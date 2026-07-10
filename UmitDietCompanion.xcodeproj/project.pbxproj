@@ -34,9 +34,22 @@
 		7B1B468E2FFB05E900C6F2EA /* README.md */ = {isa = PBXFileReference; lastKnownFileType = net.daringfireball.markdown; path = README.md; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
+/* Begin PBXFileSystemSynchronizedBuildFileExceptionSet section */
+		7B1B474D3001158700C6F2EA /* Exceptions for "UmitDietCompanion" folder in "UmitDietCompanion" target */ = {
+			isa = PBXFileSystemSynchronizedBuildFileExceptionSet;
+			membershipExceptions = (
+				Info.plist,
+			);
+			target = 7B1B454E2FFAE88300C6F2EA /* UmitDietCompanion */;
+		};
+/* End PBXFileSystemSynchronizedBuildFileExceptionSet section */
+
 /* Begin PBXFileSystemSynchronizedRootGroup section */
 		7B1B45512FFAE88300C6F2EA /* UmitDietCompanion */ = {
 			isa = PBXFileSystemSynchronizedRootGroup;
+			exceptions = (
+				7B1B474D3001158700C6F2EA /* Exceptions for "UmitDietCompanion" folder in "UmitDietCompanion" target */,
+			);
 			path = UmitDietCompanion;
 			sourceTree = "<group>";
 		};
@@ -402,11 +415,14 @@
 			buildSettings = {
 				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
 				ASSETCATALOG_COMPILER_GLOBAL_ACCENT_COLOR_NAME = AccentColor;
+				CODE_SIGN_ENTITLEMENTS = UmitDietCompanion/UmitDietCompanion.entitlements;
 				CODE_SIGN_STYLE = Automatic;
 				CURRENT_PROJECT_VERSION = 1;
 				DEVELOPMENT_TEAM = H2GMVD4FL4;
 				ENABLE_PREVIEWS = YES;
-				GENERATE_INFOPLIST_FILE = YES;
+				GENERATE_INFOPLIST_FILE = NO;
+				"INFOPLIST_FILE[sdk=*]" = UmitDietCompanion/Info.plist;
+				INFOPLIST_KEY_NSHealthUpdateUsageDescription = "Ümit Diet Companion gerektiğinde sağlık hedeflerinizi ve izinlerinizi yönetmek için HealthKit erişimini kullanır.";
 				INFOPLIST_KEY_UIApplicationSceneManifest_Generation = YES;
 				INFOPLIST_KEY_UIApplicationSupportsIndirectInputEvents = YES;
 				INFOPLIST_KEY_UILaunchScreen_Generation = YES;
@@ -434,11 +450,14 @@
 			buildSettings = {
 				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
 				ASSETCATALOG_COMPILER_GLOBAL_ACCENT_COLOR_NAME = AccentColor;
+				CODE_SIGN_ENTITLEMENTS = UmitDietCompanion/UmitDietCompanion.entitlements;
 				CODE_SIGN_STYLE = Automatic;
 				CURRENT_PROJECT_VERSION = 1;
 				DEVELOPMENT_TEAM = H2GMVD4FL4;
 				ENABLE_PREVIEWS = YES;
-				GENERATE_INFOPLIST_FILE = YES;
+				GENERATE_INFOPLIST_FILE = NO;
+				"INFOPLIST_FILE[sdk=*]" = UmitDietCompanion/Info.plist;
+				INFOPLIST_KEY_NSHealthUpdateUsageDescription = "Ümit Diet Companion gerektiğinde sağlık hedeflerinizi ve izinlerinizi yönetmek için HealthKit erişimini kullanır.";
 				INFOPLIST_KEY_UIApplicationSceneManifest_Generation = YES;
 				INFOPLIST_KEY_UIApplicationSupportsIndirectInputEvents = YES;
 				INFOPLIST_KEY_UILaunchScreen_Generation = YES;
