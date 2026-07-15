@@ -1,0 +1,29 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
+<plist version="1.0">
+<dict>
+    <key>CFBundleName</key>
+    <string>$(PRODUCT_NAME)</string>
+
+    <key>CFBundleIdentifier</key>
+    <string>$(PRODUCT_BUNDLE_IDENTIFIER)</string>
+
+    <key>CFBundleExecutable</key>
+    <string>$(EXECUTABLE_NAME)</string>
+    
+	<key>UILaunchScreen</key>
+	<dict>
+		<key>UIImageName</key>
+		<string></string>
+	</dict>
+	<key>UISupportedInterfaceOrientations~iphone</key>
+	<array>
+		<string>UIInterfaceOrientationPortrait</string>
+	</array>
+    <key>NSHealthShareUsageDescription</key>
+    <string>Ümit Diet Companion sağlık verilerinizi analiz ederek size kişiselleştirilmiş öneriler sunmak için HealthKit verilerinizi okur.</string>
+
+    <key>NSHealthUpdateUsageDescription</key>
+    <string>Ümit Diet Companion gerektiğinde sağlık verilerinizi güncellemek için HealthKit erişimini kullanır.</string>
+</dict>
+</plist>
