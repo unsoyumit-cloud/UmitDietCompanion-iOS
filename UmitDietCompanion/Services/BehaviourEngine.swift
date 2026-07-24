@@ -7,6 +7,29 @@
 
 import Foundation
 
-final class BehaviorEngine {
+final class BehaviourEngine {
 
+    private let rules: [BehaviourRule] = [
+        LowWaterRule()
+    ]
+
+    func evaluate(
+        snapshot: DailyHealthSnapshot,
+        status: HealthStatus,
+        phase: DayPhase
+    ) -> BehaviourRecommendation? {
+
+        for rule in rules {
+
+            if let recommendation = rule.evaluate(
+                snapshot: snapshot,
+                status: status,
+                phase: phase
+            ) {
+                return recommendation
+            }
+        }
+
+        return nil
+    }
 }

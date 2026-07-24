@@ -8,6 +8,9 @@
 
 /* Begin PBXBuildFile section */
 		7B1B468F2FFB05E900C6F2EA /* README.md in Resources */ = {isa = PBXBuildFile; fileRef = 7B1B468E2FFB05E900C6F2EA /* README.md */; };
+		7B1B486A30138D4700C6F2EA /* Decisions.md in Resources */ = {isa = PBXBuildFile; fileRef = 7B1B486830138D4700C6F2EA /* Decisions.md */; };
+		7B1B486B30138D4700C6F2EA /* CoachArchitecture.md in Resources */ = {isa = PBXBuildFile; fileRef = 7B1B486630138D4700C6F2EA /* CoachArchitecture.md */; };
+		7B1B486E30138D9200C6F2EA /* Roadmap.md in Resources */ = {isa = PBXBuildFile; fileRef = 7B1B486D30138D9200C6F2EA /* Roadmap.md */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXContainerItemProxy section */
@@ -32,6 +35,9 @@
 		7B1B455C2FFAE88500C6F2EA /* UmitDietCompanionTests.xctest */ = {isa = PBXFileReference; explicitFileType = wrapper.cfbundle; includeInIndex = 0; path = UmitDietCompanionTests.xctest; sourceTree = BUILT_PRODUCTS_DIR; };
 		7B1B45662FFAE88500C6F2EA /* UmitDietCompanionUITests.xctest */ = {isa = PBXFileReference; explicitFileType = wrapper.cfbundle; includeInIndex = 0; path = UmitDietCompanionUITests.xctest; sourceTree = BUILT_PRODUCTS_DIR; };
 		7B1B468E2FFB05E900C6F2EA /* README.md */ = {isa = PBXFileReference; lastKnownFileType = net.daringfireball.markdown; path = README.md; sourceTree = "<group>"; };
+		7B1B486630138D4700C6F2EA /* CoachArchitecture.md */ = {isa = PBXFileReference; lastKnownFileType = net.daringfireball.markdown; path = CoachArchitecture.md; sourceTree = "<group>"; };
+		7B1B486830138D4700C6F2EA /* Decisions.md */ = {isa = PBXFileReference; lastKnownFileType = net.daringfireball.markdown; path = Decisions.md; sourceTree = "<group>"; };
+		7B1B486D30138D9200C6F2EA /* Roadmap.md */ = {isa = PBXFileReference; lastKnownFileType = net.daringfireball.markdown; path = Roadmap.md; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
 /* Begin PBXFileSystemSynchronizedBuildFileExceptionSet section */
@@ -98,6 +104,7 @@
 				7B1B45692FFAE88500C6F2EA /* UmitDietCompanionUITests */,
 				7B1B45502FFAE88300C6F2EA /* Products */,
 				7B1B45512FFAE88300C6F2EA /* UmitDietCompanion */,
+				7B1B486930138D4700C6F2EA /* Documentation */,
 			);
 			sourceTree = "<group>";
 		};
@@ -109,6 +116,16 @@
 				7B1B45662FFAE88500C6F2EA /* UmitDietCompanionUITests.xctest */,
 			);
 			name = Products;
+			sourceTree = "<group>";
+		};
+		7B1B486930138D4700C6F2EA /* Documentation */ = {
+			isa = PBXGroup;
+			children = (
+				7B1B486630138D4700C6F2EA /* CoachArchitecture.md */,
+				7B1B486830138D4700C6F2EA /* Decisions.md */,
+				7B1B486D30138D9200C6F2EA /* Roadmap.md */,
+			);
+			path = Documentation;
 			sourceTree = "<group>";
 		};
 /* End PBXGroup section */
@@ -232,6 +249,9 @@
 			buildActionMask = 2147483647;
 			files = (
 				7B1B468F2FFB05E900C6F2EA /* README.md in Resources */,
+				7B1B486A30138D4700C6F2EA /* Decisions.md in Resources */,
+				7B1B486B30138D4700C6F2EA /* CoachArchitecture.md in Resources */,
+				7B1B486E30138D9200C6F2EA /* Roadmap.md in Resources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};

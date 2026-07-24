@@ -7,7 +7,7 @@
 
 import Foundation
 
-struct BehaviuorRecommendation {
+struct BehaviourRecommendation {
 
     let behaviour: Behaviour
     let priority: RecommendationPriority
