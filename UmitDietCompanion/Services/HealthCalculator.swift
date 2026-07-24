@@ -140,4 +140,43 @@ struct HealthCalculator {
 
         return weight / (meters * meters)
     }
+    // MARK: - Health Status
+
+    static func makeStatus(
+        profile: UserProfile,
+        metrics: DailyHealthMetrics
+    ) -> HealthStatus {
+
+        HealthStatus(
+
+            stepProgress: progress(
+                current: Double(metrics.steps),
+                target: Double(profile.stepGoal)
+            ),
+
+            waterProgress: waterProgress(
+                intake: metrics.waterIntake,
+                goal: profile.waterGoal
+            ),
+
+            calorieProgress: calorieProgress(
+                intake: metrics.calorieIntake,
+                goal: profile.calorieGoal
+            ),
+
+            sleepProgress: sleepProgress(
+                sleepHours: metrics.sleepHours,
+                goal: profile.sleepGoal
+            ),
+
+            weightProgress: weightProgress(
+                profile: profile,
+                today: metrics
+            ),
+
+            heartProgress: heartRateProgress(
+                restingHeartRate: metrics.restingHeartRate
+            )
+        )
+    }
 }
