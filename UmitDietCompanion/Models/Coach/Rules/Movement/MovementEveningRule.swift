@@ -12,11 +12,11 @@ final class MovementEveningRule: BehaviourRule {
         snapshot: DailyHealthSnapshot,
         status: HealthStatus,
         profile: UserProfile,
-        phase: DayPhase
+        context: CoachingContext
     ) -> BehaviourRecommendation? {
 
         // This rule is only active in the evening.
-        guard phase == .evening else {
+        guard context.phase == .evening else {
             return nil
         }
 

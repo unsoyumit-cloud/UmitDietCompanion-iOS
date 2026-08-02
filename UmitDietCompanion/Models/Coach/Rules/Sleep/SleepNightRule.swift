@@ -11,11 +11,11 @@ final class SleepNightRule: BehaviourRule {
         snapshot: DailyHealthSnapshot,
         status: HealthStatus,
         profile: UserProfile,
-        phase: DayPhase
+        context: CoachingContext
     ) -> BehaviourRecommendation? {
 
         // This rule is only active at night.
-        guard phase == .night else {
+        guard context.phase == .night else {
             return nil
         }
 

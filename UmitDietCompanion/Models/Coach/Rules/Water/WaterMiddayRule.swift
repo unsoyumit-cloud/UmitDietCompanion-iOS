@@ -11,11 +11,11 @@ final class WaterMiddayRule: BehaviourRule {
         snapshot: DailyHealthSnapshot,
         status: HealthStatus,
         profile: UserProfile,
-        phase: DayPhase
+        context: CoachingContext
     ) -> BehaviourRecommendation? {
 
         // This rule is only active at midday.
-        guard phase == .midday else {
+        guard context.phase == .midday else {
             return nil
         }
 

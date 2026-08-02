@@ -11,11 +11,11 @@ final class RecoveryMiddayRule: BehaviourRule {
         snapshot: DailyHealthSnapshot,
         status: HealthStatus,
         profile: UserProfile,
-        phase: DayPhase
+        context: CoachingContext
     ) -> BehaviourRecommendation? {
 
         // Only active around midday.
-        guard phase == .midday else {
+        guard context.phase == .midday else {
             return nil
         }
 

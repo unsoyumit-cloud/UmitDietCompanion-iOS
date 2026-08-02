@@ -13,7 +13,7 @@ final class LowWaterRule: BehaviourRule {
         snapshot: DailyHealthSnapshot,
         status: HealthStatus,
         profile: UserProfile,
-        phase: DayPhase
+        context: CoachingContext
     ) -> BehaviourRecommendation? {
 
         guard status.waterProgress < 0.4 else {

@@ -11,7 +11,7 @@ final class PoorSleepRule: BehaviourRule {
         snapshot: DailyHealthSnapshot,
         status: HealthStatus,
         profile: UserProfile,
-        phase: DayPhase
+        context: CoachingContext
     ) -> BehaviourRecommendation? {
 
         guard status.sleepProgress < 0.7 else {

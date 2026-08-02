@@ -13,7 +13,7 @@ final class LowStepsRule: BehaviourRule {
         snapshot: DailyHealthSnapshot,
         status: HealthStatus,
         profile: UserProfile,
-        phase: DayPhase
+        context: CoachingContext
     ) -> BehaviourRecommendation? {
 
         guard status.stepProgress < 0.5 else {

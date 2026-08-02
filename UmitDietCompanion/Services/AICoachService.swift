@@ -16,15 +16,17 @@ struct AICoachService {
             metrics: snapshot.metrics
         )
 
-        let phase = currentDayPhase()
-
+        let context = ContextBuilder.build(
+            snapshot: snapshot
+        )
         let engine = BehaviourEngine()
 
         guard let recommendation = engine.evaluate(
+            
             snapshot: snapshot,
             status: status,
             profile: snapshot.profile,
-            phase: phase
+            context: context
         ) else {
 
             return CoachMessage(
@@ -37,39 +39,23 @@ struct AICoachService {
 
         let baseMessage = CoachMessageFactory.makeMessage(
             from: recommendation,
-            phase: phase
+            phase: context.phase
         )
 
         let personality = PersonalityService.currentPersonality(
             for: snapshot.profile
         )
 
+        RecommendationMemory.shared.add(
+            recommendation.reason
+        )
+        
         return PersonalityEngine.apply(
             to: baseMessage,
             personality: personality
         )
+        
+        
     }
 
-    private static func currentDayPhase() -> DayPhase {
-
-        let hour = Calendar.current.component(.hour, from: Date())
-
-        switch hour {
-
-        case 5..<11:
-            return .morning
-
-        case 11..<15:
-            return .midday
-
-        case 15..<18:
-            return .afternoon
-
-        case 18..<22:
-            return .evening
-
-        default:
-            return .night
-        }
-    }
 }

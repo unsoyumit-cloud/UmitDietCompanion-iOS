@@ -33,7 +33,7 @@ final class BehaviourEngine {
         snapshot: DailyHealthSnapshot,
         status: HealthStatus,
         profile: UserProfile,
-        phase: DayPhase
+        context: CoachingContext
     ) -> BehaviourRecommendation? {
 
         for rule in rules {
@@ -42,7 +42,7 @@ final class BehaviourEngine {
                 snapshot: snapshot,
                 status: status,
                 profile: profile,
-                phase: phase
+                context: context
             ) {
                 return recommendation
             }

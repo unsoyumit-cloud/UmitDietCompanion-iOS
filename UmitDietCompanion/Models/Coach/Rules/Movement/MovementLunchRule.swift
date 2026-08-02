@@ -11,11 +11,11 @@ final class MovementLunchRule: BehaviourRule {
         snapshot: DailyHealthSnapshot,
         status: HealthStatus,
         profile: UserProfile,
-        phase: DayPhase
+        context: CoachingContext
     ) -> BehaviourRecommendation? {
 
         // This rule is only active around lunchtime.
-        guard phase == .midday else {
+        guard context.phase == .midday else {
             return nil
         }
 
