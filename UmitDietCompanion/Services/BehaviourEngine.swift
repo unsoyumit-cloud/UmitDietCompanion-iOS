@@ -2,16 +2,29 @@
 //  BehaviourEngine.swift
 //  UmitDietCompanion
 //
-//  Created by Ümit Ünsoy on 24.07.2026.
-//
 
 import Foundation
 
 final class BehaviourEngine {
 
     private let rules: [BehaviourRule] = [
-        LowWaterRule(),
+
+        // MARK: - Sleep
+
+        SleepMorningRule(),
+        SleepEveningRule(),
+        SleepNightRule(),
+
+        // MARK: - Water
+
+        WaterMorningRule(),
+        WaterMiddayRule(),
+        WaterEveningRule(),
+
+        // MARK: - Movement
+
         LowStepsRule()
+
     ]
 
     func evaluate(
@@ -29,8 +42,10 @@ final class BehaviourEngine {
             ) {
                 return recommendation
             }
+
         }
 
         return nil
     }
+
 }

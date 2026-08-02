@@ -61,3 +61,18 @@ It never generates user-facing text.
 Reason:
 
 Decision logic and presentation should remain separate.
+
+# Product Decisions
+
+## PD-001 - Action First Coaching
+
+The coach must never simply report metrics.
+
+Every recommendation must answer:
+
+1. What is the current problem?
+2. What is the best action the user can take right now?
+3. Why is that action important now?
+
+Only one primary action should be shown at a time.
+Recommendations must change depending on the current phase of the day.

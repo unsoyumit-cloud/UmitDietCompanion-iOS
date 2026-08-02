@@ -1,0 +1,60 @@
+//
+//  CoachMessageFactory.swift
+//  UmitDietCompanion
+//
+
+import Foundation
+
+struct CoachMessageFactory {
+
+    static func makeMessage(
+        from recommendation: BehaviourRecommendation,
+        phase: DayPhase
+    ) -> CoachMessage {
+
+        switch recommendation.reason {
+
+        case .poorSleep:
+
+            return SleepMessageFactory.makeMessage(
+                from: recommendation,
+                phase: phase
+            )
+
+        case .lowWater:
+
+            return WaterMessageFactory.makeMessage(
+                from: recommendation,
+                phase: phase
+            )
+
+        case .lowSteps:
+
+            return MovementMessageFactory.makeMessage(
+                from: recommendation,
+                phase: phase
+            )
+
+        case .maintainProgress:
+
+            return CoachMessage(
+                title: "👏 Keep Going",
+                message: "You're building healthy habits. Keep doing what you're doing!",
+                priority: .low,
+                category: .general
+            )
+
+        case .defaultRecommendation:
+
+            return CoachMessage(
+                title: "🎉 Great Job",
+                message: "Everything looks good today. Keep it up!",
+                priority: .low,
+                category: .general
+            )
+
+        }
+
+    }
+
+}

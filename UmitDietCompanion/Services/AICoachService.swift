@@ -16,12 +16,14 @@ struct AICoachService {
             metrics: snapshot.metrics
         )
 
+        let phase = currentDayPhase()
+
         let engine = BehaviourEngine()
 
         guard let recommendation = engine.evaluate(
             snapshot: snapshot,
             status: status,
-            phase: currentDayPhase()
+            phase: phase
         ) else {
 
             return CoachMessage(
@@ -30,58 +32,12 @@ struct AICoachService {
                 priority: .low,
                 category: .general
             )
-
         }
 
-        switch recommendation.reason {
-
-        case .lowWater:
-
-            return CoachMessage(
-                title: "💧 Su Tüketimi",
-                message: "Bugünkü su hedefinin biraz gerisindesin. Şimdi bir bardak su içmek iyi bir başlangıç olabilir.",
-                priority: .high,
-                category: .water
-            )
-
-        case .lowSteps:
-
-            return CoachMessage(
-                title: "🚶 Hareket",
-                message: "Bugünkü adım hedefinin biraz gerisindesin. Kısa bir yürüyüş bile fark yaratabilir.",
-                priority: .medium,
-                category: .movement
-            )
-
-        case .poorSleep:
-
-            return CoachMessage(
-                title: "😴 Uyku",
-                message: "Son uykun hedefinin altında görünüyor. Bu gece biraz daha erken dinlenmeyi deneyebilirsin.",
-                priority: .medium,
-                category: .sleep
-            )
-
-        case .maintainProgress:
-
-            return CoachMessage(
-                title: "👏 Devam Et",
-                message: "Bugünkü sağlıklı alışkanlıklarını aynı şekilde sürdürmeye devam et.",
-                priority: .low,
-                category: .general
-            )
-
-        case .defaultRecommendation:
-
-            return CoachMessage(
-                title: "🎉 Harika Gidiyorsun",
-                message: "Bugünkü verilerin genel olarak hedeflerinle uyumlu. Aynı şekilde devam et!",
-                priority: .low,
-                category: .general
-            )
-
-        }
-
+        return CoachMessageFactory.makeMessage(
+            from: recommendation,
+            phase: phase
+        )
     }
 
     private static func currentDayPhase() -> DayPhase {
@@ -105,7 +61,5 @@ struct AICoachService {
         default:
             return .night
         }
-
     }
-
 }
