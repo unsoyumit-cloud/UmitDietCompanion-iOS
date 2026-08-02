@@ -2,17 +2,33 @@
 //  MovementMorningRule.swift
 //  UmitDietCompanion
 //
-//  Created by Ümit Ünsoy on 2.08.2026.
-//
 
-import SwiftUI
+import Foundation
 
-struct MovementMorningRule: View {
-    var body: some View {
-        Text(/*@START_MENU_TOKEN@*/"Hello, World!"/*@END_MENU_TOKEN@*/)
+final class MovementMorningRule: BehaviourRule {
+
+    func evaluate(
+        snapshot: DailyHealthSnapshot,
+        status: HealthStatus,
+        profile: UserProfile,
+        phase: DayPhase
+    ) -> BehaviourRecommendation? {
+
+        // This rule is only active in the morning.
+        guard phase == .morning else {
+            return nil
+        }
+
+        // Trigger when morning activity is still very low.
+        guard status.stepProgress < 0.10 else {
+            return nil
+        }
+
+        return BehaviourRecommendation(
+            behaviour: .walk,
+            priority: .medium,
+            reason: .lowSteps
+        )
     }
-}
 
-#Preview {
-    MovementMorningRule()
 }

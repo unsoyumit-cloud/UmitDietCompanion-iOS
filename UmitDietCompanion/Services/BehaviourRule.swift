@@ -12,6 +12,7 @@ protocol BehaviourRule {
     func evaluate(
         snapshot: DailyHealthSnapshot,
         status: HealthStatus,
+        profile: UserProfile,
         phase: DayPhase
     ) -> BehaviourRecommendation?
 

@@ -23,13 +23,16 @@ final class BehaviourEngine {
 
         // MARK: - Movement
 
-        LowStepsRule()
+        MovementMorningRule(),
+        MovementLunchRule(),
+        MovementEveningRule(),
 
     ]
 
     func evaluate(
         snapshot: DailyHealthSnapshot,
         status: HealthStatus,
+        profile: UserProfile,
         phase: DayPhase
     ) -> BehaviourRecommendation? {
 
@@ -38,6 +41,7 @@ final class BehaviourEngine {
             if let recommendation = rule.evaluate(
                 snapshot: snapshot,
                 status: status,
+                profile: profile,
                 phase: phase
             ) {
                 return recommendation

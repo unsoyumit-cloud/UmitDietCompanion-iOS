@@ -23,6 +23,7 @@ struct AICoachService {
         guard let recommendation = engine.evaluate(
             snapshot: snapshot,
             status: status,
+            profile: snapshot.profile,
             phase: phase
         ) else {
 

@@ -2,17 +2,34 @@
 //  MovementLunchRule.swift
 //  UmitDietCompanion
 //
-//  Created by Ümit Ünsoy on 2.08.2026.
-//
 
-import SwiftUI
+import Foundation
 
-struct MovementLunchRule: View {
-    var body: some View {
-        Text(/*@START_MENU_TOKEN@*/"Hello, World!"/*@END_MENU_TOKEN@*/)
+final class MovementLunchRule: BehaviourRule {
+
+    func evaluate(
+        snapshot: DailyHealthSnapshot,
+        status: HealthStatus,
+        profile: UserProfile,
+        phase: DayPhase
+    ) -> BehaviourRecommendation? {
+
+        // This rule is only active around lunchtime.
+        guard phase == .midday else {
+            return nil
+        }
+
+        // By lunchtime, the user should have completed
+        // around 40% of today's movement goal.
+        guard status.stepProgress < 0.40 else {
+            return nil
+        }
+
+        return BehaviourRecommendation(
+            behaviour: .walk,
+            priority: .high,
+            reason: .lowSteps
+        )
     }
-}
 
-#Preview {
-    MovementLunchRule()
 }

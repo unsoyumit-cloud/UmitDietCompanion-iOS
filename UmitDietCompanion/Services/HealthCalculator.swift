@@ -145,6 +145,7 @@ struct HealthCalculator {
     static func makeStatus(
         profile: UserProfile,
         metrics: DailyHealthMetrics
+        
     ) -> HealthStatus {
 
         HealthStatus(
@@ -176,7 +177,8 @@ struct HealthCalculator {
 
             heartProgress: heartRateProgress(
                 restingHeartRate: metrics.restingHeartRate
-            )
+            ),
+            nutritionProgress: 1.0,
         )
     }
 }

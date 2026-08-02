@@ -8,15 +8,6 @@
 
 /* Begin PBXBuildFile section */
 		7B1B468F2FFB05E900C6F2EA /* README.md in Resources */ = {isa = PBXBuildFile; fileRef = 7B1B468E2FFB05E900C6F2EA /* README.md */; };
-		7B1B486A30138D4700C6F2EA /* Decisions.md in Resources */ = {isa = PBXBuildFile; fileRef = 7B1B486830138D4700C6F2EA /* Decisions.md */; };
-		7B1B486B30138D4700C6F2EA /* CoachArchitecture.md in Resources */ = {isa = PBXBuildFile; fileRef = 7B1B486630138D4700C6F2EA /* CoachArchitecture.md */; };
-		7B1B486E30138D9200C6F2EA /* Roadmap.md in Resources */ = {isa = PBXBuildFile; fileRef = 7B1B486D30138D9200C6F2EA /* Roadmap.md */; };
-		7B1B487E301F3B8000C6F2EA /* SleepBehaviourCatalogue.md in Resources */ = {isa = PBXBuildFile; fileRef = 7B1B487D301F3B8000C6F2EA /* SleepBehaviourCatalogue.md */; };
-		7B1B489D301F413D00C6F2EA /* WaterBehaviourCatalogue.md in Resources */ = {isa = PBXBuildFile; fileRef = 7B1B489C301F413D00C6F2EA /* WaterBehaviourCatalogue.md */; };
-		7B1B489F301F414F00C6F2EA /* MovementBehaviourCatalogue.md in Resources */ = {isa = PBXBuildFile; fileRef = 7B1B489E301F414F00C6F2EA /* MovementBehaviourCatalogue.md */; };
-		7B1B48A1301F416800C6F2EA /* NutritionBehaviourCatalogue.md in Resources */ = {isa = PBXBuildFile; fileRef = 7B1B48A0301F416800C6F2EA /* NutritionBehaviourCatalogue.md */; };
-		7B1B48A3301F417300C6F2EA /* RecoveryBehaviourCatalogue.md in Resources */ = {isa = PBXBuildFile; fileRef = 7B1B48A2301F417300C6F2EA /* RecoveryBehaviourCatalogue.md */; };
-		7B1B48B4301F538400C6F2EA /* ProductPrinciples.md in Resources */ = {isa = PBXBuildFile; fileRef = 7B1B48B3301F538400C6F2EA /* ProductPrinciples.md */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXContainerItemProxy section */
@@ -41,15 +32,6 @@
 		7B1B455C2FFAE88500C6F2EA /* UmitDietCompanionTests.xctest */ = {isa = PBXFileReference; explicitFileType = wrapper.cfbundle; includeInIndex = 0; path = UmitDietCompanionTests.xctest; sourceTree = BUILT_PRODUCTS_DIR; };
 		7B1B45662FFAE88500C6F2EA /* UmitDietCompanionUITests.xctest */ = {isa = PBXFileReference; explicitFileType = wrapper.cfbundle; includeInIndex = 0; path = UmitDietCompanionUITests.xctest; sourceTree = BUILT_PRODUCTS_DIR; };
 		7B1B468E2FFB05E900C6F2EA /* README.md */ = {isa = PBXFileReference; lastKnownFileType = net.daringfireball.markdown; path = README.md; sourceTree = "<group>"; };
-		7B1B486630138D4700C6F2EA /* CoachArchitecture.md */ = {isa = PBXFileReference; lastKnownFileType = net.daringfireball.markdown; path = CoachArchitecture.md; sourceTree = "<group>"; };
-		7B1B486830138D4700C6F2EA /* Decisions.md */ = {isa = PBXFileReference; lastKnownFileType = net.daringfireball.markdown; path = Decisions.md; sourceTree = "<group>"; };
-		7B1B486D30138D9200C6F2EA /* Roadmap.md */ = {isa = PBXFileReference; lastKnownFileType = net.daringfireball.markdown; path = Roadmap.md; sourceTree = "<group>"; };
-		7B1B487D301F3B8000C6F2EA /* SleepBehaviourCatalogue.md */ = {isa = PBXFileReference; lastKnownFileType = net.daringfireball.markdown; path = SleepBehaviourCatalogue.md; sourceTree = "<group>"; };
-		7B1B489C301F413D00C6F2EA /* WaterBehaviourCatalogue.md */ = {isa = PBXFileReference; lastKnownFileType = net.daringfireball.markdown; path = WaterBehaviourCatalogue.md; sourceTree = "<group>"; };
-		7B1B489E301F414F00C6F2EA /* MovementBehaviourCatalogue.md */ = {isa = PBXFileReference; lastKnownFileType = net.daringfireball.markdown; path = MovementBehaviourCatalogue.md; sourceTree = "<group>"; };
-		7B1B48A0301F416800C6F2EA /* NutritionBehaviourCatalogue.md */ = {isa = PBXFileReference; lastKnownFileType = net.daringfireball.markdown; path = NutritionBehaviourCatalogue.md; sourceTree = "<group>"; };
-		7B1B48A2301F417300C6F2EA /* RecoveryBehaviourCatalogue.md */ = {isa = PBXFileReference; lastKnownFileType = net.daringfireball.markdown; path = RecoveryBehaviourCatalogue.md; sourceTree = "<group>"; };
-		7B1B48B3301F538400C6F2EA /* ProductPrinciples.md */ = {isa = PBXFileReference; lastKnownFileType = net.daringfireball.markdown; path = ProductPrinciples.md; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
 /* Begin PBXFileSystemSynchronizedBuildFileExceptionSet section */
@@ -79,6 +61,31 @@
 		7B1B45692FFAE88500C6F2EA /* UmitDietCompanionUITests */ = {
 			isa = PBXFileSystemSynchronizedRootGroup;
 			path = UmitDietCompanionUITests;
+			sourceTree = "<group>";
+		};
+		7B1B48B5301F559600C6F2EA /* ADR */ = {
+			isa = PBXFileSystemSynchronizedRootGroup;
+			path = ADR;
+			sourceTree = "<group>";
+		};
+		7B1B48C4301F58FA00C6F2EA /* Product */ = {
+			isa = PBXFileSystemSynchronizedRootGroup;
+			path = Product;
+			sourceTree = "<group>";
+		};
+		7B1B48C5301F590000C6F2EA /* Behaviour */ = {
+			isa = PBXFileSystemSynchronizedRootGroup;
+			path = Behaviour;
+			sourceTree = "<group>";
+		};
+		7B1B48C6301F599500C6F2EA /* Architecture */ = {
+			isa = PBXFileSystemSynchronizedRootGroup;
+			path = Architecture;
+			sourceTree = "<group>";
+		};
+		7B1B48C7301F599B00C6F2EA /* Development */ = {
+			isa = PBXFileSystemSynchronizedRootGroup;
+			path = Development;
 			sourceTree = "<group>";
 		};
 /* End PBXFileSystemSynchronizedRootGroup section */
@@ -133,15 +140,11 @@
 		7B1B486930138D4700C6F2EA /* Documentation */ = {
 			isa = PBXGroup;
 			children = (
-				7B1B486630138D4700C6F2EA /* CoachArchitecture.md */,
-				7B1B486830138D4700C6F2EA /* Decisions.md */,
-				7B1B486D30138D9200C6F2EA /* Roadmap.md */,
-				7B1B487D301F3B8000C6F2EA /* SleepBehaviourCatalogue.md */,
-				7B1B489C301F413D00C6F2EA /* WaterBehaviourCatalogue.md */,
-				7B1B489E301F414F00C6F2EA /* MovementBehaviourCatalogue.md */,
-				7B1B48A0301F416800C6F2EA /* NutritionBehaviourCatalogue.md */,
-				7B1B48A2301F417300C6F2EA /* RecoveryBehaviourCatalogue.md */,
-				7B1B48B3301F538400C6F2EA /* ProductPrinciples.md */,
+				7B1B48C7301F599B00C6F2EA /* Development */,
+				7B1B48C6301F599500C6F2EA /* Architecture */,
+				7B1B48C5301F590000C6F2EA /* Behaviour */,
+				7B1B48C4301F58FA00C6F2EA /* Product */,
+				7B1B48B5301F559600C6F2EA /* ADR */,
 			);
 			path = Documentation;
 			sourceTree = "<group>";
@@ -163,6 +166,11 @@
 			);
 			fileSystemSynchronizedGroups = (
 				7B1B45512FFAE88300C6F2EA /* UmitDietCompanion */,
+				7B1B48B5301F559600C6F2EA /* ADR */,
+				7B1B48C4301F58FA00C6F2EA /* Product */,
+				7B1B48C5301F590000C6F2EA /* Behaviour */,
+				7B1B48C6301F599500C6F2EA /* Architecture */,
+				7B1B48C7301F599B00C6F2EA /* Development */,
 			);
 			name = UmitDietCompanion;
 			packageProductDependencies = (
@@ -267,15 +275,6 @@
 			buildActionMask = 2147483647;
 			files = (
 				7B1B468F2FFB05E900C6F2EA /* README.md in Resources */,
-				7B1B48A3301F417300C6F2EA /* RecoveryBehaviourCatalogue.md in Resources */,
-				7B1B486A30138D4700C6F2EA /* Decisions.md in Resources */,
-				7B1B486B30138D4700C6F2EA /* CoachArchitecture.md in Resources */,
-				7B1B48B4301F538400C6F2EA /* ProductPrinciples.md in Resources */,
-				7B1B486E30138D9200C6F2EA /* Roadmap.md in Resources */,
-				7B1B48A1301F416800C6F2EA /* NutritionBehaviourCatalogue.md in Resources */,
-				7B1B487E301F3B8000C6F2EA /* SleepBehaviourCatalogue.md in Resources */,
-				7B1B489F301F414F00C6F2EA /* MovementBehaviourCatalogue.md in Resources */,
-				7B1B489D301F413D00C6F2EA /* WaterBehaviourCatalogue.md in Resources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};

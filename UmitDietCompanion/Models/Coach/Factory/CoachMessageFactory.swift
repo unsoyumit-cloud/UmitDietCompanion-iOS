@@ -53,6 +53,13 @@ struct CoachMessageFactory {
                 category: .general
             )
 
+        case .poorNutrition:
+
+            return NutritionMessageFactory.makeMessage(
+                from: recommendation,
+                phase: phase
+            )
+            
         }
 
     }

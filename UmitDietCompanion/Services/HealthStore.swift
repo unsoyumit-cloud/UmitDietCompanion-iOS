@@ -107,6 +107,7 @@ final class HealthStore {
             startWeight: 89,
             targetWeight: 75,
             activityLevel: .moderate,
+            eatingStyle: .standard,
             calorieGoal: energyTarget,
             waterGoal: Int(waterTarget),
             stepGoal: stepsTarget,

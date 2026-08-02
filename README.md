@@ -1,5 +1,17 @@
 # Ümit Diet Companion
 
+## Documentation
+
+| Topic | Document |
+|--------|----------|
+| Vision | Product/Vision.md |
+| Product Philosophy | Product/ProductPrinciples.md |
+| Onboarding | Product/OnboardingExperience.md |
+| Roadmap | Product/Roadmap.md |
+| Coach Architecture | Architecture/CoachArchitecture.md |
+| Behaviour Rules | Behaviour/*.md |
+| Architecture Decisions | ADR/*.md |
+
 An AI-powered health companion that helps people build healthier habits by recommending one meaningful action at the right moment.
 
 Instead of overwhelming users with dashboards, charts and percentages, Ümit Diet Companion focuses on behaviour.
@@ -247,6 +259,31 @@ The long-term goal is to build a personal health companion that users enjoy inte
 Success is measured not by how many charts the application displays, but by how many healthy habits it helps users build.
 
 ---
+
+# Architecture Diagram
+
+Dashboard
+      │
+      ▼
+AICoachService
+      │
+      ▼
+BehaviourEngine
+      │
+      ▼
+BehaviourRule
+      │
+      ▼
+BehaviourRecommendation
+      │
+      ▼
+CoachMessageFactory
+      │
+      ├── SleepMessageFactory
+      ├── WaterMessageFactory
+      ├── MovementMessageFactory
+      ├── NutritionMessageFactory
+      └── RecoveryMessageFactory
 
 Developed by
 

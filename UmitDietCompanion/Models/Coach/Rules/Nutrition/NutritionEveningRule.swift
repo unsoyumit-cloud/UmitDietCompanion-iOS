@@ -1,11 +1,11 @@
 //
-//  SleepMorningRule.swift
+//  NutritionEveningRule.swift
 //  UmitDietCompanion
 //
 
 import Foundation
 
-final class SleepMorningRule: BehaviourRule {
+final class NutritionEveningRule: BehaviourRule {
 
     func evaluate(
         snapshot: DailyHealthSnapshot,
@@ -14,20 +14,20 @@ final class SleepMorningRule: BehaviourRule {
         phase: DayPhase
     ) -> BehaviourRecommendation? {
 
-        // This rule is only active in the morning.
-        guard phase == .morning else {
+        // Only active in the evening.
+        guard phase == .evening else {
             return nil
         }
 
-        // Trigger only when sleep progress is below target.
-        guard status.sleepProgress < 0.7 else {
+        // Trigger if the user is still behind today's nutrition goal.
+        guard status.nutritionProgress < 0.80 else {
             return nil
         }
 
         return BehaviourRecommendation(
-            behaviour: .sleepEarlier,
+            behaviour: .eatBetter,
             priority: .medium,
-            reason: .poorSleep
+            reason: .poorNutrition
         )
     }
 

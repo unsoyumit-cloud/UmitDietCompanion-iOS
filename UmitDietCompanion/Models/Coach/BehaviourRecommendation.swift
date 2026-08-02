@@ -30,5 +30,5 @@ enum RecommendationReason {
     case poorSleep
     case maintainProgress
     case defaultRecommendation
-
+    case poorNutrition
 }

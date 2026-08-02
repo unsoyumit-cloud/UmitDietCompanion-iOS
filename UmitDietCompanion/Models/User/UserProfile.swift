@@ -20,6 +20,14 @@ enum ActivityLevel: String, CaseIterable {
     case athlete = "Sporcu"
 }
 
+enum EatingStyle: String, CaseIterable {
+    case standard = "Standart"
+    case intermittentFasting = "Intermittent Fasting"
+    case vegetarian = "Vejetaryen"
+    case vegan = "Vegan"
+    case other = "Diğer"
+}
+
 struct UserProfile {
 
     var name: String
@@ -35,6 +43,8 @@ struct UserProfile {
         var targetWeight: Double
 
         var activityLevel: ActivityLevel
+    
+        var eatingStyle: EatingStyle
 
         var calorieGoal: Int
 
