@@ -10,7 +10,8 @@ import Foundation
 final class BehaviourEngine {
 
     private let rules: [BehaviourRule] = [
-        LowWaterRule()
+        LowWaterRule(),
+        LowStepsRule()
     ]
 
     func evaluate(
