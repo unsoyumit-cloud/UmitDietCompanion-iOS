@@ -15,4 +15,5 @@ enum Behaviour: String, CaseIterable {
     case sleepEarlier
     case stretch
     case eatBetter
+    case recover
 }

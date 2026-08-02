@@ -38,5 +38,5 @@ enum HealthCategory {
     case weight
     case heart
     case general
-
+    case recovery
 }

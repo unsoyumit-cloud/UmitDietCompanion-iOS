@@ -45,6 +45,8 @@ struct UserProfile {
         var activityLevel: ActivityLevel
     
         var eatingStyle: EatingStyle
+    
+        var coachPersonality: CoachPersonality
 
         var calorieGoal: Int
 

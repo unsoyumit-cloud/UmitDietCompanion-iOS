@@ -35,9 +35,18 @@ struct AICoachService {
             )
         }
 
-        return CoachMessageFactory.makeMessage(
+        let baseMessage = CoachMessageFactory.makeMessage(
             from: recommendation,
             phase: phase
+        )
+
+        let personality = PersonalityService.currentPersonality(
+            for: snapshot.profile
+        )
+
+        return PersonalityEngine.apply(
+            to: baseMessage,
+            personality: personality
         )
     }
 

@@ -16,5 +16,5 @@ struct HealthStatus {
     let weightProgress: Double
     let heartProgress: Double
     let nutritionProgress: Double
-
+    let recoveryProgress: Double
 }

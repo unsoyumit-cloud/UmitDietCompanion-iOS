@@ -179,6 +179,7 @@ struct HealthCalculator {
                 restingHeartRate: metrics.restingHeartRate
             ),
             nutritionProgress: 1.0,
+            recoveryProgress: 1.0,
         )
     }
 }

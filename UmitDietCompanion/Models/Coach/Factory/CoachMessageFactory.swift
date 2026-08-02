@@ -60,6 +60,13 @@ struct CoachMessageFactory {
                 phase: phase
             )
             
+        case .lowRecovery:
+
+            return RecoveryMessageFactory.makeMessage(
+                from: recommendation,
+                phase: phase
+            )
+            
         }
 
     }

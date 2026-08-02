@@ -31,4 +31,5 @@ enum RecommendationReason {
     case maintainProgress
     case defaultRecommendation
     case poorNutrition
+    case lowRecovery
 }
