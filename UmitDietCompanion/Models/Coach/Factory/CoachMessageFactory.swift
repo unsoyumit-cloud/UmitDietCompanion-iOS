@@ -9,6 +9,7 @@ struct CoachMessageFactory {
 
     static func makeMessage(
         from recommendation: BehaviourRecommendation,
+        reasoning: CoachReasoning,
         phase: DayPhase
     ) -> CoachMessage {
 
@@ -18,6 +19,7 @@ struct CoachMessageFactory {
 
             return SleepMessageFactory.makeMessage(
                 from: recommendation,
+                reasoning: reasoning,
                 phase: phase
             )
 
@@ -25,6 +27,7 @@ struct CoachMessageFactory {
 
             return WaterMessageFactory.makeMessage(
                 from: recommendation,
+                reasoning: reasoning,
                 phase: phase
             )
 
@@ -32,6 +35,23 @@ struct CoachMessageFactory {
 
             return MovementMessageFactory.makeMessage(
                 from: recommendation,
+                reasoning: reasoning,
+                phase: phase
+            )
+
+        case .poorNutrition:
+
+            return NutritionMessageFactory.makeMessage(
+                from: recommendation,
+                reasoning: reasoning,
+                phase: phase
+            )
+
+        case .lowRecovery:
+
+            return RecoveryMessageFactory.makeMessage(
+                from: recommendation,
+                reasoning: reasoning,
                 phase: phase
             )
 
@@ -53,20 +73,6 @@ struct CoachMessageFactory {
                 category: .general
             )
 
-        case .poorNutrition:
-
-            return NutritionMessageFactory.makeMessage(
-                from: recommendation,
-                phase: phase
-            )
-            
-        case .lowRecovery:
-
-            return RecoveryMessageFactory.makeMessage(
-                from: recommendation,
-                phase: phase
-            )
-            
         }
 
     }

@@ -18,6 +18,10 @@ final class WaterMorningRule: BehaviourRule {
         guard context.phase == .morning else {
             return nil
         }
+        
+        guard !context.recommendationsToday.contains(.lowWater) else {
+            return nil
+        }
 
         // Trigger only when hydration is very low.
         guard status.waterProgress < 0.20 else {

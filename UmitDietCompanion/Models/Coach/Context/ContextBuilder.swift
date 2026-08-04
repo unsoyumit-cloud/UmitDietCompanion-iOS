@@ -23,10 +23,11 @@ struct ContextBuilder {
 
         return CoachingContext(
             phase: phase,
-            personality: personality,
             isWeekend: isWeekend,
+            personality: personality,
             recommendationCountToday: RecommendationMemory.shared.todayCount(),
             lastRecommendation: RecommendationMemory.shared.lastReason(),
+            recommendationsToday: RecommendationMemory.shared.reasonsRecommendedToday(),
             consecutiveDays: 0
         )
     }

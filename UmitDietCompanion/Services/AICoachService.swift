@@ -37,8 +37,15 @@ struct AICoachService {
             )
         }
 
+        let reasoning = ReasoningEngine.build(
+            recommendation: recommendation,
+            context: context,
+            snapshot: snapshot
+        )
+        
         let baseMessage = CoachMessageFactory.makeMessage(
             from: recommendation,
+            reasoning: reasoning,
             phase: context.phase
         )
 

@@ -9,6 +9,7 @@ struct WaterMessageFactory {
 
     static func makeMessage(
         from recommendation: BehaviourRecommendation,
+        reasoning: CoachReasoning,
         phase: DayPhase
     ) -> CoachMessage {
 

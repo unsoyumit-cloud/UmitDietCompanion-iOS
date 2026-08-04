@@ -2,8 +2,6 @@
 //  RecommendationMemory.swift
 //  UmitDietCompanion
 //
-//  Created by Ümit Ünsoy on 2.08.2026.
-//
 
 import Foundation
 
@@ -15,6 +13,8 @@ final class RecommendationMemory {
 
     private var history: [RecommendationHistory] = []
 
+    // MARK: - Write
+
     func add(_ reason: RecommendationReason) {
 
         history.append(
@@ -23,25 +23,77 @@ final class RecommendationMemory {
                 date: Date()
             )
         )
+
     }
+
+    func clear() {
+
+        history.removeAll()
+
+    }
+
+    // MARK: - Read
 
     func todayCount() -> Int {
 
         let calendar = Calendar.current
 
         return history.filter {
+
             calendar.isDateInToday($0.date)
+
         }.count
+
     }
 
     func lastReason() -> RecommendationReason? {
 
         history.last?.reason
+
     }
 
-    func clear() {
+    func reasonsRecommendedToday() -> Set<RecommendationReason> {
 
-        history.removeAll()
+        let calendar = Calendar.current
+
+        return Set(
+            history
+                .filter {
+
+                    calendar.isDateInToday($0.date)
+
+                }
+                .map {
+
+                    $0.reason
+
+                }
+        )
+
+    }
+
+    func wasRecommendedToday(
+        _ reason: RecommendationReason
+    ) -> Bool {
+
+        reasonsRecommendedToday().contains(reason)
+
+    }
+
+    func wasRecommendedRecently(
+        _ reason: RecommendationReason,
+        within hours: Double
+    ) -> Bool {
+
+        let limit = Date().addingTimeInterval(-(hours * 3600))
+
+        return history.contains {
+
+            $0.reason == reason &&
+            $0.date > limit
+
+        }
+
     }
 
 }
