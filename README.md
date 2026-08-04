@@ -12,6 +12,8 @@
 | Behaviour Rules | Behaviour/*.md |
 | Architecture Decisions | ADR/*.md |
 
+Ümit Diet Companion is a health and wellness coaching application. It is designed to encourage healthy habits and support informed lifestyle decisions. It is not intended to diagnose, treat, cure or prevent any disease.
+
 An AI-powered health companion that helps people build healthier habits by recommending one meaningful action at the right moment.
 
 Instead of overwhelming users with dashboards, charts and percentages, Ümit Diet Companion focuses on behaviour.

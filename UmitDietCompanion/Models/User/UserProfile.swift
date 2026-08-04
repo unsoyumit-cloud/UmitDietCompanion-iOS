@@ -2,8 +2,6 @@
 //  UserProfile.swift
 //  UmitDietCompanion
 //
-//  Created by Ümit Ünsoy on 2.07.2026.
-//
 
 import Foundation
 
@@ -30,33 +28,36 @@ enum EatingStyle: String, CaseIterable {
 
 struct UserProfile {
 
+    // MARK: - Identity
+
     var name: String
+    var birthDate: Date
+    var gender: Gender
 
-        var birthDate: Date
+    // MARK: - Body
 
-        var gender: Gender
+    var height: Double
+    var startWeight: Double
+    var targetWeight: Double
 
-        var height: Double
+    // MARK: - Lifestyle
 
-        var startWeight: Double
+    var activityLevel: ActivityLevel
+    var eatingStyle: EatingStyle
 
-        var targetWeight: Double
+    // MARK: - Coaching
 
-        var activityLevel: ActivityLevel
-    
-        var eatingStyle: EatingStyle
-    
-        var coachPersonality: CoachPersonality
+    var coachPersonality: CoachPersonality
 
-        var calorieGoal: Int
+    // MARK: - Goals
 
-        var waterGoal: Int
+    var calorieGoal: Int
+    var waterGoal: Int
+    var stepGoal: Int
+    var sleepGoal: Double
 
-        var stepGoal: Int
+    // MARK: - Computed
 
-        var sleepGoal: Double
-
-    
     var age: Int {
         Calendar.current.dateComponents(
             [.year],
