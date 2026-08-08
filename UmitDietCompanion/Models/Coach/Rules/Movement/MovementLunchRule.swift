@@ -28,7 +28,7 @@ final class MovementLunchRule: BehaviourRule {
         return BehaviourRecommendation(
             behaviour: .walk,
             priority: .high,
-            reason: .lowSteps
+            reason: .lowMovement
         )
     }
 

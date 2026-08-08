@@ -31,7 +31,7 @@ struct CoachMessageFactory {
                 phase: phase
             )
 
-        case .lowSteps:
+        case .lowMovement:
 
             return MovementMessageFactory.makeMessage(
                 from: recommendation,
@@ -55,23 +55,7 @@ struct CoachMessageFactory {
                 phase: phase
             )
 
-        case .maintainProgress:
-
-            return CoachMessage(
-                title: "👏 Keep Going",
-                message: "You're building healthy habits. Keep doing what you're doing!",
-                priority: .low,
-                category: .general
-            )
-
-        case .defaultRecommendation:
-
-            return CoachMessage(
-                title: "🎉 Great Job",
-                message: "Everything looks good today. Keep it up!",
-                priority: .low,
-                category: .general
-            )
+       
 
         }
 

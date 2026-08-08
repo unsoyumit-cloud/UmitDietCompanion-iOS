@@ -23,13 +23,3 @@ enum RecommendationPriority {
 
 }
 
-enum RecommendationReason {
-
-    case lowWater
-    case lowSteps
-    case poorSleep
-    case maintainProgress
-    case defaultRecommendation
-    case poorNutrition
-    case lowRecovery
-}

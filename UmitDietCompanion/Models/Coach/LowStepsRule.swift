@@ -40,7 +40,7 @@ final class LowStepsRule: BehaviourRule {
         return BehaviourRecommendation(
             behaviour: .walk,
             priority: priority,
-            reason: .lowSteps
+            reason: .lowMovement
         )
 
     }

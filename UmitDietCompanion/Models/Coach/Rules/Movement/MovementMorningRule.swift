@@ -31,7 +31,7 @@ final class MovementMorningRule: BehaviourRule {
         return BehaviourRecommendation(
             behaviour: .walk,
             priority: .medium,
-            reason: .lowSteps
+            reason: .lowMovement
         )
     }
 
