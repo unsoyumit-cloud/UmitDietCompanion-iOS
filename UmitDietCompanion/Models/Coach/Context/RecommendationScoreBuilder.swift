@@ -12,19 +12,73 @@ struct RecommendationScoreBuilder {
         context: CoachingContext
     ) -> RecommendationScore {
 
-        RecommendationScore(
+        let timeMultiplier = calculateTimeMultiplier(context: context)
+
+        let contextModifier = calculateContextModifier(context: context)
+
+        let memoryModifier = calculateMemoryModifier(context: context)
+
+        let personalityModifier = calculatePersonalityModifier(context: context)
+
+        return RecommendationScore(
 
             need: need,
 
-            timeMultiplier: 1.0,
+            timeMultiplier: timeMultiplier,
 
-            contextModifier: 0,
+            contextModifier: contextModifier,
 
-            memoryModifier: 0,
+            memoryModifier: memoryModifier,
 
-            personalityModifier: 0
+            personalityModifier: personalityModifier
 
         )
+
+    }
+
+}
+
+// MARK: - Private
+
+private extension RecommendationScoreBuilder {
+
+    func calculateTimeMultiplier(
+        context: CoachingContext
+    ) -> Double {
+
+        // TODO
+
+        return 1.0
+
+    }
+
+    func calculateContextModifier(
+        context: CoachingContext
+    ) -> Int {
+
+        // TODO
+
+        return 0
+
+    }
+
+    func calculateMemoryModifier(
+        context: CoachingContext
+    ) -> Int {
+
+        // TODO
+
+        return 0
+
+    }
+
+    func calculatePersonalityModifier(
+        context: CoachingContext
+    ) -> Int {
+
+        // TODO
+
+        return 0
 
     }
 

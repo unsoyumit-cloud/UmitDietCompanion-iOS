@@ -1,11 +1,11 @@
 //
-//  LowStepsRule.swift
+//  PoorNutritionRule.swift
 //  UmitDietCompanion
 //
 
 import Foundation
 
-final class LowStepsRule: BehaviourRule {
+final class PoorNutritionRule: BehaviourRule {
 
     func evaluate(
         snapshot: DailyHealthSnapshot,
@@ -14,7 +14,7 @@ final class LowStepsRule: BehaviourRule {
         context: CoachingContext
     ) -> BehaviourRecommendation? {
 
-        let need = MovementNeedCalculator().calculateNeed(
+        let need = NutritionNeedCalculator().calculateNeed(
             snapshot: snapshot,
             context: context
         )
@@ -38,9 +38,9 @@ final class LowStepsRule: BehaviourRule {
         }
 
         return BehaviourRecommendation(
-            behaviour: .walk,
+            behaviour: .eatBetter,
             priority: priority,
-            reason: .lowSteps
+            reason: .poorNutrition
         )
 
     }

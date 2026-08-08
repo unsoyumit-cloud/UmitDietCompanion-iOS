@@ -2,8 +2,6 @@
 //  LowWaterRule.swift
 //  UmitDietCompanion
 //
-//  Created by Ümit Ünsoy on 24.07.2026.
-//
 
 import Foundation
 
@@ -16,14 +14,35 @@ final class LowWaterRule: BehaviourRule {
         context: CoachingContext
     ) -> BehaviourRecommendation? {
 
-        guard status.waterProgress < 0.4 else {
+        let need = WaterNeedCalculator().calculateNeed(
+            snapshot: snapshot,
+            context: context
+        )
+
+        guard need >= 70 else {
             return nil
+        }
+
+        let priority: RecommendationPriority
+
+        switch need {
+
+        case 90...100:
+            priority = .high
+
+        case 70..<90:
+            priority = .medium
+
+        default:
+            priority = .low
         }
 
         return BehaviourRecommendation(
             behaviour: .drinkWater,
-            priority: .high,
+            priority: priority,
             reason: .lowWater
         )
+
     }
+
 }

@@ -1,3 +1,4 @@
+
 //
 //  RecommendationCandidate.swift
 //  UmitDietCompanion
@@ -7,8 +8,13 @@ import Foundation
 
 struct RecommendationCandidate {
 
-    let recommendation: BehaviourRecommendation
+    /// Health domain this recommendation belongs to.
+    let category: HealthCategory
 
+    /// Behaviour that should be recommended.
+    let behaviour: Behaviour
+
+    /// Recommendation scoring details.
     let score: RecommendationScore
 
 }

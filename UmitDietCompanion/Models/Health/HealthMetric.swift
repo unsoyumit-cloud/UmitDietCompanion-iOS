@@ -11,7 +11,7 @@ enum MetricType: String, CaseIterable, Identifiable {
 
     case water
     case steps
-    case energy
+    case nutrition
     case sleep
     case weight
     case heart
@@ -28,8 +28,8 @@ enum MetricType: String, CaseIterable, Identifiable {
         case .steps:
             return "Adım"
 
-        case .energy:
-            return "Enerji"
+        case .nutrition:
+            return "Beslenme"
 
         case .sleep:
             return "Uyku"
@@ -54,8 +54,8 @@ enum MetricType: String, CaseIterable, Identifiable {
         case .steps:
             return "👣"
 
-        case .energy:
-            return "🔥"
+        case .nutrition:
+            return "🥗"
 
         case .sleep:
             return "😴"
@@ -80,8 +80,8 @@ enum MetricType: String, CaseIterable, Identifiable {
         case .steps:
             return .green
 
-        case .energy:
-            return .orange
+        case .nutrition:
+            return .mint
 
         case .sleep:
             return .purple

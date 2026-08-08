@@ -166,3 +166,9 @@ It should make the user feel understood.
 
 "If a new feature violates one of these principles,
 the feature should be redesigned before implementation."
+
+The Companion evaluates dietary patterns rather than individual foods.
+
+No food is inherently "good" or "bad".
+
+Meal quality is determined by nutritional balance, portion appropriateness and the user's overall daily context.

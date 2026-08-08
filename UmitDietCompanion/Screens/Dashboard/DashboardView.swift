@@ -86,7 +86,7 @@ struct DashboardView: View {
                                                 )
                                                 .padding()
                                                 
-                                            case .energy:
+                                            case .nutrition:
 
                                                 EnergyCard(
                                                     activeCalories: viewModel.healthStore.activeEnergy,

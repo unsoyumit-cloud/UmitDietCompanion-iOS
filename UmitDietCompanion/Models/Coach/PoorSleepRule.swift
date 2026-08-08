@@ -14,13 +14,32 @@ final class PoorSleepRule: BehaviourRule {
         context: CoachingContext
     ) -> BehaviourRecommendation? {
 
-        guard status.sleepProgress < 0.7 else {
+        let need = SleepNeedCalculator().calculateNeed(
+            snapshot: snapshot,
+            context: context
+        )
+
+        guard need >= 70 else {
             return nil
+        }
+
+        let priority: RecommendationPriority
+
+        switch need {
+
+        case 90...100:
+            priority = .high
+
+        case 70..<90:
+            priority = .medium
+
+        default:
+            priority = .low
         }
 
         return BehaviourRecommendation(
             behaviour: .sleepEarlier,
-            priority: .medium,
+            priority: priority,
             reason: .poorSleep
         )
 

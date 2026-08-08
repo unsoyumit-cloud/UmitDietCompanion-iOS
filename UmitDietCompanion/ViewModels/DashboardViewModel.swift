@@ -43,8 +43,10 @@ final class DashboardViewModel {
         "\(healthStore.steps)"
     }
 
-    var energyCurrentValue: String {
-        "\(healthStore.activeEnergy) kcal"
+    var nutritionCurrentValue: String {
+        
+            "0%"
+        
     }
 
     var sleepCurrentValue: String {
@@ -118,12 +120,12 @@ final class DashboardViewModel {
             ),
 
             HealthMetric(
-                type: .energy,
+                type: .nutrition,
                 progress: HealthCalculator.calorieProgress(
                     intake: healthStore.activeEnergy,
                     goal: healthStore.energyTarget
                 ),
-                currentValue: energyCurrentValue,
+                currentValue: nutritionCurrentValue,
                 targetValue: "2.500 kcal"
             ),
 
