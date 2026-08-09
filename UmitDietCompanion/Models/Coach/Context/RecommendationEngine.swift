@@ -59,8 +59,10 @@ private extension RecommendationEngine {
         )
 
         return [
+
             RecommendationCandidate(
                 category: .water,
+                reason: .lowWater,
                 behaviour: .drinkWater,
                 score: scoreBuilder.build(
                     need: waterNeed,
@@ -70,6 +72,7 @@ private extension RecommendationEngine {
 
             RecommendationCandidate(
                 category: .movement,
+                reason: .lowMovement,
                 behaviour: .walk,
                 score: scoreBuilder.build(
                     need: movementNeed,
@@ -79,6 +82,7 @@ private extension RecommendationEngine {
 
             RecommendationCandidate(
                 category: .nutrition,
+                reason: .poorNutrition,
                 behaviour: .eatBetter,
                 score: scoreBuilder.build(
                     need: nutritionNeed,
@@ -88,6 +92,7 @@ private extension RecommendationEngine {
 
             RecommendationCandidate(
                 category: .sleep,
+                reason: .poorSleep,
                 behaviour: .sleepEarlier,
                 score: scoreBuilder.build(
                     need: sleepNeed,
@@ -97,12 +102,15 @@ private extension RecommendationEngine {
 
             RecommendationCandidate(
                 category: .recovery,
+                reason: .lowRecovery,
                 behaviour: .recover,
                 score: scoreBuilder.build(
                     need: recoveryNeed,
                     context: context
                 )
             )
+
         ]
     }
+
 }

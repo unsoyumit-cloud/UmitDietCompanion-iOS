@@ -8,7 +8,7 @@ import Foundation
 struct CoachMessageFactory {
 
     static func makeMessage(
-        from recommendation: BehaviourRecommendation,
+        from recommendation: RecommendationCandidate,
         reasoning: CoachReasoning,
         phase: DayPhase
     ) -> CoachMessage {
@@ -54,8 +54,6 @@ struct CoachMessageFactory {
                 reasoning: reasoning,
                 phase: phase
             )
-
-       
 
         }
 

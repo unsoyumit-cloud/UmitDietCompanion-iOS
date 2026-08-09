@@ -11,21 +11,18 @@ struct AICoachService {
         snapshot: DailyHealthSnapshot
     ) -> CoachMessage {
 
-        let status = HealthCalculator.makeStatus(
-            profile: snapshot.profile,
-            metrics: snapshot.metrics
-        )
+        // MARK: - Build Context
 
-        let context = ContextBuilder.build(
+        let context = CoachingContextBuilder().build(
             snapshot: snapshot
         )
-        let engine = BehaviourEngine()
 
-        guard let recommendation = engine.evaluate(
-            
+        // MARK: - Recommendation
+
+        let recommendationEngine = RecommendationEngine()
+
+        guard let recommendation = recommendationEngine.recommend(
             snapshot: snapshot,
-            status: status,
-            profile: snapshot.profile,
             context: context
         ) else {
 
@@ -35,34 +32,44 @@ struct AICoachService {
                 priority: .low,
                 category: .general
             )
+
         }
 
-        let reasoning = ReasoningEngine.build(
-            recommendation: recommendation,
-            context: context,
-            snapshot: snapshot
+        // MARK: - Reasoning
+
+        let reasoningEngine = ReasoningEngine()
+
+        let reasoning = reasoningEngine.build(
+            from: recommendation
         )
-        
+
+        // MARK: - Coach Message
+
         let baseMessage = CoachMessageFactory.makeMessage(
             from: recommendation,
             reasoning: reasoning,
             phase: context.phase
         )
 
+        // MARK: - Personality
+
         let personality = PersonalityService.currentPersonality(
             for: snapshot.profile
         )
 
+        // MARK: - Memory
+
         RecommendationMemory.shared.add(
             recommendation.reason
         )
-        
+
+        // MARK: - Final Message
+
         return PersonalityEngine.apply(
             to: baseMessage,
             personality: personality
         )
-        
-        
+
     }
 
 }
