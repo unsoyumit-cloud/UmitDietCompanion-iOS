@@ -1,11 +1,4 @@
 //
-//  DasBoardVieModel.swift
-//  UmitDietCompanion
-//
-//  Created by Ümit Ünsoy on 7.07.2026.
-//
-
-//
 //  DashboardViewModel.swift
 //  UmitDietCompanion
 //
@@ -15,38 +8,45 @@ import Observation
 
 @Observable
 final class DashboardViewModel {
-    
-    
-    
+
+    // MARK: - Dependencies
+
     let healthStore = HealthStore.shared
-    
-    
-    
+
     private let healthKitService = HealthKitService()
+
+    private let contextBuilder = CoachingContextBuilder()
+
+    private let recommendationEngine = RecommendationEngine()
+
+    // MARK: - Water
 
     var targetWater: Double {
         healthStore.waterTarget
     }
+
     var waterAmount: Double {
         get { healthStore.waterAmount }
         set { healthStore.waterAmount = newValue }
     }
+
     var waterProgress: Double {
+
         HealthCalculator.progress(
             current: waterAmount,
             target: targetWater
         )
-    
+
     }
-    
+
+    // MARK: - Current Values
+
     var stepsCurrentValue: String {
         "\(healthStore.steps)"
     }
 
     var nutritionCurrentValue: String {
-        
-            "0%"
-        
+        "0%"
     }
 
     var sleepCurrentValue: String {
@@ -69,14 +69,17 @@ final class DashboardViewModel {
         String(format: "%.1f L", targetWater)
     }
 
+    // MARK: - Scores
+
     var waterScore: Int {
 
         HealthScoreCalculator.waterScore(
             current: waterAmount,
             target: targetWater
         )
+
     }
-    
+
     var totalScore: Int {
 
         HealthScoreCalculator.totalScore(
@@ -86,22 +89,54 @@ final class DashboardViewModel {
             heart: 20,
             energy: 15
         )
+
     }
-    
+
+    // MARK: - Snapshot
+
     var dailySnapshot: DailyHealthSnapshot {
+
         healthStore.dailySnapshot
+
     }
+
+    // MARK: - Coaching Context
+
+    var coachingContext: CoachingContext {
+
+        contextBuilder.build(
+            snapshot: dailySnapshot
+        )
+
+    }
+
+    // MARK: - Recommendation
+
+    var recommendation: RecommendationCandidate? {
+
+        recommendationEngine.recommend(
+            snapshot: dailySnapshot,
+            context: coachingContext
+        )
+
+    }
+
+    // MARK: - Coach Message
 
     var coachMessage: CoachMessage {
 
         AICoachService.generateMessage(
             snapshot: dailySnapshot
         )
+
     }
-    
+
+    // MARK: - Metrics
+
     var metrics: [HealthMetric] {
 
         [
+
             HealthMetric(
                 type: .water,
                 progress: waterProgress,
@@ -153,12 +188,13 @@ final class DashboardViewModel {
                 ),
                 currentValue: heartCurrentValue,
                 targetValue: nil
-            ),
-            
-            
+            )
+
         ]
+
     }
-    
+    // MARK: - Health Refresh
+
     func refreshHealthData() {
 
         Task {
@@ -171,6 +207,8 @@ final class DashboardViewModel {
 
                     healthStore.steps = steps
 
+                    debugRecommendation()
+
                 }
 
             } catch {
@@ -182,5 +220,29 @@ final class DashboardViewModel {
         }
 
     }
-    
+
+    // MARK: - Debug
+
+    private func debugRecommendation() {
+
+        guard let recommendation else {
+
+            print("❌ No Recommendation")
+
+            return
+
+        }
+
+        print("")
+        print("========== AI COACH ==========")
+        print("🏆 Recommendation Generated")
+        print("Category : \(recommendation.category)")
+        print("Behaviour: \(recommendation.behaviour)")
+        print("Need     : \(recommendation.score.need)")
+        print("Score    : \(recommendation.score.total)")
+        print("==============================")
+        print("")
+
+    }
+
 }
