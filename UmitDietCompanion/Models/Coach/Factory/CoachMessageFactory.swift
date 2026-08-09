@@ -16,7 +16,6 @@ struct CoachMessageFactory {
         switch recommendation.reason {
 
         case .poorSleep:
-
             return SleepMessageFactory.makeMessage(
                 from: recommendation,
                 reasoning: reasoning,
@@ -24,7 +23,6 @@ struct CoachMessageFactory {
             )
 
         case .lowWater:
-
             return WaterMessageFactory.makeMessage(
                 from: recommendation,
                 reasoning: reasoning,
@@ -32,7 +30,6 @@ struct CoachMessageFactory {
             )
 
         case .lowMovement:
-
             return MovementMessageFactory.makeMessage(
                 from: recommendation,
                 reasoning: reasoning,
@@ -40,7 +37,6 @@ struct CoachMessageFactory {
             )
 
         case .poorNutrition:
-
             return NutritionMessageFactory.makeMessage(
                 from: recommendation,
                 reasoning: reasoning,
@@ -48,15 +44,11 @@ struct CoachMessageFactory {
             )
 
         case .lowRecovery:
-
             return RecoveryMessageFactory.makeMessage(
                 from: recommendation,
                 reasoning: reasoning,
                 phase: phase
             )
-
         }
-
     }
-
 }

@@ -7,29 +7,33 @@ import Foundation
 
 struct CoachingContextBuilder {
 
+    private let clock = ClockService()
+
     func build(
         snapshot: DailyHealthSnapshot
     ) -> CoachingContext {
 
-        CoachingContext(
+        let phase = DayPhase.current()
 
-            // MARK: - Time
+        let isWeekend = clock.calendar.isDateInWeekend(clock.now)
 
-            phase: DayPhase.current(),
+        let personality = PersonalityService.currentPersonality(
+            for: snapshot.profile
+        )
 
-            isWeekend: Calendar.current.isDateInWeekend(Date()),
+        return CoachingContext(
 
-            // MARK: - User
+            phase: phase,
 
-            personality: .balanced,
+            isWeekend: isWeekend,
 
-            // MARK: - Recommendation Memory
+            personality: personality,
 
-            recommendationCountToday: 0,
+            recommendationCountToday: RecommendationMemory.shared.todayCount(),
 
-            lastRecommendation: nil,
+            lastRecommendation: RecommendationMemory.shared.lastReason(),
 
-            recommendationsToday: [],
+            recommendationsToday: RecommendationMemory.shared.reasonsRecommendedToday(),
 
             consecutiveDays: 0
 
