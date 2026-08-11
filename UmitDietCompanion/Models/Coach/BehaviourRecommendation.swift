@@ -10,12 +10,12 @@ import Foundation
 struct BehaviourRecommendation {
 
     let behaviour: Behaviour
-    let priority: RecommendationPriority
+    let priority: BehaviourRecommendationPriority
     let reason: RecommendationReason
 
 }
 
-enum RecommendationPriority {
+enum BehaviourRecommendationPriority {
 
     case low
     case medium

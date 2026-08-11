@@ -23,8 +23,8 @@ final class LowWaterRule: BehaviourRule {
             return nil
         }
 
-        let priority: RecommendationPriority
-
+        let priority: BehaviourRecommendationPriority
+        
         switch need {
 
         case 90...100:

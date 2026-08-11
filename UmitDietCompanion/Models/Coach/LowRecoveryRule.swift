@@ -23,7 +23,7 @@ final class LowRecoveryRule: BehaviourRule {
             return nil
         }
 
-        let priority: RecommendationPriority
+        let priority: BehaviourRecommendationPriority
 
         switch need {
 

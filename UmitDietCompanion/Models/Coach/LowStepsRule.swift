@@ -23,7 +23,7 @@ final class LowStepsRule: BehaviourRule {
             return nil
         }
 
-        let priority: RecommendationPriority
+        let priority: BehaviourRecommendationPriority
 
         switch need {
 
