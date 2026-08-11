@@ -2,8 +2,8 @@
 //  RecommendationScoreBuilder.swift
 //  UmitDietCompanion
 //
-//  Created by Ümit Ünsoy on 4.08.2026.
-//
+
+import Foundation
 
 struct RecommendationScoreBuilder {
 
@@ -12,74 +12,76 @@ struct RecommendationScoreBuilder {
         context: CoachingContext
     ) -> RecommendationScore {
 
-        let timeMultiplier = calculateTimeMultiplier(context: context)
-
-        let contextModifier = calculateContextModifier(context: context)
-
-        let memoryModifier = calculateMemoryModifier(context: context)
-
-        let personalityModifier = calculatePersonalityModifier(context: context)
-
-        return RecommendationScore(
-
-            need: need,
-
-            timeMultiplier: timeMultiplier,
-
-            contextModifier: contextModifier,
-
-            memoryModifier: memoryModifier,
-
-            personalityModifier: personalityModifier
-
+        let modifiers = buildModifiers(
+            context: context
         )
 
+        return RecommendationScore(
+            need: need,
+            timeMultiplier: modifiers.timeMultiplier,
+            contextModifier: modifiers.contextModifier,
+            memoryModifier: modifiers.memoryModifier,
+            personalityModifier: modifiers.personalityModifier
+        )
     }
-
 }
 
 // MARK: - Private
 
 private extension RecommendationScoreBuilder {
 
+    typealias ScoreModifiers = (
+        timeMultiplier: Double,
+        contextModifier: Int,
+        memoryModifier: Int,
+        personalityModifier: Int
+    )
+
+    func buildModifiers(
+        context: CoachingContext
+    ) -> ScoreModifiers {
+
+        (
+            timeMultiplier: calculateTimeMultiplier(context: context),
+            contextModifier: calculateContextModifier(context: context),
+            memoryModifier: calculateMemoryModifier(context: context),
+            personalityModifier: calculatePersonalityModifier(context: context)
+        )
+    }
+
     func calculateTimeMultiplier(
         context: CoachingContext
     ) -> Double {
 
-        // TODO
+        // TODO: Phase-based weighting
 
         return 1.0
-
     }
 
     func calculateContextModifier(
         context: CoachingContext
     ) -> Int {
 
-        // TODO
+        // TODO: Activity / workout / weekday modifiers
 
         return 0
-
     }
 
     func calculateMemoryModifier(
         context: CoachingContext
     ) -> Int {
 
-        // TODO
+        // TODO: Avoid repeating recent recommendations
 
         return 0
-
     }
 
     func calculatePersonalityModifier(
         context: CoachingContext
     ) -> Int {
 
-        // TODO
+        // TODO: Personality-based weighting
 
         return 0
-
     }
-
 }

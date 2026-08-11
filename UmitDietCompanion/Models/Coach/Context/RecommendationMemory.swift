@@ -11,11 +11,14 @@ final class RecommendationMemory {
 
     private init() {}
 
+    private let calendar = Calendar.current
     private var history: [RecommendationHistory] = []
 
     // MARK: - Write
 
     func add(_ reason: RecommendationReason) {
+
+        removeOldHistory()
 
         history.append(
             RecommendationHistory(
@@ -23,7 +26,6 @@ final class RecommendationMemory {
                 date: Date()
             )
         )
-
     }
 
     func clear() {
@@ -36,13 +38,10 @@ final class RecommendationMemory {
 
     func todayCount() -> Int {
 
-        let calendar = Calendar.current
-
-        return history.filter {
-
+        history.filter {
             calendar.isDateInToday($0.date)
-
-        }.count
+        }
+        .count
 
     }
 
@@ -54,20 +53,12 @@ final class RecommendationMemory {
 
     func reasonsRecommendedToday() -> Set<RecommendationReason> {
 
-        let calendar = Calendar.current
-
-        return Set(
+        Set(
             history
                 .filter {
-
                     calendar.isDateInToday($0.date)
-
                 }
-                .map {
-
-                    $0.reason
-
-                }
+                .map(\.reason)
         )
 
     }
@@ -95,5 +86,18 @@ final class RecommendationMemory {
         }
 
     }
+}
 
+// MARK: - Private
+
+private extension RecommendationMemory {
+
+    func removeOldHistory() {
+
+        let limit = Date().addingTimeInterval(-(30 * 24 * 3600))
+
+        history.removeAll {
+            $0.date < limit
+        }
+    }
 }

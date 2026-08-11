@@ -33,84 +33,117 @@ private extension RecommendationEngine {
         context: CoachingContext
     ) -> [RecommendationCandidate] {
 
-        let waterNeed = WaterNeedCalculator().calculateNeed(
-            snapshot: snapshot,
-            context: context
-        )
-
-        let movementNeed = MovementNeedCalculator().calculateNeed(
-            snapshot: snapshot,
-            context: context
-        )
-
-        let nutritionNeed = NutritionNeedCalculator().calculateNeed(
-            snapshot: snapshot,
-            context: context
-        )
-
-        let sleepNeed = SleepNeedCalculator().calculateNeed(
-            snapshot: snapshot,
-            context: context
-        )
-
-        let recoveryNeed = RecoveryNeedCalculator().calculateNeed(
-            snapshot: snapshot,
-            context: context
-        )
-
-        return [
-
-            RecommendationCandidate(
-                category: .water,
-                reason: .lowWater,
-                behaviour: .drinkWater,
-                score: scoreBuilder.build(
-                    need: waterNeed,
-                    context: context
-                )
-            ),
-
-            RecommendationCandidate(
-                category: .movement,
-                reason: .lowMovement,
-                behaviour: .walk,
-                score: scoreBuilder.build(
-                    need: movementNeed,
-                    context: context
-                )
-            ),
-
-            RecommendationCandidate(
-                category: .nutrition,
-                reason: .poorNutrition,
-                behaviour: .eatBetter,
-                score: scoreBuilder.build(
-                    need: nutritionNeed,
-                    context: context
-                )
-            ),
-
-            RecommendationCandidate(
-                category: .sleep,
-                reason: .poorSleep,
-                behaviour: .sleepEarlier,
-                score: scoreBuilder.build(
-                    need: sleepNeed,
-                    context: context
-                )
-            ),
-
-            RecommendationCandidate(
-                category: .recovery,
-                reason: .lowRecovery,
-                behaviour: .recover,
-                score: scoreBuilder.build(
-                    need: recoveryNeed,
-                    context: context
-                )
-            )
-
+        [
+            buildWaterCandidate(snapshot: snapshot, context: context),
+            buildMovementCandidate(snapshot: snapshot, context: context),
+            buildNutritionCandidate(snapshot: snapshot, context: context),
+            buildSleepCandidate(snapshot: snapshot, context: context),
+            buildRecoveryCandidate(snapshot: snapshot, context: context)
         ]
     }
 
+    func buildWaterCandidate(
+        snapshot: DailyHealthSnapshot,
+        context: CoachingContext
+    ) -> RecommendationCandidate {
+
+        let need = WaterNeedCalculator().calculateNeed(
+            snapshot: snapshot,
+            context: context
+        )
+
+        return RecommendationCandidate(
+            category: .water,
+            reason: .lowWater,
+            behaviour: .drinkWater,
+            score: scoreBuilder.build(
+                need: need,
+                context: context
+            )
+        )
+    }
+
+    func buildMovementCandidate(
+        snapshot: DailyHealthSnapshot,
+        context: CoachingContext
+    ) -> RecommendationCandidate {
+
+        let need = MovementNeedCalculator().calculateNeed(
+            snapshot: snapshot,
+            context: context
+        )
+
+        return RecommendationCandidate(
+            category: .movement,
+            reason: .lowMovement,
+            behaviour: .walk,
+            score: scoreBuilder.build(
+                need: need,
+                context: context
+            )
+        )
+    }
+
+    func buildNutritionCandidate(
+        snapshot: DailyHealthSnapshot,
+        context: CoachingContext
+    ) -> RecommendationCandidate {
+
+        let need = NutritionNeedCalculator().calculateNeed(
+            snapshot: snapshot,
+            context: context
+        )
+
+        return RecommendationCandidate(
+            category: .nutrition,
+            reason: .poorNutrition,
+            behaviour: .eatBetter,
+            score: scoreBuilder.build(
+                need: need,
+                context: context
+            )
+        )
+    }
+
+    func buildSleepCandidate(
+        snapshot: DailyHealthSnapshot,
+        context: CoachingContext
+    ) -> RecommendationCandidate {
+
+        let need = SleepNeedCalculator().calculateNeed(
+            snapshot: snapshot,
+            context: context
+        )
+
+        return RecommendationCandidate(
+            category: .sleep,
+            reason: .poorSleep,
+            behaviour: .sleepEarlier,
+            score: scoreBuilder.build(
+                need: need,
+                context: context
+            )
+        )
+    }
+
+    func buildRecoveryCandidate(
+        snapshot: DailyHealthSnapshot,
+        context: CoachingContext
+    ) -> RecommendationCandidate {
+
+        let need = RecoveryNeedCalculator().calculateNeed(
+            snapshot: snapshot,
+            context: context
+        )
+
+        return RecommendationCandidate(
+            category: .recovery,
+            reason: .lowRecovery,
+            behaviour: .recover,
+            score: scoreBuilder.build(
+                need: need,
+                context: context
+            )
+        )
+    }
 }

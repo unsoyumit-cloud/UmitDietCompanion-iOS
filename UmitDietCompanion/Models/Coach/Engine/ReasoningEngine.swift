@@ -11,25 +11,14 @@ struct ReasoningEngine {
         from recommendation: RecommendationCandidate
     ) -> CoachReasoning {
 
-        CoachReasoning(
+        let content = content(for: recommendation.reason)
 
+        return CoachReasoning(
             recommendation: recommendation,
-
-            observation: observation(
-                for: recommendation.reason
-            ),
-
-            reasoning: reasoning(
-                for: recommendation.reason
-            ),
-
-            nextAction: nextAction(
-                for: recommendation.behaviour
-            ),
-
-            confidence: confidence(
-                score: recommendation.score
-            )
+            observation: content.observation,
+            reasoning: content.reasoning,
+            nextAction: nextAction(for: recommendation.behaviour),
+            confidence: confidence(score: recommendation.score)
         )
     }
 }
@@ -38,51 +27,46 @@ struct ReasoningEngine {
 
 private extension ReasoningEngine {
 
-    func observation(
+    typealias ReasoningContent = (
+        observation: String,
+        reasoning: String
+    )
+
+    func content(
         for reason: RecommendationReason
-    ) -> String {
+    ) -> ReasoningContent {
 
         switch reason {
 
         case .lowWater:
-            return "Su hedefinin gerisindesin."
+            return (
+                observation: "Su hedefinin gerisindesin.",
+                reasoning: "Günün bu aşamasında en önemli ihtiyaç su tüketimi olarak değerlendirildi."
+            )
 
         case .lowMovement:
-            return "Bugünkü hareket seviyen hedefin altında."
+            return (
+                observation: "Bugünkü hareket seviyen hedefin altında.",
+                reasoning: "Hareket hedefinin gerisinde kaldığın için bu öneri seçildi."
+            )
 
         case .poorNutrition:
-            return "Beslenme kaliten bugün geliştirilebilir."
+            return (
+                observation: "Beslenme kaliten bugün geliştirilebilir.",
+                reasoning: "Beslenme puanın diğer metriklere göre daha düşük."
+            )
 
         case .poorSleep:
-            return "Uyku kaliten toparlanma için yeterli görünmüyor."
+            return (
+                observation: "Uyku kaliten toparlanma için yeterli görünmüyor.",
+                reasoning: "Yetersiz uyku gün içindeki performansını olumsuz etkileyebilir."
+            )
 
         case .lowRecovery:
-            return "Toparlanma seviyen bugün düşük görünüyor."
-
-        }
-    }
-
-    func reasoning(
-        for reason: RecommendationReason
-    ) -> String {
-
-        switch reason {
-
-        case .lowWater:
-            return "Günün bu aşamasında en önemli ihtiyaç su tüketimi olarak değerlendirildi."
-
-        case .lowMovement:
-            return "Hareket hedefinin gerisinde kaldığın için bu öneri seçildi."
-
-        case .poorNutrition:
-            return "Beslenme puanın diğer metriklere göre daha düşük."
-
-        case .poorSleep:
-            return "Yetersiz uyku gün içindeki performansını olumsuz etkileyebilir."
-
-        case .lowRecovery:
-            return "Vücudunun toparlanmaya öncelik vermesi gerekiyor."
-
+            return (
+                observation: "Toparlanma seviyen bugün düşük görünüyor.",
+                reasoning: "Vücudunun toparlanmaya öncelik vermesi gerekiyor."
+            )
         }
     }
 
@@ -115,7 +99,6 @@ private extension ReasoningEngine {
 
         case .recover:
             return "Kendine dinlenmek için zaman ayır."
-
         }
     }
 

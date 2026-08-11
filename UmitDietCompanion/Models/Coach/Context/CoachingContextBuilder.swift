@@ -13,7 +13,7 @@ struct CoachingContextBuilder {
         snapshot: DailyHealthSnapshot
     ) -> CoachingContext {
 
-        let phase = DayPhase.current()
+        let phase = DayPhase.current
 
         let isWeekend = clock.calendar.isDateInWeekend(clock.now)
 
