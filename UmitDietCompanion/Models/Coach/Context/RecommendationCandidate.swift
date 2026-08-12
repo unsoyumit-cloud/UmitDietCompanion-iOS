@@ -5,18 +5,12 @@
 
 import Foundation
 
-struct RecommendationCandidate {
-
-    /// Health domain this recommendation belongs to.
-    let category: HealthCategory
-
-    /// Why this recommendation was selected.
-    let reason: RecommendationReason
-
-    /// Behaviour that should be recommended.
-    let behaviour: Behaviour
-
-    /// Recommendation scoring details.
-    let score: RecommendationScore
-
-}
+/// Legacy model.
+///
+/// Sprint 6 ile birlikte RecommendationEngine artık doğrudan
+/// `Recommendation` modeli üretmektedir.
+///
+/// Bu dosya eski katman tamamen kaldırılıncaya kadar
+/// sadece geriye dönük uyumluluk amacıyla tutulmaktadır.
+@available(*, deprecated, message: "Use Recommendation instead.")
+typealias RecommendationCandidate = Recommendation

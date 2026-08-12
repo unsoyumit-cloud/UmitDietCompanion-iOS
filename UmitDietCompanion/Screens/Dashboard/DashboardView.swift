@@ -9,152 +9,173 @@ import SwiftUI
 
 struct DashboardView: View {
     
+    @State private var showReactorConsole = false
+    
     @State private var viewModel = DashboardViewModel()
     
-    // MARK: - Demo Data
-    
-    
+    var body: some View {
         
-        var body: some View {
+        NavigationStack {
             
-            
-            
-            NavigationStack {
+            GeometryReader { geo in
                 
-                GeometryReader { geo in
+                let horizontalPadding = AppTheme.Layout.screenPadding
+                let spacing = geo.size.width * AppTheme.Layout.gridSpacingRatio
+                
+                let ringSize =
+                (
+                    geo.size.width
+                    - (horizontalPadding * 2)
+                    - (spacing * 2)
+                ) / 3
+                
+                ZStack {
                     
-                    let horizontalPadding = AppTheme.Layout.screenPadding
-                    let spacing = geo.size.width * AppTheme.Layout.gridSpacingRatio
+                    AppTheme.Colors.dashboardBackground
+                        .ignoresSafeArea()
                     
-                    let ringSize =
-                    (
-                        geo.size.width
-                        - (horizontalPadding * 2)
-                        - (spacing * 2)
-                    ) / 3
-                    
-                    ZStack {
+                    ScrollView(showsIndicators: false) {
                         
-                        AppTheme.Colors.dashboardBackground
-                            .ignoresSafeArea()
-                        
-                        ScrollView(showsIndicators: false) {
+                        VStack(spacing: AppTheme.Layout.sectionSpacing) {
                             
-                            VStack(spacing: AppTheme.Layout.sectionSpacing) {
+                            DashboardHeaderView(
+                                greeting: "🌤️ İyi Günler, Ümit",
+                                todayString: "7 Temmuz 2026 Salı"
+                            )
+                            
+                            InsightCard(
+                                insight: viewModel.coachMessage.message
+                            )
+                            
+                            
+                            ScoreCard(
+                                score: viewModel.totalScore,
+                                waterScore: viewModel.waterScore,
+                                stepScore: 15,
+                                sleepScore: 15,
+                                restingHeartRateScore: 20
+                            )
+                            
+                            LazyVGrid(
+                                columns: [
+                                    GridItem(.flexible(), spacing: spacing),
+                                    GridItem(.flexible(), spacing: spacing),
+                                    GridItem(.flexible())
+                                ],
+                                spacing: spacing
+                            ) {
                                 
-                                DashboardHeaderView(
-                                    greeting: "🌤️ İyi Günler, Ümit",
-                                    todayString: "7 Temmuz 2026 Salı"
-                                )
-                                
-                                InsightCard(
-                                    insight: viewModel.coachMessage.message
-                                )
-                                
-                                ScoreCard(
-                                    score: viewModel.totalScore,                                    waterScore: viewModel.waterScore,         stepScore: 15,
-                                    sleepScore: 15,
-                                    restingHeartRateScore: 20
-                                )
-                                
-                                LazyVGrid(
-                                    columns: [
-                                        GridItem(.flexible(), spacing: spacing),
-                                        GridItem(.flexible(), spacing: spacing),
-                                        GridItem(.flexible())
-                                    ],
-                                    spacing: spacing
-                                ) {
+                                ForEach(viewModel.metrics.indices, id: \.self) { index in
                                     
-                                    ForEach(viewModel.metrics.indices, id: \.self) { index in
-
-                                        let metrics = viewModel.metrics
-                                        let metric = metrics[index]
+                                    let metrics = viewModel.metrics
+                                    let metric = metrics[index]
+                                    
+                                    NavigationLink {
                                         
-                                        NavigationLink {
+                                        switch metric.type {
                                             
-                                            switch metric.type {
-                                                
-                                            case .water:
-                                                WaterDetailView()
-                                                
-                                            case .steps:
-
-                                                StepCard(
-                                                    dailyStepGoal: viewModel.healthStore.stepsTarget,
-                                                    dailySteps: viewModel.healthStore.steps
-                                                )
-                                                .padding()
-                                                
-                                            case .nutrition:
-
-                                                EnergyCard(
-                                                    activeCalories: viewModel.healthStore.activeEnergy,
-                                                    targetCalories: viewModel.healthStore.energyTarget
-                                                )
-                                                .padding()
-                                                
-                                            case .sleep:
-
-                                                SleepCard(
-                                                    sleepGoal: viewModel.healthStore.sleepTarget,
-                                                    sleepHours: viewModel.healthStore.sleepHours
-                                                )
-                                                .padding()
-                                                
-                                            case .weight:
-
-                                                WeightCard(
-                                                    currentWeight: viewModel.healthStore.weight,
-                                                    targetWeight: viewModel.healthStore.weightTarget
-                                                )
-                                                .padding()
-                                                
-                                            case .heart:
-
-                                                HeartCard(
-                                                    restingHeartRate: viewModel.healthStore.restingHeartRate
-                                                )
-                                                .padding()
-                                                
-                                            }
+                                        case .water:
                                             
-                                        } label: {
+                                            WaterDetailView()
                                             
-                                            MetricRingCard(
-                                                metric: metric,
-                                                size: ringSize
+                                        case .steps:
+                                            
+                                            StepCard(
+                                                dailyStepGoal: viewModel.healthStore.stepsTarget,
+                                                dailySteps: viewModel.healthStore.steps
                                             )
+                                            .padding()
+                                            
+                                        case .nutrition:
+                                            
+                                            EnergyCard(
+                                                activeCalories: viewModel.healthStore.activeEnergy,
+                                                targetCalories: viewModel.healthStore.energyTarget
+                                            )
+                                            .padding()
+                                            
+                                        case .sleep:
+                                            
+                                            SleepCard(
+                                                sleepGoal: viewModel.healthStore.sleepTarget,
+                                                sleepHours: viewModel.healthStore.sleepHours
+                                            )
+                                            .padding()
+                                        case .weight:
+                                            
+                                            WeightCard(
+                                                currentWeight: viewModel.healthStore.weight,
+                                                targetWeight: viewModel.healthStore.weightTarget
+                                            )
+                                            .padding()
+                                            
+                                        case .heart:
+                                            
+                                            HeartCard(
+                                                restingHeartRate: viewModel.healthStore.restingHeartRate
+                                            )
+                                            .padding()
                                             
                                         }
-                                        .buttonStyle(.plain)
+                                        
+                                    } label: {
+                                        
+                                        MetricRingCard(
+                                            metric: metric,
+                                            size: ringSize
+                                        )
                                         
                                     }
+                                    .buttonStyle(.plain)
                                     
                                 }
                                 
                             }
-                            .padding(.horizontal, horizontalPadding)
-                            .padding(.vertical)
                             
                         }
+                        .padding(.horizontal, horizontalPadding)
+                        .padding(.vertical)
                         
                     }
                     
                 }
                 
             }
-            
+            .toolbar {
+                
+                ToolbarItem(placement: .topBarTrailing) {
+                    
+                    Button {
+                        
+                        showReactorConsole = true
+                        
+                    } label: {
+                        
+                        Image(systemName: "wrench.and.screwdriver")
+                        
+                    }
+                    
+                }
+                
+            }
+            .sheet(isPresented: $showReactorConsole) {
+                
+                AIReactorConsoleView()
+                
+            }
             .task {
-
+                
                 await HealthStore.shared.refresh()
-
+                
             }
             
         }
+        
     }
-    
-    #Preview {
-        DashboardView()
-    }
+}
 
+#Preview {
+
+    DashboardView()
+
+}

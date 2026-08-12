@@ -8,107 +8,145 @@ import Foundation
 struct ReasoningEngine {
 
     func build(
-        from recommendation: RecommendationCandidate
+        from recommendation: Recommendation
     ) -> CoachReasoning {
 
-        let content = content(for: recommendation.reason)
-
-        return CoachReasoning(
+        CoachReasoning(
             recommendation: recommendation,
-            observation: content.observation,
-            reasoning: content.reasoning,
-            nextAction: nextAction(for: recommendation.behaviour),
-            confidence: confidence(score: recommendation.score)
+            observation: observation(for: recommendation),
+            reasoning: reasoning(for: recommendation),
+            nextAction: nextAction(for: recommendation.type),
+            confidence: recommendation.confidence.rawValue
         )
+
     }
+
 }
 
 // MARK: - Private
 
 private extension ReasoningEngine {
 
-    typealias ReasoningContent = (
-        observation: String,
-        reasoning: String
-    )
+    func observation(
+        for recommendation: Recommendation
+    ) -> String {
 
-    func content(
-        for reason: RecommendationReason
-    ) -> ReasoningContent {
+        guard let insight = recommendation.supportingInsights.first else {
+            return "Bugünkü sağlık verileri analiz edildi."
+        }
 
-        switch reason {
+        switch insight.type {
 
-        case .lowWater:
-            return (
-                observation: "Su hedefinin gerisindesin.",
-                reasoning: "Günün bu aşamasında en önemli ihtiyaç su tüketimi olarak değerlendirildi."
-            )
+        case .hydrationOpportunity:
+            return "Su tüketimin hedefinin gerisinde."
 
-        case .lowMovement:
-            return (
-                observation: "Bugünkü hareket seviyen hedefin altında.",
-                reasoning: "Hareket hedefinin gerisinde kaldığın için bu öneri seçildi."
-            )
+        case .proteinOpportunity:
+            return "Protein alımın artırılabilir."
 
-        case .poorNutrition:
-            return (
-                observation: "Beslenme kaliten bugün geliştirilebilir.",
-                reasoning: "Beslenme puanın diğer metriklere göre daha düşük."
-            )
+        case .healthyMealOpportunity:
+            return "Beslenme kaliten geliştirilebilir."
 
-        case .poorSleep:
-            return (
-                observation: "Uyku kaliten toparlanma için yeterli görünmüyor.",
-                reasoning: "Yetersiz uyku gün içindeki performansını olumsuz etkileyebilir."
-            )
+        case .movementOpportunity:
+            return "Hareket hedefinin gerisindesin."
 
-        case .lowRecovery:
-            return (
-                observation: "Toparlanma seviyen bugün düşük görünüyor.",
-                reasoning: "Vücudunun toparlanmaya öncelik vermesi gerekiyor."
-            )
+        case .recoveryOpportunity:
+            return "Toparlanmaya daha fazla ihtiyaç duyuyorsun."
+
+        case .dehydrationRisk:
+            return "Susuz kalma riski oluşuyor."
+
+        case .lateEatingRisk:
+            return "Geç saatlerde yemek yeme eğilimi görünüyor."
+
+        case .sedentaryRisk:
+            return "Uzun süredir hareketsiz görünüyorsun."
+
+        case .poorRecovery:
+            return "Toparlanma seviyen düşük."
+
+        case .highCaffeineIntake:
+            return "Kafein tüketimin bugün yüksek."
+
+        case .healthyMomentum:
+            return "Bugün iyi bir ritim yakaladın."
+
+        case .consistencyReward:
+            return "İstikrarlı ilerliyorsun."
+
+        case .streakContinuation:
+            return "Serini devam ettiriyorsun."
+
+        case .busyWorkday:
+            return "Yoğun bir iş günündesin."
+
+        case .travelImpact:
+            return "Seyahat planın günlük düzenini etkileyebilir."
+
+        case .socialEating:
+            return "Sosyal bir öğün planın var."
+
+        case .groceryOpportunity:
+            return "Sağlıklı seçim yapmak için uygun bir ortamdasın."
+
+        case .coffeeOpportunity:
+            return "Kahve molası zamanı."
         }
     }
 
-    func nextAction(
-        for behaviour: Behaviour
+    func reasoning(
+        for recommendation: Recommendation
     ) -> String {
 
-        switch behaviour {
+        "Bu öneri mevcut sağlık durumu ve destekleyen gözlemler doğrultusunda oluşturuldu."
 
-        case .drinkWater:
-            return "Bir büyük bardak su iç."
+    }
 
-        case .walk:
-            return "10–15 dakikalık kısa bir yürüyüş yap."
+    func nextAction(
+        for type: RecommendationType
+    ) -> String {
+
+        switch type {
+
+        case .drinkWaterNow:
+            return "Bir bardak su iç."
+
+        case .refillWaterBottle:
+            return "Su şişeni doldur."
+
+        case .eatProtein:
+            return "Bir sonraki öğününe protein ekle."
+
+        case .buyProtein:
+            return "Protein açısından zengin besin satın al."
+
+        case .eatHealthyMeal:
+            return "Dengeli bir öğün tercih et."
+
+        case .takeShortWalk:
+            return "10 dakikalık kısa bir yürüyüş yap."
 
         case .standUp:
             return "Ayağa kalkıp birkaç dakika hareket et."
 
-        case .eatProtein:
-            return "Bir sonraki öğünde protein ağırlıklı seçim yap."
+        case .stretch:
+            return "5 dakikalık esneme hareketleri yap."
+
+        case .rest:
+            return "Bugün dinlenmeye öncelik ver."
 
         case .sleepEarlier:
             return "Bu akşam biraz daha erken uyumayı hedefle."
 
-        case .stretch:
-            return "5 dakikalık esneme hareketleri yap."
+        case .prepareHealthySnack:
+            return "Yanına sağlıklı bir atıştırmalık al."
 
-        case .eatBetter:
-            return "Bir sonraki öğünde daha dengeli beslenmeye odaklan."
+        case .avoidLateMeal:
+            return "Geç saatlerde yemek yememeye çalış."
 
-        case .recover:
-            return "Kendine dinlenmek için zaman ayır."
+        case .reduceCoffee:
+            return "Bir sonraki kahveni suyla değiştirmeyi düşün."
         }
+
     }
 
-    func confidence(
-        score: RecommendationScore
-    ) -> Double {
-
-        min(
-            max(score.total / 100.0, 0.0),
-            1.0
-        )
-    }
 }

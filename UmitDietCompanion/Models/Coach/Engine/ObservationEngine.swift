@@ -5,275 +5,246 @@
 
 import Foundation
 
-final class ObservationEngine {
+struct ObservationEngine {
 
-    // MARK: - Public
+    // MARK: - Public API
 
-    func observe(context: AIContext) -> [HealthObservation] {
+    func observe(
+        context: AIContext
+    ) -> [HealthObservation] {
+
+        let health = context.health
 
         var observations: [HealthObservation] = []
 
-        observations.append(contentsOf: observeHydration(context.health))
-        observations.append(contentsOf: observeNutrition(context.health))
-        observations.append(contentsOf: observeActivity(context.health))
-        observations.append(contentsOf: observeSleep(context.health))
-        observations.append(contentsOf: observeRecovery(context.health))
-        observations.append(contentsOf: observeWeight(context.health))
-        observations.append(contentsOf: observeEnvironment(context.environment))
+        observations.append(
+            hydrationObservation(from: health)
+        )
+
+        observations.append(
+            nutritionObservation(from: health)
+        )
+
+        observations.append(
+            movementObservation(from: health)
+        )
+
+        observations.append(
+            sleepObservation(from: health)
+        )
+
+        observations.append(
+            heartObservation(from: health)
+        )
+
+        observations.append(
+            weightObservation(from: health)
+        )
 
         return observations
+
     }
+
 }
 
 // MARK: - Hydration
 
 private extension ObservationEngine {
 
-    func observeHydration(_ health: HealthContext) -> [HealthObservation] {
+    func hydrationObservation(
+        from health: HealthContext
+    ) -> HealthObservation {
 
-        var observations: [HealthObservation] = []
+        observation(
+            progress: health.hydrationProgress,
+            low: .hydrationLow,
+            declining: .hydrationDeclining,
+            good: .hydrationGood
+        )
 
-        if health.hydrationProgress < 0.40 {
-
-            observations.append(
-                HealthObservation(
-                    type: .hydrationLow,
-                    severity: .high,
-                    confidence: 1.0,
-                    source: .system,
-                    createdAt: Date()
-                )
-            )
-
-        } else if health.hydrationProgress >= 1.0 {
-
-            observations.append(
-                HealthObservation(
-                    type: .hydrationGood,
-                    severity: .low,
-                    confidence: 1.0,
-                    source: .system,
-                    createdAt: Date()
-                )
-            )
-
-        }
-
-        return observations
     }
+
 }
 
 // MARK: - Nutrition
 
 private extension ObservationEngine {
 
-    func observeNutrition(_ health: HealthContext) -> [HealthObservation] {
+    func nutritionObservation(
+        from health: HealthContext
+    ) -> HealthObservation {
 
-        var observations: [HealthObservation] = []
+        observation(
+            progress: health.nutritionProgress,
+            low: .nutritionLow,
+            declining: .nutritionDeclining,
+            good: .nutritionGood
+        )
 
-        if health.proteinProgress < 0.40 {
-
-            observations.append(
-                HealthObservation(
-                    type: .proteinLow,
-                    severity: .medium,
-                    confidence: 1.0,
-                    source: .system,
-                    createdAt: Date()
-                )
-            )
-
-        }
-
-        if health.calorieProgress > 1.10 {
-
-            observations.append(
-                HealthObservation(
-                    type: .calorieHigh,
-                    severity: .medium,
-                    confidence: 1.0,
-                    source: .system,
-                    createdAt: Date()
-                )
-            )
-
-        }
-
-        return observations
     }
+
 }
 
-// MARK: - Activity
+// MARK: - Movement
 
 private extension ObservationEngine {
 
-    func observeActivity(_ health: HealthContext) -> [HealthObservation] {
+    func movementObservation(
+        from health: HealthContext
+    ) -> HealthObservation {
 
-        var observations: [HealthObservation] = []
+        observation(
+            progress: health.movementProgress,
+            low: .movementLow,
+            declining: .movementDeclining,
+            good: .movementGoalReached
+        )
 
-        if health.movementProgress < 0.40 {
-
-            observations.append(
-                HealthObservation(
-                    type: .movementLow,
-                    severity: .medium,
-                    confidence: 1.0,
-                    source: .system,
-                    createdAt: Date()
-                )
-            )
-
-        }
-
-        if health.movementProgress >= 1.0 {
-
-            observations.append(
-                HealthObservation(
-                    type: .movementGoalReached,
-                    severity: .low,
-                    confidence: 1.0,
-                    source: .system,
-                    createdAt: Date()
-                )
-            )
-
-        }
-
-        return observations
     }
+
 }
 
 // MARK: - Sleep
 
 private extension ObservationEngine {
 
-    func observeSleep(_ health: HealthContext) -> [HealthObservation] {
+    func sleepObservation(
+        from health: HealthContext
+    ) -> HealthObservation {
 
-        guard health.sleepProgress < 0.50 else { return [] }
+        observation(
+            progress: health.sleepProgress,
+            low: .sleepPoor,
+            declining: .sleepDeclining,
+            good: .sleepGood
+        )
 
-        return [
-            HealthObservation(
-                type: .poorSleep,
-                severity: .high,
-                confidence: 1.0,
-                source: .system,
-                createdAt: Date()
-            )
-        ]
     }
+
 }
 
-// MARK: - Recovery
+// MARK: - Heart
 
 private extension ObservationEngine {
 
-    func observeRecovery(_ health: HealthContext) -> [HealthObservation] {
+    func heartObservation(
+        from health: HealthContext
+    ) -> HealthObservation {
 
-        guard health.recoveryProgress < 0.50 else { return [] }
+        observation(
+            progress: health.heartProgress,
+            low: .heartElevated,
+            declining: .heartDeclining,
+            good: .heartNormal
+        )
 
-        return [
-            HealthObservation(
-                type: .recoveryLow,
-                severity: .high,
-                confidence: 1.0,
-                source: .system,
-                createdAt: Date()
-            )
-        ]
     }
+
 }
 
 // MARK: - Weight
 
 private extension ObservationEngine {
 
-    func observeWeight(_ health: HealthContext) -> [HealthObservation] {
+    func weightObservation(
+        from health: HealthContext
+    ) -> HealthObservation {
 
-        return []
+        observation(
+            progress: health.weightProgress,
+            low: .weightIncreasing,
+            declining: .weightStable,
+            good: .weightStable
+        )
 
     }
+
 }
 
-// MARK: - Environment
+// MARK: - Shared Builder
 
 private extension ObservationEngine {
 
-    func observeEnvironment(_ environment: EnvironmentContext) -> [HealthObservation] {
+    func observation(
+        progress: Double,
+        low: HealthObservationType,
+        declining: HealthObservationType,
+        good: HealthObservationType
+    ) -> HealthObservation {
 
-        var observations: [HealthObservation] = []
+        let type: HealthObservationType
 
-        if environment.isBusyMeetingDay {
+        switch progress {
 
-            observations.append(
-                HealthObservation(
-                    type: .busyMeetingDay,
-                    severity: .medium,
-                    confidence: 1.0,
-                    source: .calendar,
-                    createdAt: Date()
-                )
-            )
+        case ..<0.60:
+            type = low
 
-        }
-
-        guard let location = environment.locationCategory else {
-            return observations
-        }
-
-        switch location {
-
-        case .groceryStore:
-
-            observations.append(
-                HealthObservation(
-                    type: .groceryShopping,
-                    severity: .low,
-                    confidence: 1.0,
-                    source: .location,
-                    createdAt: Date()
-                )
-            )
-
-        case .coffeeShop:
-
-            observations.append(
-                HealthObservation(
-                    type: .coffeeBreak,
-                    severity: .low,
-                    confidence: 1.0,
-                    source: .location,
-                    createdAt: Date()
-                )
-            )
-
-        case .gym:
-
-            observations.append(
-                HealthObservation(
-                    type: .workoutSession,
-                    severity: .low,
-                    confidence: 1.0,
-                    source: .location,
-                    createdAt: Date()
-                )
-            )
-
-        case .airport, .hotel:
-
-            observations.append(
-                HealthObservation(
-                    type: .travelDay,
-                    severity: .medium,
-                    confidence: 1.0,
-                    source: .location,
-                    createdAt: Date()
-                )
-            )
+        case 0.60..<0.80:
+            type = declining
 
         default:
-            break
+            type = good
+
         }
 
-        return observations
+        return HealthObservation(
+            type: type,
+            severity: severity(for: progress),
+            confidence: confidence(for: progress),
+            source: .system,
+            createdAt: Date()
+        )
+
     }
+
+}
+
+// MARK: - Helpers
+
+private extension ObservationEngine {
+
+    func severity(
+        for progress: Double
+    ) -> HealthObservationSeverity {
+
+        switch progress {
+
+        case ..<0.40:
+            return .critical
+
+        case ..<0.60:
+            return .high
+
+        case ..<0.80:
+            return .medium
+
+        default:
+            return .low
+
+        }
+
+    }
+
+    func confidence(
+        for progress: Double
+    ) -> Double {
+
+        switch progress {
+
+        case ..<0.40:
+            return 0.98
+
+        case ..<0.60:
+            return 0.95
+
+        case ..<0.80:
+            return 0.90
+
+        default:
+            return 0.99
+
+        }
+
+    }
+
 }

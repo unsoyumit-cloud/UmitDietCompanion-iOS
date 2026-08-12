@@ -43,14 +43,14 @@ enum InsightRules {
             confidence: .medium
         ),
 
-        // MARK: - Protein
+        // MARK: - Nutrition
 
         InsightRule(
             requiredObservations: [
-                .proteinLow,
+                .nutritionLow,
                 .groceryShopping
             ],
-            generatedInsight: .proteinOpportunity,
+            generatedInsight: .healthyMealOpportunity,
             priority: .high,
             confidence: .high
         ),
@@ -71,7 +71,7 @@ enum InsightRules {
 
         InsightRule(
             requiredObservations: [
-                .poorSleep,
+                .sleepPoor,
                 .busyMeetingDay
             ],
             generatedInsight: .recoveryOpportunity,

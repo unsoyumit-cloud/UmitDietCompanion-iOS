@@ -13,7 +13,7 @@ struct PersonalityService {
         for profile: UserProfile
     ) -> CoachPersonality {
 
-        return profile.coachPersonality
+        profile.coaching.coachPersonality
 
     }
 

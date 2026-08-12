@@ -45,10 +45,6 @@ struct UserProfile {
     var activityLevel: ActivityLevel
     var eatingStyle: EatingStyle
 
-    // MARK: - Coaching
-
-    var coachPersonality: CoachPersonality
-
     // MARK: - Goals
 
     var calorieGoal: Int
@@ -56,13 +52,24 @@ struct UserProfile {
     var stepGoal: Int
     var sleepGoal: Double
 
+    // MARK: - Configuration
+
+    var preferences = UserPreferences()
+
+    var coaching = CoachingProfile()
+
+    var learned = LearnedProfile()
+
     // MARK: - Computed
 
     var age: Int {
+
         Calendar.current.dateComponents(
             [.year],
             from: birthDate,
             to: Date()
         ).year ?? 0
+
     }
+
 }

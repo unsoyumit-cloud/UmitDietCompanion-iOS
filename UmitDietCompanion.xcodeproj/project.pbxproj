@@ -8,6 +8,16 @@
 
 /* Begin PBXBuildFile section */
 		7B1B468F2FFB05E900C6F2EA /* README.md in Resources */ = {isa = PBXBuildFile; fileRef = 7B1B468E2FFB05E900C6F2EA /* README.md */; };
+		7B3060313029E67E00DF04A0 /* AI_COACH_PRINCIPLES.md in Resources */ = {isa = PBXBuildFile; fileRef = 7B3060303029E67E00DF04A0 /* AI_COACH_PRINCIPLES.md */; };
+		7B3060333029E6D800DF04A0 /* AI_FOUNDATION_DESIGN.md in Resources */ = {isa = PBXBuildFile; fileRef = 7B3060323029E6D800DF04A0 /* AI_FOUNDATION_DESIGN.md */; };
+		7B3060353029E71A00DF04A0 /* AI_COACH_EXAMPLES.md in Resources */ = {isa = PBXBuildFile; fileRef = 7B3060343029E71A00DF04A0 /* AI_COACH_EXAMPLES.md */; };
+		7B30603D3029EAA300DF04A0 /* AI_CONTEXT_ARCHITECTURE.md in Resources */ = {isa = PBXBuildFile; fileRef = 7B30603C3029EAA300DF04A0 /* AI_CONTEXT_ARCHITECTURE.md */; };
+		7B3060413029EBA700DF04A0 /* AI_COACH_FEED.md in Resources */ = {isa = PBXBuildFile; fileRef = 7B3060403029EBA700DF04A0 /* AI_COACH_FEED.md */; };
+		7B3060433029EE0D00DF04A0 /* AI_BRAIN_ARCHITECTURE.md in Resources */ = {isa = PBXBuildFile; fileRef = 7B3060423029EE0D00DF04A0 /* AI_BRAIN_ARCHITECTURE.md */; };
+		7B3060A4302CA88A00DF04A0 /* ARCHITECTURE.md in Resources */ = {isa = PBXBuildFile; fileRef = 7B3060A3302CA88A00DF04A0 /* ARCHITECTURE.md */; };
+		7B3060A6302CAAB500DF04A0 /* AI_PRINCIPLES.md in Resources */ = {isa = PBXBuildFile; fileRef = 7B3060A5302CAAB500DF04A0 /* AI_PRINCIPLES.md */; };
+		7B3060A9302CB28300DF04A0 /* OBSERVATION_RULES.md in Resources */ = {isa = PBXBuildFile; fileRef = 7B3060A8302CB28300DF04A0 /* OBSERVATION_RULES.md */; };
+		7B3060B4302D132000DF04A0 /* AI_REACTOR_CONSOLE.md in Resources */ = {isa = PBXBuildFile; fileRef = 7B3060B3302D132000DF04A0 /* AI_REACTOR_CONSOLE.md */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXContainerItemProxy section */
@@ -32,6 +42,16 @@
 		7B1B455C2FFAE88500C6F2EA /* UmitDietCompanionTests.xctest */ = {isa = PBXFileReference; explicitFileType = wrapper.cfbundle; includeInIndex = 0; path = UmitDietCompanionTests.xctest; sourceTree = BUILT_PRODUCTS_DIR; };
 		7B1B45662FFAE88500C6F2EA /* UmitDietCompanionUITests.xctest */ = {isa = PBXFileReference; explicitFileType = wrapper.cfbundle; includeInIndex = 0; path = UmitDietCompanionUITests.xctest; sourceTree = BUILT_PRODUCTS_DIR; };
 		7B1B468E2FFB05E900C6F2EA /* README.md */ = {isa = PBXFileReference; lastKnownFileType = net.daringfireball.markdown; path = README.md; sourceTree = "<group>"; };
+		7B3060303029E67E00DF04A0 /* AI_COACH_PRINCIPLES.md */ = {isa = PBXFileReference; lastKnownFileType = net.daringfireball.markdown; path = AI_COACH_PRINCIPLES.md; sourceTree = "<group>"; };
+		7B3060323029E6D800DF04A0 /* AI_FOUNDATION_DESIGN.md */ = {isa = PBXFileReference; lastKnownFileType = net.daringfireball.markdown; path = AI_FOUNDATION_DESIGN.md; sourceTree = "<group>"; };
+		7B3060343029E71A00DF04A0 /* AI_COACH_EXAMPLES.md */ = {isa = PBXFileReference; lastKnownFileType = net.daringfireball.markdown; path = AI_COACH_EXAMPLES.md; sourceTree = "<group>"; };
+		7B30603C3029EAA300DF04A0 /* AI_CONTEXT_ARCHITECTURE.md */ = {isa = PBXFileReference; lastKnownFileType = net.daringfireball.markdown; path = AI_CONTEXT_ARCHITECTURE.md; sourceTree = "<group>"; };
+		7B3060403029EBA700DF04A0 /* AI_COACH_FEED.md */ = {isa = PBXFileReference; lastKnownFileType = net.daringfireball.markdown; path = AI_COACH_FEED.md; sourceTree = "<group>"; };
+		7B3060423029EE0D00DF04A0 /* AI_BRAIN_ARCHITECTURE.md */ = {isa = PBXFileReference; lastKnownFileType = net.daringfireball.markdown; path = AI_BRAIN_ARCHITECTURE.md; sourceTree = "<group>"; };
+		7B3060A3302CA88A00DF04A0 /* ARCHITECTURE.md */ = {isa = PBXFileReference; lastKnownFileType = net.daringfireball.markdown; path = ARCHITECTURE.md; sourceTree = "<group>"; };
+		7B3060A5302CAAB500DF04A0 /* AI_PRINCIPLES.md */ = {isa = PBXFileReference; lastKnownFileType = net.daringfireball.markdown; path = AI_PRINCIPLES.md; sourceTree = "<group>"; };
+		7B3060A8302CB28300DF04A0 /* OBSERVATION_RULES.md */ = {isa = PBXFileReference; lastKnownFileType = net.daringfireball.markdown; path = OBSERVATION_RULES.md; sourceTree = "<group>"; };
+		7B3060B3302D132000DF04A0 /* AI_REACTOR_CONSOLE.md */ = {isa = PBXFileReference; lastKnownFileType = net.daringfireball.markdown; path = AI_REACTOR_CONSOLE.md; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
 /* Begin PBXFileSystemSynchronizedBuildFileExceptionSet section */
@@ -140,6 +160,7 @@
 		7B1B486930138D4700C6F2EA /* Documentation */ = {
 			isa = PBXGroup;
 			children = (
+				7B3060A7302CAAD900DF04A0 /* AI */,
 				7B1B48C7301F599B00C6F2EA /* Development */,
 				7B1B48C6301F599500C6F2EA /* Architecture */,
 				7B1B48C5301F590000C6F2EA /* Behaviour */,
@@ -147,6 +168,23 @@
 				7B1B48B5301F559600C6F2EA /* ADR */,
 			);
 			path = Documentation;
+			sourceTree = "<group>";
+		};
+		7B3060A7302CAAD900DF04A0 /* AI */ = {
+			isa = PBXGroup;
+			children = (
+				7B3060A5302CAAB500DF04A0 /* AI_PRINCIPLES.md */,
+				7B3060A3302CA88A00DF04A0 /* ARCHITECTURE.md */,
+				7B3060423029EE0D00DF04A0 /* AI_BRAIN_ARCHITECTURE.md */,
+				7B3060343029E71A00DF04A0 /* AI_COACH_EXAMPLES.md */,
+				7B3060403029EBA700DF04A0 /* AI_COACH_FEED.md */,
+				7B3060303029E67E00DF04A0 /* AI_COACH_PRINCIPLES.md */,
+				7B30603C3029EAA300DF04A0 /* AI_CONTEXT_ARCHITECTURE.md */,
+				7B3060323029E6D800DF04A0 /* AI_FOUNDATION_DESIGN.md */,
+				7B3060A8302CB28300DF04A0 /* OBSERVATION_RULES.md */,
+				7B3060B3302D132000DF04A0 /* AI_REACTOR_CONSOLE.md */,
+			);
+			path = AI;
 			sourceTree = "<group>";
 		};
 /* End PBXGroup section */
@@ -274,6 +312,16 @@
 			isa = PBXResourcesBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
+				7B3060A6302CAAB500DF04A0 /* AI_PRINCIPLES.md in Resources */,
+				7B30603D3029EAA300DF04A0 /* AI_CONTEXT_ARCHITECTURE.md in Resources */,
+				7B3060313029E67E00DF04A0 /* AI_COACH_PRINCIPLES.md in Resources */,
+				7B3060A4302CA88A00DF04A0 /* ARCHITECTURE.md in Resources */,
+				7B3060B4302D132000DF04A0 /* AI_REACTOR_CONSOLE.md in Resources */,
+				7B3060353029E71A00DF04A0 /* AI_COACH_EXAMPLES.md in Resources */,
+				7B3060A9302CB28300DF04A0 /* OBSERVATION_RULES.md in Resources */,
+				7B3060333029E6D800DF04A0 /* AI_FOUNDATION_DESIGN.md in Resources */,
+				7B3060433029EE0D00DF04A0 /* AI_BRAIN_ARCHITECTURE.md in Resources */,
+				7B3060413029EBA700DF04A0 /* AI_COACH_FEED.md in Resources */,
 				7B1B468F2FFB05E900C6F2EA /* README.md in Resources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;

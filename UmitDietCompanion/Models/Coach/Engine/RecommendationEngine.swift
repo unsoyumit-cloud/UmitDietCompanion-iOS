@@ -5,145 +5,39 @@
 
 import Foundation
 
-struct RecommendationEngine {
+final class RecommendationEngine {
 
-    private let scoreBuilder = RecommendationScoreBuilder()
-    private let scoreEngine = RecommendationScoreEngine()
+    // MARK: - Public
 
-    func recommend(
-        snapshot: DailyHealthSnapshot,
-        context: CoachingContext
-    ) -> RecommendationCandidate? {
+    func generateRecommendations(
+        from insights: [Insight]
+    ) -> [Recommendation] {
 
-        let candidates = buildCandidates(
-            snapshot: snapshot,
-            context: context
-        )
+        let insightTypes = Set(insights.map(\.type))
 
-        return scoreEngine.bestCandidate(from: candidates)
-    }
-}
+        var recommendations: [Recommendation] = []
 
-// MARK: - Private
+        for rule in RecommendationRules.all {
 
-private extension RecommendationEngine {
+            guard rule.requiredInsights.isSubset(of: insightTypes) else {
+                continue
+            }
 
-    func buildCandidates(
-        snapshot: DailyHealthSnapshot,
-        context: CoachingContext
-    ) -> [RecommendationCandidate] {
+            let supportingInsights = insights.filter {
+                rule.requiredInsights.contains($0.type)
+            }
 
-        [
-            buildWaterCandidate(snapshot: snapshot, context: context),
-            buildMovementCandidate(snapshot: snapshot, context: context),
-            buildNutritionCandidate(snapshot: snapshot, context: context),
-            buildSleepCandidate(snapshot: snapshot, context: context),
-            buildRecoveryCandidate(snapshot: snapshot, context: context)
-        ]
-    }
-
-    func buildWaterCandidate(
-        snapshot: DailyHealthSnapshot,
-        context: CoachingContext
-    ) -> RecommendationCandidate {
-
-        let need = WaterNeedCalculator().calculateNeed(
-            snapshot: snapshot,
-            context: context
-        )
-
-        return RecommendationCandidate(
-            category: .water,
-            reason: .lowWater,
-            behaviour: .drinkWater,
-            score: scoreBuilder.build(
-                need: need,
-                context: context
+            recommendations.append(
+                Recommendation(
+                    type: rule.generatedRecommendation,
+                    priority: rule.priority,
+                    confidence: rule.confidence,
+                    supportingInsights: supportingInsights,
+                    createdAt: Date()
+                )
             )
-        )
-    }
+        }
 
-    func buildMovementCandidate(
-        snapshot: DailyHealthSnapshot,
-        context: CoachingContext
-    ) -> RecommendationCandidate {
-
-        let need = MovementNeedCalculator().calculateNeed(
-            snapshot: snapshot,
-            context: context
-        )
-
-        return RecommendationCandidate(
-            category: .movement,
-            reason: .lowMovement,
-            behaviour: .walk,
-            score: scoreBuilder.build(
-                need: need,
-                context: context
-            )
-        )
-    }
-
-    func buildNutritionCandidate(
-        snapshot: DailyHealthSnapshot,
-        context: CoachingContext
-    ) -> RecommendationCandidate {
-
-        let need = NutritionNeedCalculator().calculateNeed(
-            snapshot: snapshot,
-            context: context
-        )
-
-        return RecommendationCandidate(
-            category: .nutrition,
-            reason: .poorNutrition,
-            behaviour: .eatBetter,
-            score: scoreBuilder.build(
-                need: need,
-                context: context
-            )
-        )
-    }
-
-    func buildSleepCandidate(
-        snapshot: DailyHealthSnapshot,
-        context: CoachingContext
-    ) -> RecommendationCandidate {
-
-        let need = SleepNeedCalculator().calculateNeed(
-            snapshot: snapshot,
-            context: context
-        )
-
-        return RecommendationCandidate(
-            category: .sleep,
-            reason: .poorSleep,
-            behaviour: .sleepEarlier,
-            score: scoreBuilder.build(
-                need: need,
-                context: context
-            )
-        )
-    }
-
-    func buildRecoveryCandidate(
-        snapshot: DailyHealthSnapshot,
-        context: CoachingContext
-    ) -> RecommendationCandidate {
-
-        let need = RecoveryNeedCalculator().calculateNeed(
-            snapshot: snapshot,
-            context: context
-        )
-
-        return RecommendationCandidate(
-            category: .recovery,
-            reason: .lowRecovery,
-            behaviour: .recover,
-            score: scoreBuilder.build(
-                need: need,
-                context: context
-            )
-        )
+        return recommendations
     }
 }

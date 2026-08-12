@@ -17,8 +17,6 @@ final class DashboardViewModel {
 
     private let contextBuilder = CoachingContextBuilder()
 
-    private let recommendationEngine = RecommendationEngine()
-
     // MARK: - Water
 
     var targetWater: Double {
@@ -110,17 +108,6 @@ final class DashboardViewModel {
 
     }
 
-    // MARK: - Recommendation
-
-    var recommendation: RecommendationCandidate? {
-
-        recommendationEngine.recommend(
-            snapshot: dailySnapshot,
-            context: coachingContext
-        )
-
-    }
-
     // MARK: - Coach Message
 
     var coachMessage: CoachMessage {
@@ -193,6 +180,7 @@ final class DashboardViewModel {
         ]
 
     }
+
     // MARK: - Health Refresh
 
     func refreshHealthData() {
@@ -207,8 +195,6 @@ final class DashboardViewModel {
 
                     healthStore.steps = steps
 
-                    debugRecommendation()
-
                 }
 
             } catch {
@@ -218,30 +204,6 @@ final class DashboardViewModel {
             }
 
         }
-
-    }
-
-    // MARK: - Debug
-
-    private func debugRecommendation() {
-
-        guard let recommendation else {
-
-            print("❌ No Recommendation")
-
-            return
-
-        }
-
-        print("")
-        print("========== AI COACH ==========")
-        print("🏆 Recommendation Generated")
-        print("Category : \(recommendation.category)")
-        print("Behaviour: \(recommendation.behaviour)")
-        print("Need     : \(recommendation.score.need)")
-        print("Score    : \(recommendation.score.total)")
-        print("==============================")
-        print("")
 
     }
 

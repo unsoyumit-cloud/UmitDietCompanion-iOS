@@ -2,17 +2,23 @@
 //  UserPreferences.swift
 //  UmitDietCompanion
 //
-//  Created by Ümit Ünsoy on 10.08.2026.
-//
 
-import SwiftUI
+import Foundation
 
-struct UserPreferences: View {
-    var body: some View {
-        Text(/*@START_MENU_TOKEN@*/"Hello, World!"/*@END_MENU_TOKEN@*/)
-    }
-}
+struct UserPreferences {
 
-#Preview {
-    UserPreferences()
+    // MARK: - Notifications
+
+    var notificationsEnabled = true
+
+    // MARK: - Units
+
+    var useMetricSystem = true
+
+    // MARK: - Coach
+
+    var prefersShortMessages = false
+
+    var prefersEmoji = true
+
 }

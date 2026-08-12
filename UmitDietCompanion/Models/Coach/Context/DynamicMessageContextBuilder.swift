@@ -13,7 +13,7 @@ struct DynamicMessageContextBuilder {
     func build(
         currentValue: Double,
         targetValue: Double,
-        recommendation: RecommendationCandidate,
+        recommendation: Recommendation,
         reasoning: CoachReasoning
     ) -> DynamicMessageContext {
 
@@ -27,7 +27,8 @@ struct DynamicMessageContextBuilder {
         let remainingProgress = max(1.0 - progress, 0)
 
         let progressPercentage = Int(progress * 100)
-        let confidence = recommendation.score.total / 100.0
+
+        let confidence = recommendation.confidence.rawValue
 
         let isTargetReached = progress >= 1.0
         let isAlmostFinished = progress >= 0.90

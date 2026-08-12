@@ -1,5 +1,5 @@
 //
-//  ObservationType.swift
+//  HealthObservationType.swift
 //  UmitDietCompanion
 //
 
@@ -11,39 +11,37 @@ enum HealthObservationType {
 
     case hydrationLow
     case hydrationGood
-    case hydrationDeclining
     case hydrationImproving
+    case hydrationDeclining
 
     // MARK: - Nutrition
 
-    case proteinLow
-    case calorieHigh
-    case calorieLow
-    case nutritionBalanced
-    case nutritionDeclining
+    case nutritionLow
+    case nutritionGood
     case nutritionImproving
+    case nutritionDeclining
 
-    // MARK: - Activity
+    // MARK: - Movement
 
     case movementLow
     case movementGoalReached
-    case activityDeclining
-    case activityImproving
+    case movementImproving
+    case movementDeclining
     case sedentaryPeriod
 
     // MARK: - Sleep
 
-    case poorSleep
-    case goodSleep
-    case sleepDeclining
+    case sleepPoor
+    case sleepGood
     case sleepImproving
+    case sleepDeclining
 
-    // MARK: - Recovery
+    // MARK: - Heart
 
-    case recoveryLow
-    case recoveryGood
-    case recoveryDeclining
-    case recoveryImproving
+    case heartElevated
+    case heartNormal
+    case heartImproving
+    case heartDeclining
 
     // MARK: - Weight
 
@@ -58,7 +56,7 @@ enum HealthObservationType {
     case goalCompleted
     case goalMissed
 
-    // MARK: - Context Triggers
+    // MARK: - Context
 
     case busyMeetingDay
     case groceryShopping
