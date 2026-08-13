@@ -9,84 +9,27 @@ struct AIReactorConsoleView: View {
 
     @Environment(\.dismiss) private var dismiss
 
+    private let reactor = ReactorHealthService()
+
     var body: some View {
 
         NavigationStack {
 
-            ScrollView {
+            Group {
 
-                VStack(
-                    alignment: .leading,
-                    spacing: 24
-                ) {
+                if reactor.issues().isEmpty {
 
-                    headerSection()
+                    healthyView()
 
-                    PipelineView()
+                } else {
 
-                    ReactorSectionView(
-                        title: "Snapshot"
-                    ) {
-
-                        Text("Waiting for pipeline...")
-
-                    }
-
-                    ReactorSectionView(
-                        title: "Context"
-                    ) {
-
-                        Text("Waiting for pipeline...")
-
-                    }
-
-                    ReactorSectionView(
-                        title: "Observation"
-                    ) {
-
-                        Text("Waiting for pipeline...")
-
-                    }
-
-                    ReactorSectionView(
-                        title: "Insight"
-                    ) {
-
-                        Text("Waiting for pipeline...")
-
-                    }
-
-                    ReactorSectionView(
-                        title: "Recommendation"
-                    ) {
-
-                        Text("Waiting for pipeline...")
-
-                    }
-
-                    ReactorSectionView(
-                        title: "Reasoning"
-                    ) {
-
-                        Text("Waiting for pipeline...")
-
-                    }
-
-                    ReactorSectionView(
-                        title: "Coach Message"
-                    ) {
-
-                        Text("Waiting for pipeline...")
-
-                    }
+                    issuesView()
 
                 }
-                .padding()
 
             }
             .navigationTitle("☢️ AI Reactor Console")
             .navigationBarTitleDisplayMode(.inline)
-
             .toolbar {
 
                 ToolbarItem(placement: .topBarTrailing) {
@@ -98,7 +41,6 @@ struct AIReactorConsoleView: View {
                     } label: {
 
                         Image(systemName: "xmark.circle.fill")
-                            .font(.title3)
 
                     }
 
@@ -112,58 +54,83 @@ struct AIReactorConsoleView: View {
 
 }
 
+// MARK: - Healthy
+
 private extension AIReactorConsoleView {
 
     @ViewBuilder
-    func headerSection() -> some View {
+    func healthyView() -> some View {
 
-        VStack(
-            alignment: .leading,
-            spacing: 12
-        ) {
+        VStack(spacing: 24) {
 
-            Text("Internal AI Pipeline Monitor")
-                .font(.subheadline)
+            Spacer()
+
+            Image(systemName: "checkmark.circle.fill")
+                .font(.system(size: 72))
+                .foregroundStyle(.green)
+
+            Text("AI Engine Healthy")
+                .font(.title2)
+                .fontWeight(.bold)
+
+            Text("No action required.")
                 .foregroundStyle(.secondary)
 
-            Divider()
+            Spacer()
 
-            HStack {
+        }
+        .padding()
 
-                VStack(
-                    alignment: .leading,
-                    spacing: 4
-                ) {
+    }
 
-                    Text("SYSTEM STATUS")
-                        .font(.caption)
-                        .foregroundStyle(.secondary)
+}
 
-                    Label(
-                        "ONLINE",
-                        systemImage: "checkmark.circle.fill"
-                    )
-                    .foregroundStyle(.green)
+// MARK: - Issues
+
+private extension AIReactorConsoleView {
+
+    @ViewBuilder
+    func issuesView() -> some View {
+
+        let issues = reactor.issues()
+
+        ScrollView {
+
+            VStack(
+                alignment: .leading,
+                spacing: 20
+            ) {
+
+                Text("🚨 \(issues.count) Actions Required")
+                    .font(.title2)
+                    .fontWeight(.bold)
+
+                ForEach(issues) { issue in
+
+                    NavigationLink {
+
+                        ReactorIssueDetailView(
+                            issue: issue
+                        )
+
+                    } label: {
+
+                        ReactorIssueCard(
+                            issue: issue
+                        )
+
+                    }
+                    .buttonStyle(.plain)
 
                 }
 
-                Spacer()
-
-                VStack(
-                    alignment: .trailing,
-                    spacing: 4
-                ) {
-
-                    Text("PIPELINE")
-                        .font(.caption)
-                        .foregroundStyle(.secondary)
-
-                    Text("7 / 7 Modules")
-                        .fontWeight(.semibold)
-
-                }
+                Text("Select an issue for diagnostics.")
+                    .font(.footnote)
+                    .foregroundStyle(.secondary)
+                    .padding(.top)
 
             }
+            .padding()
 
         }
 
