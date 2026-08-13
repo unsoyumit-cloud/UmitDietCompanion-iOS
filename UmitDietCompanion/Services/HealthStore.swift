@@ -11,7 +11,7 @@ final class HealthStore {
 
     static let shared = HealthStore()
 
-    private let healthKitService = HealthKitService()
+    private let appleHealthProvider = AppleHealthProvider()
     private let developmentProvider = DevelopmentHealthProvider.shared
 
     private init() {
@@ -21,6 +21,10 @@ final class HealthStore {
         if savedWater > 0 {
             waterAmount = savedWater
         }
+
+        // Temporary fallback values.
+        // These will be removed as each metric is migrated
+        // to Apple Health.
 
         steps = developmentProvider.steps
         activeEnergy = developmentProvider.activeEnergy
@@ -40,7 +44,7 @@ final class HealthStore {
 
     // MARK: - Energy
 
-    var activeEnergy: Int = 1250
+    var activeEnergy: Int
 
     // MARK: - Sleep
 
@@ -62,28 +66,55 @@ final class HealthStore {
     let sleepTarget: Double = 8.0
     let weightTarget: Double = 75.0
 
+    // MARK: - Water
+
     func updateWater(by amount: Double) {
 
-        waterAmount = max(0, waterAmount + amount)
+        waterAmount = max(
+            0,
+            waterAmount + amount
+        )
 
-        PersistenceService.saveWater(waterAmount)
+        PersistenceService.saveWater(
+            waterAmount
+        )
 
     }
+
+    // MARK: - Refresh
 
     @MainActor
     func refresh() async {
 
         do {
 
-            try await healthKitService.requestAuthorization()
+            let metrics = try await appleHealthProvider.fetchDailyMetrics(
+                for: Date()
+            )
 
-            steps = try await healthKitService.getTodayStepCount()
+            // Apple Health Metrics
 
-            print("HealthKit returned: \(steps)")
+            steps = metrics.steps
+            sleepHours = metrics.sleepHours
+            activeEnergy = metrics.activeCaloriesBurned
+
+            // Remaining values are still provided by
+            // DevelopmentHealthProvider until their
+            // HealthKit implementations are completed.
+
+            weight = developmentProvider.weight
+            restingHeartRate = developmentProvider.restingHeartRate
+
+            print("✅ HealthStore refreshed")
+
+            print("Steps:", steps)
+            print("Sleep:", sleepHours)
+            print("Active Energy:", activeEnergy)
 
         } catch {
 
-            print("Health refresh failed:", error)
+            print("❌ Health refresh failed:")
+            print(error)
 
         }
 
@@ -92,11 +123,11 @@ final class HealthStore {
     // MARK: - Models
 
     var profile: UserProfile {
-
+        
         var profile = UserProfile(
-
+            
             name: "Ümit",
-
+            
             birthDate: Calendar.current.date(
                 from: DateComponents(
                     year: 1983,
@@ -104,29 +135,28 @@ final class HealthStore {
                     day: 7
                 )
             )!,
-
+            
             gender: .male,
-
+            
             height: 178,
-
+            
             startWeight: 89,
-
+            
             targetWeight: 75,
-
+            
             activityLevel: .moderate,
-
+            
             eatingStyle: .standard,
-
+            
             calorieGoal: energyTarget,
-
+            
             waterGoal: Int(waterTarget),
-
+            
             stepGoal: stepsTarget,
-
+            
             sleepGoal: sleepTarget
-
+            
         )
-
         profile.coaching = CoachingProfile(
 
             coachPersonality: .balanced,
@@ -141,6 +171,8 @@ final class HealthStore {
 
     }
 
+    // MARK: - Daily Metrics
+
     var dailyMetrics: DailyHealthMetrics {
 
         DailyHealthMetrics(
@@ -151,7 +183,7 @@ final class HealthStore {
 
             waterIntake: Int(waterAmount),
 
-            calorieIntake: activeEnergy,
+            calorieIntake: 0,
 
             activeCaloriesBurned: activeEnergy,
 
@@ -164,6 +196,8 @@ final class HealthStore {
         )
 
     }
+
+    // MARK: - Daily Snapshot
 
     var dailySnapshot: DailyHealthSnapshot {
 

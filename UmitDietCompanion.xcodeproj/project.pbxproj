@@ -124,6 +124,11 @@
 			path = Development;
 			sourceTree = "<group>";
 		};
+		7B3060F5302DF84400DF04A0 /* UI */ = {
+			isa = PBXFileSystemSynchronizedRootGroup;
+			path = UI;
+			sourceTree = "<group>";
+		};
 /* End PBXFileSystemSynchronizedRootGroup section */
 
 /* Begin PBXFrameworksBuildPhase section */
@@ -176,6 +181,7 @@
 		7B1B486930138D4700C6F2EA /* Documentation */ = {
 			isa = PBXGroup;
 			children = (
+				7B3060F5302DF84400DF04A0 /* UI */,
 				7B3060A7302CAAD900DF04A0 /* AI */,
 				7B1B48C7301F599B00C6F2EA /* Development */,
 				7B1B48C6301F599500C6F2EA /* Architecture */,
@@ -233,6 +239,7 @@
 				7B1B48C5301F590000C6F2EA /* Behaviour */,
 				7B1B48C6301F599500C6F2EA /* Architecture */,
 				7B1B48C7301F599B00C6F2EA /* Development */,
+				7B3060F5302DF84400DF04A0 /* UI */,
 			);
 			name = UmitDietCompanion;
 			packageProductDependencies = (

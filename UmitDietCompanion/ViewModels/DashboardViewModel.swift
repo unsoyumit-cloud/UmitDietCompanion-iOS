@@ -1,6 +1,5 @@
 //
 //  DashboardViewModel.swift
-//  UmitDietCompanion
 //
 
 import Foundation
@@ -12,8 +11,6 @@ final class DashboardViewModel {
     // MARK: - Dependencies
 
     let healthStore = HealthStore.shared
-
-    private let healthKitService = HealthKitService()
 
     private let contextBuilder = CoachingContextBuilder()
 
@@ -178,32 +175,6 @@ final class DashboardViewModel {
             )
 
         ]
-
-    }
-
-    // MARK: - Health Refresh
-
-    func refreshHealthData() {
-
-        Task {
-
-            do {
-
-                let steps = try await healthKitService.getTodayStepCount()
-
-                await MainActor.run {
-
-                    healthStore.steps = steps
-
-                }
-
-            } catch {
-
-                print("HealthKit Read Error:", error)
-
-            }
-
-        }
 
     }
 

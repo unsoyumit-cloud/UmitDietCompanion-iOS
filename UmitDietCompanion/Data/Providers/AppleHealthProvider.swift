@@ -17,22 +17,36 @@ final class AppleHealthProvider: HealthDataProvider {
         // Request HealthKit authorization
         try await healthKit.requestAuthorization()
 
-        // Read today's step count
+        // Read HealthKit data
         let steps = try await healthKit.getTodayStepCount()
+        let sleepHours = try await healthKit.getLastNightSleepHours()
+        let activeEnergy = try await healthKit.getTodayActiveEnergy()
 
-        // Temporary placeholder values.
-        // Each metric will be implemented incrementally during Sprint 6.
+        // Debug
+        print("Steps: \(steps)")
+        print("Sleep Hours: \(sleepHours)")
+        print("Active Energy: \(activeEnergy)")
 
         return DailyHealthMetrics(
+
             date: date,
+
             steps: steps,
+
             waterIntake: 0,
+
             calorieIntake: 0,
-            activeCaloriesBurned: 0,
-            sleepHours: 0,
+
+            activeCaloriesBurned: activeEnergy,
+
+            sleepHours: sleepHours,
+
             restingHeartRate: 0,
+
             weight: 0
+
         )
+
     }
 
 }
