@@ -18,6 +18,14 @@
 		7B3060A6302CAAB500DF04A0 /* AI_PRINCIPLES.md in Resources */ = {isa = PBXBuildFile; fileRef = 7B3060A5302CAAB500DF04A0 /* AI_PRINCIPLES.md */; };
 		7B3060A9302CB28300DF04A0 /* OBSERVATION_RULES.md in Resources */ = {isa = PBXBuildFile; fileRef = 7B3060A8302CB28300DF04A0 /* OBSERVATION_RULES.md */; };
 		7B3060B4302D132000DF04A0 /* AI_REACTOR_CONSOLE.md in Resources */ = {isa = PBXBuildFile; fileRef = 7B3060B3302D132000DF04A0 /* AI_REACTOR_CONSOLE.md */; };
+		7B3060D0302DA94900DF04A0 /* AI Intelligence Design Document.md in Resources */ = {isa = PBXBuildFile; fileRef = 7B3060CF302DA94900DF04A0 /* AI Intelligence Design Document.md */; };
+		7B3060D2302DA99B00DF04A0 /* AI Decision Engine.md in Resources */ = {isa = PBXBuildFile; fileRef = 7B3060D1302DA99B00DF04A0 /* AI Decision Engine.md */; };
+		7B3060D4302DA9CA00DF04A0 /* AI Knowledge Model.md in Resources */ = {isa = PBXBuildFile; fileRef = 7B3060D3302DA9CA00DF04A0 /* AI Knowledge Model.md */; };
+		7B3060D6302DAA2100DF04A0 /* AI Behaviour Library.md in Resources */ = {isa = PBXBuildFile; fileRef = 7B3060D5302DAA2100DF04A0 /* AI Behaviour Library.md */; };
+		7B3060D8302DAA6300DF04A0 /* AI Context Engine.md in Resources */ = {isa = PBXBuildFile; fileRef = 7B3060D7302DAA6300DF04A0 /* AI Context Engine.md */; };
+		7B3060DA302DAB5000DF04A0 /* AI Priority Matrix.md in Resources */ = {isa = PBXBuildFile; fileRef = 7B3060D9302DAB5000DF04A0 /* AI Priority Matrix.md */; };
+		7B3060DC302DABA800DF04A0 /* AI Insight Library.md in Resources */ = {isa = PBXBuildFile; fileRef = 7B3060DB302DABA800DF04A0 /* AI Insight Library.md */; };
+		7B3060DE302DABED00DF04A0 /* AI Recommendation Library.md in Resources */ = {isa = PBXBuildFile; fileRef = 7B3060DD302DABED00DF04A0 /* AI Recommendation Library.md */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXContainerItemProxy section */
@@ -52,6 +60,14 @@
 		7B3060A5302CAAB500DF04A0 /* AI_PRINCIPLES.md */ = {isa = PBXFileReference; lastKnownFileType = net.daringfireball.markdown; path = AI_PRINCIPLES.md; sourceTree = "<group>"; };
 		7B3060A8302CB28300DF04A0 /* OBSERVATION_RULES.md */ = {isa = PBXFileReference; lastKnownFileType = net.daringfireball.markdown; path = OBSERVATION_RULES.md; sourceTree = "<group>"; };
 		7B3060B3302D132000DF04A0 /* AI_REACTOR_CONSOLE.md */ = {isa = PBXFileReference; lastKnownFileType = net.daringfireball.markdown; path = AI_REACTOR_CONSOLE.md; sourceTree = "<group>"; };
+		7B3060CF302DA94900DF04A0 /* AI Intelligence Design Document.md */ = {isa = PBXFileReference; lastKnownFileType = net.daringfireball.markdown; path = "AI Intelligence Design Document.md"; sourceTree = "<group>"; };
+		7B3060D1302DA99B00DF04A0 /* AI Decision Engine.md */ = {isa = PBXFileReference; lastKnownFileType = net.daringfireball.markdown; path = "AI Decision Engine.md"; sourceTree = "<group>"; };
+		7B3060D3302DA9CA00DF04A0 /* AI Knowledge Model.md */ = {isa = PBXFileReference; lastKnownFileType = net.daringfireball.markdown; path = "AI Knowledge Model.md"; sourceTree = "<group>"; };
+		7B3060D5302DAA2100DF04A0 /* AI Behaviour Library.md */ = {isa = PBXFileReference; lastKnownFileType = net.daringfireball.markdown; path = "AI Behaviour Library.md"; sourceTree = "<group>"; };
+		7B3060D7302DAA6300DF04A0 /* AI Context Engine.md */ = {isa = PBXFileReference; lastKnownFileType = net.daringfireball.markdown; path = "AI Context Engine.md"; sourceTree = "<group>"; };
+		7B3060D9302DAB5000DF04A0 /* AI Priority Matrix.md */ = {isa = PBXFileReference; lastKnownFileType = net.daringfireball.markdown; path = "AI Priority Matrix.md"; sourceTree = "<group>"; };
+		7B3060DB302DABA800DF04A0 /* AI Insight Library.md */ = {isa = PBXFileReference; lastKnownFileType = net.daringfireball.markdown; path = "AI Insight Library.md"; sourceTree = "<group>"; };
+		7B3060DD302DABED00DF04A0 /* AI Recommendation Library.md */ = {isa = PBXFileReference; lastKnownFileType = net.daringfireball.markdown; path = "AI Recommendation Library.md"; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
 /* Begin PBXFileSystemSynchronizedBuildFileExceptionSet section */
@@ -183,6 +199,14 @@
 				7B3060323029E6D800DF04A0 /* AI_FOUNDATION_DESIGN.md */,
 				7B3060A8302CB28300DF04A0 /* OBSERVATION_RULES.md */,
 				7B3060B3302D132000DF04A0 /* AI_REACTOR_CONSOLE.md */,
+				7B3060CF302DA94900DF04A0 /* AI Intelligence Design Document.md */,
+				7B3060D1302DA99B00DF04A0 /* AI Decision Engine.md */,
+				7B3060D3302DA9CA00DF04A0 /* AI Knowledge Model.md */,
+				7B3060D5302DAA2100DF04A0 /* AI Behaviour Library.md */,
+				7B3060D7302DAA6300DF04A0 /* AI Context Engine.md */,
+				7B3060D9302DAB5000DF04A0 /* AI Priority Matrix.md */,
+				7B3060DB302DABA800DF04A0 /* AI Insight Library.md */,
+				7B3060DD302DABED00DF04A0 /* AI Recommendation Library.md */,
 			);
 			path = AI;
 			sourceTree = "<group>";
@@ -313,16 +337,24 @@
 			buildActionMask = 2147483647;
 			files = (
 				7B3060A6302CAAB500DF04A0 /* AI_PRINCIPLES.md in Resources */,
+				7B3060DA302DAB5000DF04A0 /* AI Priority Matrix.md in Resources */,
 				7B30603D3029EAA300DF04A0 /* AI_CONTEXT_ARCHITECTURE.md in Resources */,
 				7B3060313029E67E00DF04A0 /* AI_COACH_PRINCIPLES.md in Resources */,
 				7B3060A4302CA88A00DF04A0 /* ARCHITECTURE.md in Resources */,
 				7B3060B4302D132000DF04A0 /* AI_REACTOR_CONSOLE.md in Resources */,
+				7B3060D6302DAA2100DF04A0 /* AI Behaviour Library.md in Resources */,
 				7B3060353029E71A00DF04A0 /* AI_COACH_EXAMPLES.md in Resources */,
 				7B3060A9302CB28300DF04A0 /* OBSERVATION_RULES.md in Resources */,
 				7B3060333029E6D800DF04A0 /* AI_FOUNDATION_DESIGN.md in Resources */,
+				7B3060D8302DAA6300DF04A0 /* AI Context Engine.md in Resources */,
 				7B3060433029EE0D00DF04A0 /* AI_BRAIN_ARCHITECTURE.md in Resources */,
 				7B3060413029EBA700DF04A0 /* AI_COACH_FEED.md in Resources */,
+				7B3060D0302DA94900DF04A0 /* AI Intelligence Design Document.md in Resources */,
 				7B1B468F2FFB05E900C6F2EA /* README.md in Resources */,
+				7B3060D2302DA99B00DF04A0 /* AI Decision Engine.md in Resources */,
+				7B3060DC302DABA800DF04A0 /* AI Insight Library.md in Resources */,
+				7B3060D4302DA9CA00DF04A0 /* AI Knowledge Model.md in Resources */,
+				7B3060DE302DABED00DF04A0 /* AI Recommendation Library.md in Resources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
