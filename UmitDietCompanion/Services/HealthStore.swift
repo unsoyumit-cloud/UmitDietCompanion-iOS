@@ -12,7 +12,6 @@ final class HealthStore {
     static let shared = HealthStore()
 
     private let healthKitService = HealthKitService()
-
     private let developmentProvider = DevelopmentHealthProvider.shared
 
     private init() {
@@ -170,9 +169,11 @@ final class HealthStore {
 
         DailyHealthSnapshot(
 
-            metrics: dailyMetrics,
+            date: Date(),
 
             profile: profile,
+
+            metrics: dailyMetrics,
 
             healthScore: 80
 
