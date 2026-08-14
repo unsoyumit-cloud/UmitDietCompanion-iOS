@@ -7,60 +7,11 @@ import SwiftUI
 
 struct NightMetricsView: View {
 
-    // MARK: - Metrics
+    // MARK: - Health Store
 
-    private let metrics: [NightMetricItem] = [
+    @State private var healthStore = HealthStore.shared
 
-        NightMetricItem(
-            title: "Heart Rate",
-            value: "68 bpm",
-            comparison: "↓ 3 bpm vs last week",
-            icon: "heart",
-            iconColor: .red,
-            status: "Good",
-            statusColor: .green
-        ),
-
-        NightMetricItem(
-            title: "HRV",
-            value: "42 ms",
-            comparison: "≈ No change vs last week",
-            icon: "waveform.path.ecg",
-            iconColor: .green,
-            status: "Normal",
-            statusColor: .green
-        ),
-
-        NightMetricItem(
-            title: "SpO₂",
-            value: "96%",
-            comparison: "↑ 1% vs last week",
-            icon: "drop",
-            iconColor: .blue,
-            status: "Good",
-            statusColor: .green
-        ),
-
-        NightMetricItem(
-            title: "Respiratory Rate",
-            value: "15.2 brpm",
-            comparison: "≈ No change vs last week",
-            icon: "lungs",
-            iconColor: .purple,
-            status: "Normal",
-            statusColor: .green
-        ),
-
-        NightMetricItem(
-            title: "Sleep Quality",
-            value: "72 / 100",
-            comparison: "↓ 5 pts vs last week",
-            icon: "moon.zzz",
-            iconColor: .orange,
-            status: "Fair",
-            statusColor: .orange
-        )
-    ]
+    // MARK: - Body
 
     var body: some View {
 
@@ -73,7 +24,7 @@ struct NightMetricsView: View {
                 VStack(spacing: 8) {
 
                     Text(
-                        "Gece boyunca vücudundan\ntoplanan önemli metrikler."
+                        "Important metrics collected\nfrom your body during the night."
                     )
                     .font(.subheadline)
                     .foregroundStyle(.secondary)
@@ -82,7 +33,6 @@ struct NightMetricsView: View {
                 }
                 .frame(maxWidth: .infinity)
                 .padding(.vertical, 8)
-
 
                 // MARK: Metrics
 
@@ -108,7 +58,6 @@ struct NightMetricsView: View {
 
                 }
 
-
                 // MARK: AI Insight
 
                 aiInsightCard
@@ -121,6 +70,210 @@ struct NightMetricsView: View {
         .navigationTitle("Night Metrics")
         .navigationBarTitleDisplayMode(.inline)
 
+    }
+
+    // MARK: - Metrics
+
+    private var metrics: [NightMetricItem] {
+
+        [
+
+            // -------------------------------------------------
+            // Heart Rate
+            // -------------------------------------------------
+
+            NightMetricItem(
+                title: "Heart Rate",
+                value: "\(healthStore.restingHeartRate) bpm",
+                comparison: "Resting heart rate",
+                icon: "heart",
+                iconColor: .red,
+                status: "Available",
+                statusColor: .green
+            ),
+
+            // -------------------------------------------------
+            // HRV
+            // -------------------------------------------------
+
+            NightMetricItem(
+                title: "HRV",
+                value: healthStore.hasHRVData
+                    ? formatHRV(healthStore.hrv)
+                    : "No Data",
+                comparison: healthStore.hasHRVData
+                    ? "Apple Health data"
+                    : "No data available yet",
+                icon: "waveform.path.ecg",
+                iconColor: .green,
+                status: healthStore.hasHRVData
+                    ? "Available"
+                    : "No Data",
+                statusColor: healthStore.hasHRVData
+                    ? .green
+                    : .secondary
+            ),
+
+            // -------------------------------------------------
+            // SpO2
+            // -------------------------------------------------
+
+            NightMetricItem(
+                title: "SpO₂",
+                value: healthStore.hasSpO2Data
+                    ? formatSpO2(healthStore.spo2)
+                    : "No Data",
+                comparison: healthStore.hasSpO2Data
+                    ? "Apple Health data"
+                    : "No data available yet",
+                icon: "drop",
+                iconColor: .blue,
+                status: healthStore.hasSpO2Data
+                    ? "Available"
+                    : "No Data",
+                statusColor: healthStore.hasSpO2Data
+                    ? .green
+                    : .secondary
+            ),
+
+            // -------------------------------------------------
+            // Respiratory Rate
+            // -------------------------------------------------
+
+            NightMetricItem(
+                title: "Respiratory Rate",
+                value: healthStore.hasRespiratoryRateData
+                    ? formatRespiratoryRate(
+                        healthStore.respiratoryRate
+                    )
+                    : "No Data",
+                comparison: healthStore.hasRespiratoryRateData
+                    ? "Apple Health data"
+                    : "No data available yet",
+                icon: "lungs",
+                iconColor: .purple,
+                status: healthStore.hasRespiratoryRateData
+                    ? "Available"
+                    : "No Data",
+                statusColor: healthStore.hasRespiratoryRateData
+                    ? .green
+                    : .secondary
+            ),
+
+            // -------------------------------------------------
+            // Sleep Quality
+            // -------------------------------------------------
+
+            NightMetricItem(
+                title: "Sleep Quality",
+                value: sleepQualityText,
+                comparison: "Total sleep tonight",
+                icon: "moon.zzz",
+                iconColor: .orange,
+                status: sleepQualityStatus,
+                statusColor: sleepQualityStatusColor
+            )
+        ]
+    }
+
+    // MARK: - Sleep Quality
+
+    private var sleepQualityText: String {
+
+        let hours = healthStore.sleepHours
+
+        guard hours > 0 else {
+            return "No Data"
+        }
+
+        return String(
+            format: "%.1f h",
+            hours
+        )
+    }
+
+    private var sleepQualityStatus: String {
+
+        let hours = healthStore.sleepHours
+
+        guard hours > 0 else {
+            return "No Data"
+        }
+
+        switch hours {
+
+        case 7...:
+            return "Good"
+
+        case 6..<7:
+            return "Fair"
+
+        default:
+            return "Low"
+
+        }
+    }
+
+    private var sleepQualityStatusColor: Color {
+
+        let hours = healthStore.sleepHours
+
+        guard hours > 0 else {
+            return .secondary
+        }
+
+        switch hours {
+
+        case 7...:
+            return .green
+
+        case 6..<7:
+            return .orange
+
+        default:
+            return .red
+
+        }
+    }
+
+    // MARK: - Formatting
+
+    private func formatHRV(_ value: Double) -> String {
+
+        if value <= 0 {
+            return "No Data"
+        }
+
+        return String(
+            format: "%.0f ms",
+            value
+        )
+    }
+
+    private func formatSpO2(_ value: Double) -> String {
+
+        if value <= 0 {
+            return "No Data"
+        }
+
+        return String(
+            format: "%.0f%%",
+            value
+        )
+    }
+
+    private func formatRespiratoryRate(
+        _ value: Double
+    ) -> String {
+
+        if value <= 0 {
+            return "No Data"
+        }
+
+        return String(
+            format: "%.1f brpm",
+            value
+        )
     }
 
     // MARK: - AI Insight
@@ -144,16 +297,13 @@ struct NightMetricsView: View {
                 Text("AI Insight")
                     .font(.headline)
 
-                Text(
-                    "Geçen haftaya göre uyku kaliten biraz düşmüş. " +
-                    "Bugün daha erken uyumayı deneyebilirsin."
-                )
-                .font(.subheadline)
-                .foregroundStyle(.secondary)
-                .fixedSize(
-                    horizontal: false,
-                    vertical: true
-                )
+                Text(aiInsightText)
+                    .font(.subheadline)
+                    .foregroundStyle(.secondary)
+                    .fixedSize(
+                        horizontal: false,
+                        vertical: true
+                    )
 
             }
 
@@ -174,9 +324,35 @@ struct NightMetricsView: View {
                 style: .continuous
             )
         )
-
     }
-    
+
+    private var aiInsightText: String {
+
+        if !healthStore.hasHRVData &&
+            !healthStore.hasSpO2Data &&
+            !healthStore.hasRespiratoryRateData {
+
+            return "Some night metrics are not available yet. They will appear here when Apple Health has data for them."
+        }
+
+        if !healthStore.hasHRVData {
+
+            return "HRV data is not available yet. Once Apple Health has enough data, we can start tracking this metric here."
+        }
+
+        if !healthStore.hasSpO2Data {
+
+            return "SpO₂ data is not available yet. Once Apple Health has data, we can start tracking this metric here."
+        }
+
+        if !healthStore.hasRespiratoryRateData {
+
+            return "Respiratory rate data is not available yet. Once Apple Health has data, we can start tracking this metric here."
+        }
+
+        return "Your night metrics are available. Over time, we can track the patterns and trends together."
+    }
+
     // MARK: - Night Metric Model
 
     private struct NightMetricItem: Identifiable {
@@ -191,7 +367,6 @@ struct NightMetricsView: View {
         let status: String
         let statusColor: Color
     }
-
 
     // MARK: - Night Metric Row
 
@@ -270,7 +445,6 @@ struct NightMetricsView: View {
 
         }
     }
-
 
     // MARK: - Preview
 

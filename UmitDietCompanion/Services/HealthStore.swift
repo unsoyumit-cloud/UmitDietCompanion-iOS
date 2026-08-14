@@ -9,10 +9,16 @@ import Observation
 @Observable
 final class HealthStore {
 
+    // MARK: - Singleton
+
     static let shared = HealthStore()
+
+    // MARK: - Providers
 
     private let appleHealthProvider = AppleHealthProvider()
     private let developmentProvider = DevelopmentHealthProvider.shared
+
+    // MARK: - Initialization
 
     private init() {
 
@@ -22,9 +28,9 @@ final class HealthStore {
             waterAmount = savedWater
         }
 
-        // Temporary fallback values.
-        // These will be replaced as each metric
-        // is migrated to Apple Health.
+        // Development fallback values.
+        // These remain in place until each metric
+        // is fully migrated to Apple Health.
 
         steps = developmentProvider.steps
         activeEnergy = developmentProvider.activeEnergy
@@ -37,11 +43,9 @@ final class HealthStore {
 
     var waterAmount: Double = 2.1
 
-    // MARK: - Steps
+    // MARK: - Activity
 
     var steps: Int
-
-    // MARK: - Energy
 
     var activeEnergy: Int
 
@@ -67,10 +71,6 @@ final class HealthStore {
 
     var sleepEfficiency: Double = 0
 
-    // MARK: - Weight
-
-    var weight: Double
-
     // MARK: - Heart
 
     var restingHeartRate: Int
@@ -79,17 +79,32 @@ final class HealthStore {
 
     var hrv: Double = 0
 
+    var hasHRVData: Bool = false
+
     var spo2: Double = 0
 
+    var hasSpO2Data: Bool = false
+
     var respiratoryRate: Double = 0
+
+    var hasRespiratoryRateData: Bool = false
+
+    // MARK: - Body
+
+    var weight: Double
 
     // MARK: - Targets
 
     let waterTarget: Double = 2.5
+
     let stepsTarget: Int = 10_000
+
     let energyTarget: Int = 2_500
+
     let sleepTarget: Double = 8.0
+
     let weightTarget: Double = 75.0
+
     // MARK: - Water
 
     func updateWater(by amount: Double) {
@@ -111,20 +126,16 @@ final class HealthStore {
 
         do {
 
-            let metrics =
-                try await appleHealthProvider.fetchDailyMetrics(
-                    for: Date()
-                )
+            let metrics = try await appleHealthProvider.fetchDailyMetrics(
+                for: Date()
+            )
 
-            // MARK: - Activity
+            // MARK: - Apple Health Metrics
 
-            steps =
-                metrics.steps
+            steps = metrics.steps
 
             activeEnergy =
                 metrics.activeCaloriesBurned
-
-            // MARK: - Sleep
 
             sleepHours =
                 metrics.sleepHours
@@ -156,55 +167,147 @@ final class HealthStore {
             sleepEfficiency =
                 metrics.sleepEfficiency
 
-            // MARK: - Body
+            restingHeartRate =
+                metrics.restingHeartRate
 
             weight =
                 metrics.weight
-
-            // MARK: - Heart
-
-            restingHeartRate =
-                metrics.restingHeartRate
 
             // MARK: - Night Metrics
 
             hrv =
                 metrics.hrv
 
+            hasHRVData =
+                metrics.hasHRVData
+
             spo2 =
                 metrics.spo2
+
+            hasSpO2Data =
+                metrics.hasSpO2Data
 
             respiratoryRate =
                 metrics.respiratoryRate
 
-            print("✅ HealthStore refreshed")
+            hasRespiratoryRateData =
+                metrics.hasRespiratoryRateData
 
-            print("Steps:", steps)
-            print("Sleep:", sleepHours)
-            print("Deep Sleep:", deepSleep / 60, "min")
-            print("Core Sleep:", coreSleep / 60, "min")
-            print("REM Sleep:", remSleep / 60, "min")
-            print("Awake Time:", awakeTime / 60, "min")
-            print("Time in Bed:", timeInBed / 60, "min")
-            print("Sleep Efficiency:", sleepEfficiency, "%")
-            print("Active Energy:", activeEnergy)
-            print("Resting Heart Rate:", restingHeartRate)
-            print("Weight:", weight)
-            print("HRV:", hrv, "ms")
-            print("SpO2:", spo2, "%")
+            // MARK: - Diagnostics
+
+            print("===================================")
+            print("❤️ HealthStore Night Metrics")
+            print("===================================")
+
+            print(
+                "HRV:",
+                hrv,
+                "ms"
+            )
+
+            print(
+                "HRV Data:",
+                hasHRVData
+            )
+
+            print(
+                "SpO2:",
+                spo2,
+                "%"
+            )
+
+            print(
+                "SpO2 Data:",
+                hasSpO2Data
+            )
+
             print(
                 "Respiratory Rate:",
                 respiratoryRate,
                 "breaths/min"
             )
 
+            print(
+                "Respiratory Rate Data:",
+                hasRespiratoryRateData
+            )
+
+            print("===================================")
+
+            print("✅ HealthStore refreshed")
+
+            print(
+                "Steps:",
+                steps
+            )
+
+            print(
+                "Sleep:",
+                sleepHours
+            )
+
+            print(
+                "Deep Sleep:",
+                deepSleep / 60,
+                "min"
+            )
+
+            print(
+                "Core Sleep:",
+                coreSleep / 60,
+                "min"
+            )
+
+            print(
+                "REM Sleep:",
+                remSleep / 60,
+                "min"
+            )
+
+            print(
+                "Awake Time:",
+                awakeTime / 60,
+                "min"
+            )
+
+            print(
+                "Time in Bed:",
+                timeInBed / 3600,
+                "h"
+            )
+
+            print(
+                "Sleep Efficiency:",
+                sleepEfficiency,
+                "%"
+            )
+
+            print(
+                "Active Energy:",
+                activeEnergy
+            )
+
+            print(
+                "Resting Heart Rate:",
+                restingHeartRate
+            )
+
+            print(
+                "Weight:",
+                weight
+            )
+
         } catch {
 
-            print("❌ Health refresh failed:")
+            print(
+                "❌ Health refresh failed:"
+            )
+
             print(error)
         }
     }
-    // MARK: - Models
+
+    // MARK: - Profile
 
     var profile: UserProfile {
 
@@ -261,10 +364,9 @@ final class HealthStore {
 
             date: Date(),
 
-            // Activity & Nutrition
+            // MARK: Activity & Nutrition
 
-            steps:
-                steps,
+            steps: steps,
 
             waterIntake:
                 Int(waterAmount),
@@ -275,7 +377,7 @@ final class HealthStore {
             activeCaloriesBurned:
                 activeEnergy,
 
-            // Sleep
+            // MARK: Sleep
 
             sleepHours:
                 sleepHours,
@@ -307,21 +409,32 @@ final class HealthStore {
             sleepEfficiency:
                 sleepEfficiency,
 
-            // Night Metrics
+            // MARK: Heart
 
             restingHeartRate:
                 restingHeartRate,
 
+            // MARK: Night Metrics
+
             hrv:
                 hrv,
+
+            hasHRVData:
+                hasHRVData,
 
             spo2:
                 spo2,
 
+            hasSpO2Data:
+                hasSpO2Data,
+
             respiratoryRate:
                 respiratoryRate,
 
-            // Body
+            hasRespiratoryRateData:
+                hasRespiratoryRateData,
+
+            // MARK: Body
 
             weight:
                 weight

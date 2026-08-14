@@ -37,7 +37,7 @@ final class AppleHealthProvider: HealthDataProvider {
         let weight =
             try await healthKit.getLatestWeight()
 
-        // Night Metrics
+        // MARK: - Night Metrics
 
         let hrv =
             try await healthKit.getLastNightHRV()
@@ -47,7 +47,23 @@ final class AppleHealthProvider: HealthDataProvider {
 
         let respiratoryRate =
             try await healthKit.getLastNightRespiratoryRate()
+
+        // MARK: - Data Availability
+
+        let hasHRVData =
+            hrv > 0
+
+        let hasSpO2Data =
+            spo2 > 0
+
+        let hasRespiratoryRateData =
+            respiratoryRate > 0
+
         // MARK: - Debug
+
+        print("===================================")
+        print("🌙 Apple Health Metrics")
+        print("===================================")
 
         print("Steps: \(steps)")
 
@@ -99,24 +115,60 @@ final class AppleHealthProvider: HealthDataProvider {
             "Weight: \(weight) kg"
         )
 
+        print("")
+        print("===================================")
+        print("❤️ HRV")
+        print("===================================")
+
         print(
             "HRV: \(hrv) ms"
         )
+
+        print(
+            "HRV Data Available: " +
+            "\(hasHRVData)"
+        )
+
+        print("")
+        print("===================================")
+        print("🫁 SpO₂")
+        print("===================================")
 
         print(
             "SpO2: \(spo2)%"
         )
 
         print(
+            "SpO2 Data Available: " +
+            "\(hasSpO2Data)"
+        )
+
+        print("")
+        print("===================================")
+        print("🌬 Respiratory Rate")
+        print("===================================")
+
+        print(
             "Respiratory Rate: " +
             "\(respiratoryRate) breaths/min"
         )
+
+        print(
+            "Respiratory Rate Data Available: " +
+            "\(hasRespiratoryRateData)"
+        )
+
+        print("")
 
         // MARK: - Normalized Metrics
 
         return DailyHealthMetrics(
 
+            // MARK: Identity
+
             date: date,
+
+            // MARK: Activity & Nutrition
 
             steps: steps,
 
@@ -127,7 +179,7 @@ final class AppleHealthProvider: HealthDataProvider {
             activeCaloriesBurned:
                 activeEnergy,
 
-            // Sleep
+            // MARK: Sleep
 
             sleepHours:
                 sleepMetrics.totalSleepHours,
@@ -158,7 +210,8 @@ final class AppleHealthProvider: HealthDataProvider {
 
             sleepEfficiency:
                 sleepMetrics.sleepEfficiency,
-            // Night Metrics
+
+            // MARK: Night Metrics
 
             restingHeartRate:
                 restingHeartRate,
@@ -166,13 +219,22 @@ final class AppleHealthProvider: HealthDataProvider {
             hrv:
                 hrv,
 
+            hasHRVData:
+                hasHRVData,
+
             spo2:
                 spo2,
+
+            hasSpO2Data:
+                hasSpO2Data,
 
             respiratoryRate:
                 respiratoryRate,
 
-            // Body
+            hasRespiratoryRateData:
+                hasRespiratoryRateData,
+
+            // MARK: Body
 
             weight:
                 weight

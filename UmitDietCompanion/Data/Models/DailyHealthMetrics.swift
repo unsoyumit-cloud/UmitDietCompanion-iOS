@@ -38,6 +38,7 @@ struct DailyHealthMetrics {
     var awakeTime: TimeInterval
 
     var timeInBed: TimeInterval
+    
     var deepSleepPercentage: Double
 
     var coreSleepPercentage: Double
@@ -52,9 +53,16 @@ struct DailyHealthMetrics {
 
     var hrv: Double
 
+    var hasHRVData: Bool
+
     var spo2: Double
 
+    var hasSpO2Data: Bool
+
     var respiratoryRate: Double
+
+    var hasRespiratoryRateData: Bool
+
     // MARK: - Body
 
     var weight: Double
