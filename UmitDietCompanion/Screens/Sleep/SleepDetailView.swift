@@ -7,57 +7,84 @@ import SwiftUI
 
 struct SleepDetailView: View {
 
+    @State private var healthStore = HealthStore.shared
+
     var body: some View {
 
         ScrollView {
 
             VStack(spacing: 16) {
 
+                // MARK: - Total Sleep
+
                 TotalSleepCard(
-                    totalSleep: "4h 20m",
-                    goal: "8h",
-                    status: .recoveryNeeded
+                    totalSleep: formatDuration(
+                        healthStore.sleepHours * 3600
+                    ),
+                    goal: formatDuration(
+                        healthStore.sleepTarget * 3600
+                    ),
+                    status: sleepStatus
                 )
+
+                // MARK: - Deep Sleep
 
                 SleepStageCard(
                     stage: .deep,
-                    duration: "1h 44m",
-                    trend: "↑ Compared to last week"
+                    duration: formatDuration(
+                        healthStore.deepSleep
+                    ),
+                    trend: "From Apple Health"
                 ) {
 
                     DeepSleepDetailView()
 
                 }
 
+                // MARK: - Core Sleep
+
                 SleepStageCard(
                     stage: .core,
-                    duration: "2h 25m",
-                    trend: "≈ Your usual"
+                    duration: formatDuration(
+                        healthStore.coreSleep
+                    ),
+                    trend: "From Apple Health"
                 ) {
 
                     CoreSleepDetailView()
 
                 }
 
+                // MARK: - REM Sleep
+
                 SleepStageCard(
                     stage: .rem,
-                    duration: "10m",
-                    trend: "↓ Compared to last week"
+                    duration: formatDuration(
+                        healthStore.remSleep
+                    ),
+                    trend: "From Apple Health"
                 ) {
 
                     REMSleepDetailView()
 
                 }
 
+                // MARK: - Awake
+
                 SleepStageCard(
                     stage: .awake,
-                    duration: "33m",
-                    trend: "≈ Your usual"
+                    duration: formatDuration(
+                        healthStore.awakeTime
+                    ),
+                    trend: "From Apple Health"
                 ) {
 
-                    AwakeSleepDetailView()
+                    AwakeDetailView()
 
                 }
+
+                // MARK: - Night Metrics
+
                 NightMetricsCard {
 
                     NightMetricsView()
@@ -70,6 +97,56 @@ struct SleepDetailView: View {
         }
         .navigationTitle("Sleep")
         .navigationBarTitleDisplayMode(.inline)
+
+    }
+
+    // MARK: - Sleep Status
+
+    private var sleepStatus: SleepStatus {
+
+        if healthStore.sleepHours >= healthStore.sleepTarget {
+
+            return .ready
+
+        } else {
+
+            return .recoveryNeeded
+
+        }
+
+    }
+    // MARK: - Duration Formatter
+
+    private func formatDuration(
+        _ seconds: TimeInterval
+    ) -> String {
+
+        guard seconds > 0 else {
+            return "0m"
+        }
+
+        let totalMinutes = Int(
+            (seconds / 60).rounded()
+        )
+
+        let hours = totalMinutes / 60
+        let minutes = totalMinutes % 60
+
+        if hours > 0 {
+
+            if minutes > 0 {
+
+                return "\(hours)h \(minutes)m"
+
+            } else {
+
+                return "\(hours)h"
+
+            }
+
+        }
+
+        return "\(minutes)m"
 
     }
 

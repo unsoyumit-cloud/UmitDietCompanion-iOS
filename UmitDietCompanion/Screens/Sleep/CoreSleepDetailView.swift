@@ -9,9 +9,7 @@ struct CoreSleepDetailView: View {
 
     // MARK: - Data
 
-    private let duration = "2h 25m"
-    private let percentage = "56%"
-    private let comparison = "≈ Your usual"
+    @State private var healthStore = HealthStore.shared
 
     var body: some View {
 
@@ -44,13 +42,17 @@ struct CoreSleepDetailView: View {
                         spacing: 10
                     ) {
 
-                        Text(duration)
-                            .font(
-                                .system(
-                                    size: 42,
-                                    weight: .bold
-                                )
+                        Text(
+                            formatDuration(
+                                healthStore.coreSleep
                             )
+                        )
+                        .font(
+                            .system(
+                                size: 42,
+                                weight: .bold
+                            )
+                        )
 
                         Text("of total sleep")
                             .font(.subheadline)
@@ -62,15 +64,21 @@ struct CoreSleepDetailView: View {
                         alignment: .firstTextBaseline
                     ) {
 
-                        Text(comparison)
+                        Text("From Apple Health")
                             .font(.subheadline)
                             .foregroundStyle(.secondary)
 
                         Spacer()
 
-                        Text(percentage)
-                            .font(.subheadline.weight(.semibold))
-                            .foregroundStyle(.blue)
+                        Text(
+                            formatPercentage(
+                                healthStore.coreSleepPercentage
+                            )
+                        )
+                        .font(
+                            .subheadline.weight(.semibold)
+                        )
+                        .foregroundStyle(.blue)
 
                     }
 
@@ -106,14 +114,18 @@ struct CoreSleepDetailView: View {
                         spacing: 8
                     ) {
 
-                        Text(percentage)
-                            .font(
-                                .system(
-                                    size: 30,
-                                    weight: .bold
-                                )
+                        Text(
+                            formatPercentage(
+                                healthStore.coreSleepPercentage
                             )
-                            .foregroundStyle(.blue)
+                        )
+                        .font(
+                            .system(
+                                size: 30,
+                                weight: .bold
+                            )
+                        )
+                        .foregroundStyle(.blue)
 
                         Text("of total sleep")
                             .font(.subheadline)
@@ -122,7 +134,7 @@ struct CoreSleepDetailView: View {
                     }
 
                     Text(
-                        "Core sleep made up 56% of your total sleep."
+                        coreSleepShareText
                     )
                     .font(.subheadline)
                     .foregroundStyle(.secondary)
@@ -159,9 +171,7 @@ struct CoreSleepDetailView: View {
                         .font(.headline)
 
                     Text(
-                        "Your core sleep is within your usual range. " +
-                        "It continues to make up the largest portion " +
-                        "of your sleep tonight."
+                        coreSleepAnalysis
                     )
                     .font(.body)
                     .foregroundStyle(.secondary)
@@ -185,6 +195,8 @@ struct CoreSleepDetailView: View {
                         style: .continuous
                     )
                 )
+
+
                 // MARK: AI Insight
 
                 VStack(
@@ -203,8 +215,7 @@ struct CoreSleepDetailView: View {
                     }
 
                     Text(
-                        "Your core sleep looks consistent with your usual pattern. " +
-                        "Keeping a regular sleep schedule can help maintain this balance."
+                        coreSleepInsight
                     )
                     .font(.subheadline)
                     .foregroundStyle(.secondary)
@@ -236,6 +247,113 @@ struct CoreSleepDetailView: View {
         }
         .navigationTitle("Core Sleep")
         .navigationBarTitleDisplayMode(.inline)
+
+    }
+
+    // MARK: - Sleep Share
+
+    private var coreSleepShareText: String {
+
+        let percentage = formatPercentage(
+            healthStore.coreSleepPercentage
+        )
+
+        return """
+        Core sleep made up \(percentage) of your total sleep.
+        """
+
+    }
+
+    // MARK: - Analysis
+
+    private var coreSleepAnalysis: String {
+
+        let coreSleep = formatDuration(
+            healthStore.coreSleep
+        )
+
+        let percentage = formatPercentage(
+            healthStore.coreSleepPercentage
+        )
+
+        let totalSleep = formatDuration(
+            healthStore.sleepHours * 3600
+        )
+
+        return """
+        You had \(coreSleep) of core sleep, making up \(percentage) of your \(totalSleep) total sleep.
+        """
+
+    }
+
+    // MARK: - AI Insight
+
+    private var coreSleepInsight: String {
+
+        let percentage = healthStore.coreSleepPercentage
+
+        if percentage >= 50 {
+
+            return """
+            Core sleep currently makes up the largest share of your sleep. A regular sleep schedule can help support this pattern.
+            """
+
+        } else if percentage >= 35 {
+
+            return """
+            Your core sleep currently represents a substantial share of your total sleep. Keeping a consistent sleep schedule can help support healthy sleep patterns.
+            """
+
+        } else {
+
+            return """
+            Core sleep currently represents a smaller share of your total sleep. Let's look at the pattern over time rather than judging a single night.
+            """
+
+        }
+
+    }
+
+    // MARK: - Formatting
+
+    private func formatDuration(
+        _ seconds: TimeInterval
+    ) -> String {
+
+        guard seconds > 0 else {
+            return "0m"
+        }
+
+        let totalMinutes = Int(
+            (seconds / 60).rounded()
+        )
+
+        let hours = totalMinutes / 60
+        let minutes = totalMinutes % 60
+
+        if hours > 0 {
+
+            if minutes > 0 {
+
+                return "\(hours)h \(minutes)m"
+
+            } else {
+
+                return "\(hours)h"
+
+            }
+
+        }
+
+        return "\(minutes)m"
+
+    }
+
+    private func formatPercentage(
+        _ percentage: Double
+    ) -> String {
+
+        "\(Int(percentage.rounded()))%"
 
     }
 

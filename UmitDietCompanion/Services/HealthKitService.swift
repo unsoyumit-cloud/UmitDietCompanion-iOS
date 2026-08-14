@@ -41,9 +41,20 @@ final class HealthKitService {
             )!,
 
             HKQuantityType.quantityType(
+                forIdentifier: .heartRateVariabilitySDNN
+            )!,
+
+            HKQuantityType.quantityType(
+                forIdentifier: .oxygenSaturation
+            )!,
+
+            HKQuantityType.quantityType(
+                forIdentifier: .respiratoryRate
+            )!,
+
+            HKQuantityType.quantityType(
                 forIdentifier: .bodyMass
             )!
-
         ]
 
         print("➡️ Requesting HealthKit authorization...")
@@ -63,7 +74,6 @@ final class HealthKitService {
             print(error)
 
         }
-
     }
 
     // MARK: - Steps
@@ -93,13 +103,10 @@ final class HealthKitService {
             ) { _, result, error in
 
                 if let error {
-
                     continuation.resume(
                         throwing: error
                     )
-
                     return
-
                 }
 
                 let steps = Int(
@@ -113,18 +120,22 @@ final class HealthKitService {
                 continuation.resume(
                     returning: steps
                 )
-
             }
 
             healthStore.execute(query)
-
         }
-
     }
 
     // MARK: - Sleep
 
     func getLastNightSleepHours() async throws -> Double {
+
+        let metrics = try await getLastNightSleepMetrics()
+
+        return metrics.totalSleepHours
+    }
+
+    func getLastNightSleepMetrics() async throws -> SleepMetrics {
 
         let sleepType = HKObjectType.categoryType(
             forIdentifier: .sleepAnalysis
@@ -141,7 +152,9 @@ final class HealthKitService {
         components.minute = 0
         components.second = 0
 
-        let todayAt18 = calendar.date(from: components)!
+        let todayAt18 = calendar.date(
+            from: components
+        )!
 
         let startDate = calendar.date(
             byAdding: .day,
@@ -176,23 +189,25 @@ final class HealthKitService {
             ) { _, samples, error in
 
                 if let error {
-
                     continuation.resume(
                         throwing: error
                     )
-
                     return
-
                 }
 
                 guard let samples = samples as? [HKCategorySample] else {
 
                     continuation.resume(
-                        returning: 0
+                        returning: SleepMetrics(
+                            deepSleep: 0,
+                            coreSleep: 0,
+                            remSleep: 0,
+                            awakeTime: 0,
+                            unspecifiedSleep: 0
+                        )
                     )
 
                     return
-
                 }
 
                 let calculator = SleepMetricsCalculator()
@@ -202,23 +217,158 @@ final class HealthKitService {
                 )
 
                 if DiagnosticMode.sleep {
-
                     SleepDiagnostic.printSamples(samples)
                     SleepDiagnostic.printMetrics(metrics)
-
                 }
 
-                continuation.resume(
-                    returning: metrics.totalSleep / 3600
-                )
+                print("🌙 Sleep Metrics Result")
+                print("Deep Sleep : \(metrics.deepSleep / 3600) h")
+                print("Core Sleep : \(metrics.coreSleep / 3600) h")
+                print("REM Sleep  : \(metrics.remSleep / 3600) h")
+                print("Awake Time : \(metrics.awakeTime / 3600) h")
+                print("Total Sleep: \(metrics.totalSleepHours) h")
+                print("Time in Bed: \(metrics.timeInBedHours) h")
 
+                continuation.resume(
+                    returning: metrics
+                )
             }
 
             healthStore.execute(query)
-
         }
-
     }
+    // MARK: - Night Metrics
+
+    func getLastNightHRV() async throws -> Double {
+
+        let type = HKQuantityType.quantityType(
+            forIdentifier: .heartRateVariabilitySDNN
+        )!
+
+        return try await getLatestQuantityValue(
+            type: type,
+            predicate: nightMetricsPredicate(),
+            unit: .secondUnit(
+                with: .milli
+            )
+        )
+    }
+
+    func getLastNightSpO2() async throws -> Double {
+
+        let type = HKQuantityType.quantityType(
+            forIdentifier: .oxygenSaturation
+        )!
+
+        let value = try await getLatestQuantityValue(
+            type: type,
+            predicate: nightMetricsPredicate(),
+            unit: .percent()
+        )
+
+        return value * 100
+    }
+
+    func getLastNightRespiratoryRate() async throws -> Double {
+
+        let type = HKQuantityType.quantityType(
+            forIdentifier: .respiratoryRate
+        )!
+
+        return try await getLatestQuantityValue(
+            type: type,
+            predicate: nightMetricsPredicate(),
+            unit: HKUnit.count().unitDivided(
+                by: .minute()
+            )
+        )
+    }
+
+    // MARK: - Night Metrics Helpers
+
+    private func nightMetricsPredicate() -> NSPredicate {
+
+        let calendar = Calendar.current
+
+        var components = calendar.dateComponents(
+            [.year, .month, .day],
+            from: Date()
+        )
+
+        components.hour = 18
+        components.minute = 0
+        components.second = 0
+
+        let todayAt18 = calendar.date(
+            from: components
+        )!
+
+        let startDate = calendar.date(
+            byAdding: .day,
+            value: -1,
+            to: todayAt18
+        )!
+
+        let endDate = todayAt18
+
+        return HKQuery.predicateForSamples(
+            withStart: startDate,
+            end: endDate,
+            options: .strictStartDate
+        )
+    }
+
+    private func getLatestQuantityValue(
+        type: HKQuantityType,
+        predicate: NSPredicate,
+        unit: HKUnit
+    ) async throws -> Double {
+
+        let sortDescriptor = NSSortDescriptor(
+            key: HKSampleSortIdentifierEndDate,
+            ascending: false
+        )
+
+        return try await withCheckedThrowingContinuation { continuation in
+
+            let query = HKSampleQuery(
+                sampleType: type,
+                predicate: predicate,
+                limit: 1,
+                sortDescriptors: [
+                    sortDescriptor
+                ]
+            ) { _, samples, error in
+
+                if let error {
+                    continuation.resume(
+                        throwing: error
+                    )
+                    return
+                }
+
+                guard let sample =
+                        samples?.first as? HKQuantitySample
+                else {
+                    continuation.resume(
+                        returning: 0
+                    )
+                    return
+                }
+
+                let value = sample.quantity.doubleValue(
+                    for: unit
+                )
+
+                continuation.resume(
+                    returning: value
+                )
+            }
+
+            self.healthStore.execute(query)
+        }
+    }
+
     // MARK: - Active Energy
 
     func getTodayActiveEnergy() async throws -> Int {
@@ -246,13 +396,10 @@ final class HealthKitService {
             ) { _, result, error in
 
                 if let error {
-
                     continuation.resume(
                         throwing: error
                     )
-
                     return
-
                 }
 
                 let activeEnergy = Int(
@@ -266,15 +413,11 @@ final class HealthKitService {
                 continuation.resume(
                     returning: activeEnergy
                 )
-
             }
 
             healthStore.execute(query)
-
         }
-
     }
-
     // MARK: - Resting Heart Rate
 
     func getRestingHeartRate() async throws -> Int {
@@ -294,45 +437,42 @@ final class HealthKitService {
                 sampleType: heartRateType,
                 predicate: nil,
                 limit: 1,
-                sortDescriptors: [sortDescriptor]
+                sortDescriptors: [
+                    sortDescriptor
+                ]
             ) { _, samples, error in
 
                 if let error {
-
                     continuation.resume(
                         throwing: error
                     )
-
                     return
-
                 }
 
-                guard
-                    let sample = samples?.first as? HKQuantitySample
+                guard let sample =
+                        samples?.first as? HKQuantitySample
                 else {
-
                     continuation.resume(
                         returning: 0
                     )
-
                     return
-
                 }
 
                 let bpm = sample.quantity.doubleValue(
-                    for: HKUnit.count().unitDivided(by: .minute())
+                    for: HKUnit.count().unitDivided(
+                        by: .minute()
+                    )
                 )
 
                 continuation.resume(
-                    returning: Int(bpm.rounded())
+                    returning: Int(
+                        bpm.rounded()
+                    )
                 )
-
             }
 
             healthStore.execute(query)
-
         }
-
     }
 
     // MARK: - Weight
@@ -354,45 +494,39 @@ final class HealthKitService {
                 sampleType: weightType,
                 predicate: nil,
                 limit: 1,
-                sortDescriptors: [sortDescriptor]
+                sortDescriptors: [
+                    sortDescriptor
+                ]
             ) { _, samples, error in
 
                 if let error {
-
                     continuation.resume(
                         throwing: error
                     )
-
                     return
-
                 }
 
-                guard
-                    let sample = samples?.first as? HKQuantitySample
+                guard let sample =
+                        samples?.first as? HKQuantitySample
                 else {
-
                     continuation.resume(
                         returning: 0
                     )
-
                     return
-
                 }
 
                 let weight = sample.quantity.doubleValue(
-                    for: .gramUnit(with: .kilo)
+                    for: .gramUnit(
+                        with: .kilo
+                    )
                 )
 
                 continuation.resume(
                     returning: weight
                 )
-
             }
 
             healthStore.execute(query)
-
         }
-
     }
-
 }

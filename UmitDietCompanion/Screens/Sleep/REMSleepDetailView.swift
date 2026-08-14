@@ -9,9 +9,7 @@ struct REMSleepDetailView: View {
 
     // MARK: - Data
 
-    private let duration = "10m"
-    private let percentage = "4%"
-    private let comparison = "↓ Compared to last week"
+    @State private var healthStore = HealthStore.shared
 
     var body: some View {
 
@@ -44,13 +42,17 @@ struct REMSleepDetailView: View {
                         spacing: 10
                     ) {
 
-                        Text(duration)
-                            .font(
-                                .system(
-                                    size: 42,
-                                    weight: .bold
-                                )
+                        Text(
+                            formatDuration(
+                                healthStore.remSleep
                             )
+                        )
+                        .font(
+                            .system(
+                                size: 42,
+                                weight: .bold
+                            )
+                        )
 
                         Text("of total sleep")
                             .font(.subheadline)
@@ -62,15 +64,21 @@ struct REMSleepDetailView: View {
                         alignment: .firstTextBaseline
                     ) {
 
-                        Text(comparison)
+                        Text("From Apple Health")
                             .font(.subheadline)
                             .foregroundStyle(.secondary)
 
                         Spacer()
 
-                        Text(percentage)
-                            .font(.subheadline.weight(.semibold))
-                            .foregroundStyle(.pink)
+                        Text(
+                            formatPercentage(
+                                healthStore.remSleepPercentage
+                            )
+                        )
+                        .font(
+                            .subheadline.weight(.semibold)
+                        )
+                        .foregroundStyle(.pink)
 
                     }
 
@@ -106,14 +114,18 @@ struct REMSleepDetailView: View {
                         spacing: 8
                     ) {
 
-                        Text(percentage)
-                            .font(
-                                .system(
-                                    size: 30,
-                                    weight: .bold
-                                )
+                        Text(
+                            formatPercentage(
+                                healthStore.remSleepPercentage
                             )
-                            .foregroundStyle(.pink)
+                        )
+                        .font(
+                            .system(
+                                size: 30,
+                                weight: .bold
+                            )
+                        )
+                        .foregroundStyle(.pink)
 
                         Text("of total sleep")
                             .font(.subheadline)
@@ -122,7 +134,7 @@ struct REMSleepDetailView: View {
                     }
 
                     Text(
-                        "REM sleep made up 4% of your total sleep."
+                        remSleepShareText
                     )
                     .font(.subheadline)
                     .foregroundStyle(.secondary)
@@ -159,9 +171,7 @@ struct REMSleepDetailView: View {
                         .font(.headline)
 
                     Text(
-                        "Your REM sleep was lower than last week. " +
-                        "REM sleep can vary from night to night, so " +
-                        "one night's result is best viewed as part of your longer-term pattern."
+                        remSleepAnalysis
                     )
                     .font(.body)
                     .foregroundStyle(.secondary)
@@ -185,6 +195,8 @@ struct REMSleepDetailView: View {
                         style: .continuous
                     )
                 )
+
+
                 // MARK: AI Insight
 
                 VStack(
@@ -203,8 +215,7 @@ struct REMSleepDetailView: View {
                     }
 
                     Text(
-                        "Your REM sleep was shorter than usual last night. " +
-                        "Let's keep an eye on the pattern rather than judging a single night."
+                        remSleepInsight
                     )
                     .font(.subheadline)
                     .foregroundStyle(.secondary)
@@ -236,6 +247,113 @@ struct REMSleepDetailView: View {
         }
         .navigationTitle("REM Sleep")
         .navigationBarTitleDisplayMode(.inline)
+
+    }
+
+    // MARK: - Sleep Share
+
+    private var remSleepShareText: String {
+
+        let percentage = formatPercentage(
+            healthStore.remSleepPercentage
+        )
+
+        return """
+        REM sleep made up \(percentage) of your total sleep.
+        """
+
+    }
+
+    // MARK: - Analysis
+
+    private var remSleepAnalysis: String {
+
+        let remSleep = formatDuration(
+            healthStore.remSleep
+        )
+
+        let percentage = formatPercentage(
+            healthStore.remSleepPercentage
+        )
+
+        let totalSleep = formatDuration(
+            healthStore.sleepHours * 3600
+        )
+
+        return """
+        You had \(remSleep) of REM sleep, making up \(percentage) of your \(totalSleep) total sleep. REM sleep can vary from night to night, so one night's result is best viewed as part of your longer-term pattern.
+        """
+
+    }
+
+    // MARK: - AI Insight
+
+    private var remSleepInsight: String {
+
+        let percentage = healthStore.remSleepPercentage
+
+        if percentage >= 20 {
+
+            return """
+            Your REM sleep currently makes up a substantial share of your total sleep. A consistent sleep schedule can help support this pattern.
+            """
+
+        } else if percentage >= 10 {
+
+            return """
+            Your REM sleep currently represents a moderate share of your total sleep. Let's look at the pattern over time rather than judging a single night.
+            """
+
+        } else {
+
+            return """
+            Your REM sleep currently represents a smaller share of your total sleep. One night can vary, so let's keep an eye on the pattern over time.
+            """
+
+        }
+
+    }
+
+    // MARK: - Formatting
+
+    private func formatDuration(
+        _ seconds: TimeInterval
+    ) -> String {
+
+        guard seconds > 0 else {
+            return "0m"
+        }
+
+        let totalMinutes = Int(
+            (seconds / 60).rounded()
+        )
+
+        let hours = totalMinutes / 60
+        let minutes = totalMinutes % 60
+
+        if hours > 0 {
+
+            if minutes > 0 {
+
+                return "\(hours)h \(minutes)m"
+
+            } else {
+
+                return "\(hours)h"
+
+            }
+
+        }
+
+        return "\(minutes)m"
+
+    }
+
+    private func formatPercentage(
+        _ percentage: Double
+    ) -> String {
+
+        "\(Int(percentage.rounded()))%"
 
     }
 

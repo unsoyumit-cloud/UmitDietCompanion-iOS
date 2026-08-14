@@ -1,18 +1,15 @@
 //
-//  AwakeSleepDetailView.swift
+//  AwakeDetailView.swift
 //  UmitDietCompanion
 //
 
 import SwiftUI
 
-struct AwakeSleepDetailView: View {
+struct AwakeDetailView: View {
 
     // MARK: - Data
 
-    private let awakeTime = "33m"
-    private let awakenings = "4 times"
-    private let longestSleep = "2h 18m"
-    private let comparison = "≈ Your usual"
+    @State private var healthStore = HealthStore.shared
 
     var body: some View {
 
@@ -45,13 +42,17 @@ struct AwakeSleepDetailView: View {
                         spacing: 10
                     ) {
 
-                        Text(awakeTime)
-                            .font(
-                                .system(
-                                    size: 42,
-                                    weight: .bold
-                                )
+                        Text(
+                            formatDuration(
+                                healthStore.awakeTime
                             )
+                        )
+                        .font(
+                            .system(
+                                size: 42,
+                                weight: .bold
+                            )
+                        )
 
                         Text("awake during the night")
                             .font(.subheadline)
@@ -59,7 +60,7 @@ struct AwakeSleepDetailView: View {
 
                     }
 
-                    Text(comparison)
+                    Text("From Apple Health")
                         .font(.subheadline)
                         .foregroundStyle(.secondary)
 
@@ -90,19 +91,43 @@ struct AwakeSleepDetailView: View {
                     Text("Night Activity")
                         .font(.headline)
 
-                    HStack(spacing: 12) {
+                    VStack(
+                        alignment: .leading,
+                        spacing: 8
+                    ) {
 
-                        awakeMetric(
-                            value: awakenings,
-                            label: "Awakenings"
+                        Text(
+                            formatDuration(
+                                healthStore.awakeTime
+                            )
                         )
+                        .font(
+                            .system(
+                                size: 28,
+                                weight: .bold
+                            )
+                        )
+                        .foregroundStyle(.orange)
 
-                        awakeMetric(
-                            value: longestSleep,
-                            label: "Longest uninterrupted sleep"
-                        )
+                        Text("Total awake time")
+                            .font(.caption)
+                            .foregroundStyle(.secondary)
 
                     }
+                    .frame(
+                        maxWidth: .infinity,
+                        alignment: .leading
+                    )
+                    .padding(14)
+                    .background(
+                        Color.orange.opacity(0.08)
+                    )
+                    .clipShape(
+                        RoundedRectangle(
+                            cornerRadius: 14,
+                            style: .continuous
+                        )
+                    )
 
                 }
                 .padding(20)
@@ -132,8 +157,7 @@ struct AwakeSleepDetailView: View {
                         .font(.headline)
 
                     Text(
-                        "Your awake time was within your usual range last night. " +
-                        "Your sleep pattern appears relatively consistent."
+                        awakePatternText
                     )
                     .font(.body)
                     .foregroundStyle(.secondary)
@@ -157,6 +181,8 @@ struct AwakeSleepDetailView: View {
                         style: .continuous
                     )
                 )
+
+
                 // MARK: AI Insight
 
                 VStack(
@@ -175,8 +201,7 @@ struct AwakeSleepDetailView: View {
                     }
 
                     Text(
-                        "Your awake time looks consistent with your usual pattern. " +
-                        "A calm and regular bedtime routine can help support uninterrupted sleep."
+                        awakeInsight
                     )
                     .font(.subheadline)
                     .foregroundStyle(.secondary)
@@ -211,50 +236,110 @@ struct AwakeSleepDetailView: View {
 
     }
 
-    // MARK: - Awake Metric
+    // MARK: - Pattern
 
-    private func awakeMetric(
-        value: String,
-        label: String
-    ) -> some View {
+    private var awakePatternText: String {
 
-        VStack(
-            alignment: .leading,
-            spacing: 8
-        ) {
+        let awake = healthStore.awakeTime
+        let timeInBed = healthStore.timeInBed
 
-            Text(value)
-                .font(
-                    .system(
-                        size: 24,
-                        weight: .bold
-                    )
-                )
-                .foregroundStyle(.orange)
+        guard timeInBed > 0 else {
 
-            Text(label)
-                .font(.caption)
-                .foregroundStyle(.secondary)
-                .fixedSize(
-                    horizontal: false,
-                    vertical: true
-                )
+            return """
+            You were awake for \(formatDuration(awake)) during the night. More night-to-night data will help reveal your usual pattern.
+            """
 
         }
-        .frame(
-            maxWidth: .infinity,
-            alignment: .leading
+
+        let awakePercentage =
+            (awake / timeInBed) * 100
+
+        return """
+        You were awake for \(formatDuration(awake)) during approximately \(formatPercentage(awakePercentage)) of your time in bed. A single night is best viewed as part of a longer-term pattern.
+        """
+
+    }
+
+    // MARK: - AI Insight
+
+    private var awakeInsight: String {
+
+        let awake = healthStore.awakeTime
+        let timeInBed = healthStore.timeInBed
+
+        guard timeInBed > 0 else {
+
+            return """
+            Your awake time was \(formatDuration(awake)) last night. Let's look at the pattern over time rather than judging a single night.
+            """
+
+        }
+
+        let awakePercentage =
+            (awake / timeInBed) * 100
+
+        if awakePercentage <= 10 {
+
+            return """
+            Your awake time was a relatively small part of your time in bed last night. Keeping a calm and regular bedtime routine can help support uninterrupted sleep.
+            """
+
+        } else if awakePercentage <= 20 {
+
+            return """
+            Your awake time made up a noticeable part of your time in bed last night. Let's watch the pattern over time rather than judging a single night.
+            """
+
+        } else {
+
+            return """
+            A larger share of your time in bed was spent awake last night. One night can vary, so let's look for a pattern across multiple nights.
+            """
+
+        }
+
+    }
+
+    // MARK: - Formatting
+
+    private func formatDuration(
+        _ seconds: TimeInterval
+    ) -> String {
+
+        guard seconds > 0 else {
+            return "0m"
+        }
+
+        let totalMinutes = Int(
+            (seconds / 60).rounded()
         )
-        .padding(14)
-        .background(
-            Color.orange.opacity(0.08)
-        )
-        .clipShape(
-            RoundedRectangle(
-                cornerRadius: 14,
-                style: .continuous
-            )
-        )
+
+        let hours = totalMinutes / 60
+        let minutes = totalMinutes % 60
+
+        if hours > 0 {
+
+            if minutes > 0 {
+
+                return "\(hours)h \(minutes)m"
+
+            } else {
+
+                return "\(hours)h"
+
+            }
+
+        }
+
+        return "\(minutes)m"
+
+    }
+
+    private func formatPercentage(
+        _ percentage: Double
+    ) -> String {
+
+        "\(Int(percentage.rounded()))%"
 
     }
 
@@ -264,7 +349,7 @@ struct AwakeSleepDetailView: View {
 
     NavigationStack {
 
-        AwakeSleepDetailView()
+        AwakeDetailView()
 
     }
 

@@ -1,10 +1,9 @@
 //
-//  DailyMetrics.swift
+//  DailyHealthMetrics.swift
 //  UmitDietCompanion
 //
 //  Created by Ümit Ünsoy on 2.07.2026.
 //
-
 
 import Foundation
 
@@ -12,7 +11,11 @@ import Foundation
 /// Primary input model for Health Score calculations and AI Coach.
 struct DailyHealthMetrics {
 
+    // MARK: - Identity
+
     let date: Date
+
+    // MARK: - Activity & Nutrition
 
     var steps: Int
 
@@ -22,9 +25,37 @@ struct DailyHealthMetrics {
 
     var activeCaloriesBurned: Int
 
+    // MARK: - Sleep
+
     var sleepHours: Double
 
+    var deepSleep: TimeInterval
+
+    var coreSleep: TimeInterval
+
+    var remSleep: TimeInterval
+
+    var awakeTime: TimeInterval
+
+    var timeInBed: TimeInterval
+    var deepSleepPercentage: Double
+
+    var coreSleepPercentage: Double
+
+    var remSleepPercentage: Double
+
+    var sleepEfficiency: Double
+
+    // MARK: - Night Metrics
+
     var restingHeartRate: Int
+
+    var hrv: Double
+
+    var spo2: Double
+
+    var respiratoryRate: Double
+    // MARK: - Body
 
     var weight: Double
 }

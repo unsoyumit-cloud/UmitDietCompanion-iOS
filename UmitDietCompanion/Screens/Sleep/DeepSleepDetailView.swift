@@ -9,9 +9,7 @@ struct DeepSleepDetailView: View {
 
     // MARK: - Data
 
-    private let duration = "1h 44m"
-    private let percentage = "40%"
-    private let comparison = "↑ Compared to last week"
+    @State private var healthStore = HealthStore.shared
 
     var body: some View {
 
@@ -44,13 +42,17 @@ struct DeepSleepDetailView: View {
                         spacing: 10
                     ) {
 
-                        Text(duration)
-                            .font(
-                                .system(
-                                    size: 42,
-                                    weight: .bold
-                                )
+                        Text(
+                            formatDuration(
+                                healthStore.deepSleep
                             )
+                        )
+                        .font(
+                            .system(
+                                size: 42,
+                                weight: .bold
+                            )
+                        )
 
                         Text("of total sleep")
                             .font(.subheadline)
@@ -62,15 +64,23 @@ struct DeepSleepDetailView: View {
                         alignment: .firstTextBaseline
                     ) {
 
-                        Text(comparison)
-                            .font(.subheadline)
-                            .foregroundStyle(.secondary)
+                        Text(
+                            "From Apple Health"
+                        )
+                        .font(.subheadline)
+                        .foregroundStyle(.secondary)
 
                         Spacer()
 
-                        Text(percentage)
-                            .font(.subheadline.weight(.semibold))
-                            .foregroundStyle(.purple)
+                        Text(
+                            formatPercentage(
+                                healthStore.deepSleepPercentage
+                            )
+                        )
+                        .font(
+                            .subheadline.weight(.semibold)
+                        )
+                        .foregroundStyle(.purple)
 
                     }
 
@@ -106,14 +116,18 @@ struct DeepSleepDetailView: View {
                         spacing: 8
                     ) {
 
-                        Text(percentage)
-                            .font(
-                                .system(
-                                    size: 30,
-                                    weight: .bold
-                                )
+                        Text(
+                            formatPercentage(
+                                healthStore.deepSleepPercentage
                             )
-                            .foregroundStyle(.purple)
+                        )
+                        .font(
+                            .system(
+                                size: 30,
+                                weight: .bold
+                            )
+                        )
+                        .foregroundStyle(.purple)
 
                         Text("of total sleep")
                             .font(.subheadline)
@@ -122,7 +136,7 @@ struct DeepSleepDetailView: View {
                     }
 
                     Text(
-                        "Deep sleep made up 40% of your total sleep."
+                        deepSleepShareText
                     )
                     .font(.subheadline)
                     .foregroundStyle(.secondary)
@@ -159,9 +173,7 @@ struct DeepSleepDetailView: View {
                         .font(.headline)
 
                     Text(
-                        "Your deep sleep increased compared to last week. " +
-                        "This suggests a stronger share of your sleep was spent " +
-                        "in the deeper stages of the night."
+                        deepSleepAnalysis
                     )
                     .font(.body)
                     .foregroundStyle(.secondary)
@@ -185,6 +197,8 @@ struct DeepSleepDetailView: View {
                         style: .continuous
                     )
                 )
+
+
                 // MARK: AI Insight
 
                 VStack(
@@ -203,8 +217,7 @@ struct DeepSleepDetailView: View {
                     }
 
                     Text(
-                        "Deep sleep is looking better than last week. " +
-                        "A consistent sleep schedule can help support this."
+                        deepSleepInsight
                     )
                     .font(.subheadline)
                     .foregroundStyle(.secondary)
@@ -236,6 +249,113 @@ struct DeepSleepDetailView: View {
         }
         .navigationTitle("Deep Sleep")
         .navigationBarTitleDisplayMode(.inline)
+
+    }
+
+    // MARK: - Sleep Share
+
+    private var deepSleepShareText: String {
+
+        let percentage = formatPercentage(
+            healthStore.deepSleepPercentage
+        )
+
+        return """
+        Deep sleep made up \(percentage) of your total sleep.
+        """
+
+    }
+
+    // MARK: - Analysis
+
+    private var deepSleepAnalysis: String {
+
+        let deepSleep = formatDuration(
+            healthStore.deepSleep
+        )
+
+        let percentage = formatPercentage(
+            healthStore.deepSleepPercentage
+        )
+
+        let totalSleep = formatDuration(
+            healthStore.sleepHours * 3600
+        )
+
+        return """
+        You had \(deepSleep) of deep sleep, making up \(percentage) of your \(totalSleep) total sleep.
+        """
+
+    }
+
+    // MARK: - AI Insight
+
+    private var deepSleepInsight: String {
+
+        let percentage = healthStore.deepSleepPercentage
+
+        if percentage >= 30 {
+
+            return """
+            Deep sleep currently makes up a substantial share of your total sleep. Keeping a consistent sleep schedule can help support this pattern.
+            """
+
+        } else if percentage >= 20 {
+
+            return """
+            Your deep sleep currently represents a moderate share of your total sleep. A regular sleep schedule can help support healthy sleep patterns.
+            """
+
+        } else {
+
+            return """
+            Deep sleep currently represents a smaller share of your total sleep. Let's look at the pattern over time rather than judging a single night.
+            """
+
+        }
+
+    }
+
+    // MARK: - Formatting
+
+    private func formatDuration(
+        _ seconds: TimeInterval
+    ) -> String {
+
+        guard seconds > 0 else {
+            return "0m"
+        }
+
+        let totalMinutes = Int(
+            (seconds / 60).rounded()
+        )
+
+        let hours = totalMinutes / 60
+        let minutes = totalMinutes % 60
+
+        if hours > 0 {
+
+            if minutes > 0 {
+
+                return "\(hours)h \(minutes)m"
+
+            } else {
+
+                return "\(hours)h"
+
+            }
+
+        }
+
+        return "\(minutes)m"
+
+    }
+
+    private func formatPercentage(
+        _ percentage: Double
+    ) -> String {
+
+        "\(Int(percentage.rounded()))%"
 
     }
 
