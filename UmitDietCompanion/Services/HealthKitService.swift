@@ -132,15 +132,32 @@ final class HealthKitService {
 
         let calendar = Calendar.current
 
+        var components = calendar.dateComponents(
+            [.year, .month, .day],
+            from: Date()
+        )
+
+        components.hour = 18
+        components.minute = 0
+        components.second = 0
+
+        let todayAt18 = calendar.date(from: components)!
+
         let startDate = calendar.date(
-            byAdding: .hour,
-            value: -36,
-            to: Date()
+            byAdding: .day,
+            value: -1,
+            to: todayAt18
         )!
+
+        let endDate = todayAt18
+
+        print("🌙 Sleep Query")
+        print("Start : \(startDate)")
+        print("End   : \(endDate)")
 
         let predicate = HKQuery.predicateForSamples(
             withStart: startDate,
-            end: Date(),
+            end: endDate,
             options: .strictStartDate
         )
 
@@ -178,14 +195,21 @@ final class HealthKitService {
 
                 }
 
-                let calculator = SleepDurationCalculator()
+                let calculator = SleepMetricsCalculator()
 
-                let sleepHours = calculator.calculate(
+                let metrics = calculator.calculate(
                     from: samples
                 )
 
+                if DiagnosticMode.sleep {
+
+                    SleepDiagnostic.printSamples(samples)
+                    SleepDiagnostic.printMetrics(metrics)
+
+                }
+
                 continuation.resume(
-                    returning: sleepHours
+                    returning: metrics.totalSleep / 3600
                 )
 
             }
