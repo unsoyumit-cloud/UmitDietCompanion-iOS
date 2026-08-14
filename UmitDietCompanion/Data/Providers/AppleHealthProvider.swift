@@ -21,11 +21,13 @@ final class AppleHealthProvider: HealthDataProvider {
         let steps = try await healthKit.getTodayStepCount()
         let sleepHours = try await healthKit.getLastNightSleepHours()
         let activeEnergy = try await healthKit.getTodayActiveEnergy()
+        let restingHeartRate = try await healthKit.getRestingHeartRate()
 
         // Debug
         print("Steps: \(steps)")
         print("Sleep Hours: \(sleepHours)")
         print("Active Energy: \(activeEnergy)")
+        print("Resting Heart Rate: \(restingHeartRate) bpm")
 
         return DailyHealthMetrics(
 
@@ -41,7 +43,7 @@ final class AppleHealthProvider: HealthDataProvider {
 
             sleepHours: sleepHours,
 
-            restingHeartRate: 0,
+            restingHeartRate: restingHeartRate,
 
             weight: 0
 

@@ -34,6 +34,10 @@ final class HealthKitService {
 
             HKQuantityType.quantityType(
                 forIdentifier: .activeEnergyBurned
+            )!,
+
+            HKQuantityType.quantityType(
+                forIdentifier: .restingHeartRate
             )!
 
         ]
@@ -233,6 +237,66 @@ final class HealthKitService {
 
                 continuation.resume(
                     returning: activeEnergy
+                )
+
+            }
+
+            healthStore.execute(query)
+
+        }
+
+    }
+
+    // MARK: - Resting Heart Rate
+
+    func getRestingHeartRate() async throws -> Int {
+
+        let heartRateType = HKQuantityType.quantityType(
+            forIdentifier: .restingHeartRate
+        )!
+
+        let sortDescriptor = NSSortDescriptor(
+            key: HKSampleSortIdentifierEndDate,
+            ascending: false
+        )
+
+        return try await withCheckedThrowingContinuation { continuation in
+
+            let query = HKSampleQuery(
+                sampleType: heartRateType,
+                predicate: nil,
+                limit: 1,
+                sortDescriptors: [sortDescriptor]
+            ) { _, samples, error in
+
+                if let error {
+
+                    continuation.resume(
+                        throwing: error
+                    )
+
+                    return
+
+                }
+
+                guard
+                    let sample = samples?.first as? HKQuantitySample
+                else {
+
+                    continuation.resume(
+                        returning: 0
+                    )
+
+                    return
+
+                }
+
+                let bpm = sample.quantity.doubleValue(
+                    for: HKUnit.count().unitDivided(by: .minute())
+                )
+
+                continuation.resume(
+                    returning: Int(bpm.rounded())
                 )
 
             }

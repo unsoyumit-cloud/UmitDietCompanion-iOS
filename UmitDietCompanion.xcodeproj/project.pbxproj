@@ -26,6 +26,8 @@
 		7B3060DA302DAB5000DF04A0 /* AI Priority Matrix.md in Resources */ = {isa = PBXBuildFile; fileRef = 7B3060D9302DAB5000DF04A0 /* AI Priority Matrix.md */; };
 		7B3060DC302DABA800DF04A0 /* AI Insight Library.md in Resources */ = {isa = PBXBuildFile; fileRef = 7B3060DB302DABA800DF04A0 /* AI Insight Library.md */; };
 		7B3060DE302DABED00DF04A0 /* AI Recommendation Library.md in Resources */ = {isa = PBXBuildFile; fileRef = 7B3060DD302DABED00DF04A0 /* AI Recommendation Library.md */; };
+		7B3060FF302EE31700DF04A0 /* CONTRIBUTING.md in Resources */ = {isa = PBXBuildFile; fileRef = 7B3060FE302EE31700DF04A0 /* CONTRIBUTING.md */; };
+		7B306101302EE3A400DF04A0 /* LICENSE.md in Resources */ = {isa = PBXBuildFile; fileRef = 7B306100302EE3A400DF04A0 /* LICENSE.md */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXContainerItemProxy section */
@@ -68,6 +70,8 @@
 		7B3060D9302DAB5000DF04A0 /* AI Priority Matrix.md */ = {isa = PBXFileReference; lastKnownFileType = net.daringfireball.markdown; path = "AI Priority Matrix.md"; sourceTree = "<group>"; };
 		7B3060DB302DABA800DF04A0 /* AI Insight Library.md */ = {isa = PBXFileReference; lastKnownFileType = net.daringfireball.markdown; path = "AI Insight Library.md"; sourceTree = "<group>"; };
 		7B3060DD302DABED00DF04A0 /* AI Recommendation Library.md */ = {isa = PBXFileReference; lastKnownFileType = net.daringfireball.markdown; path = "AI Recommendation Library.md"; sourceTree = "<group>"; };
+		7B3060FE302EE31700DF04A0 /* CONTRIBUTING.md */ = {isa = PBXFileReference; lastKnownFileType = net.daringfireball.markdown; path = CONTRIBUTING.md; sourceTree = "<group>"; };
+		7B306100302EE3A400DF04A0 /* LICENSE.md */ = {isa = PBXFileReference; lastKnownFileType = net.daringfireball.markdown; path = LICENSE.md; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
 /* Begin PBXFileSystemSynchronizedBuildFileExceptionSet section */
@@ -159,7 +163,6 @@
 		7B1B45462FFAE88300C6F2EA = {
 			isa = PBXGroup;
 			children = (
-				7B1B468E2FFB05E900C6F2EA /* README.md */,
 				7B1B455F2FFAE88500C6F2EA /* UmitDietCompanionTests */,
 				7B1B45692FFAE88500C6F2EA /* UmitDietCompanionUITests */,
 				7B1B45502FFAE88300C6F2EA /* Products */,
@@ -188,6 +191,9 @@
 				7B1B48C5301F590000C6F2EA /* Behaviour */,
 				7B1B48C4301F58FA00C6F2EA /* Product */,
 				7B1B48B5301F559600C6F2EA /* ADR */,
+				7B1B468E2FFB05E900C6F2EA /* README.md */,
+				7B3060FE302EE31700DF04A0 /* CONTRIBUTING.md */,
+				7B306100302EE3A400DF04A0 /* LICENSE.md */,
 			);
 			path = Documentation;
 			sourceTree = "<group>";
@@ -345,6 +351,8 @@
 			files = (
 				7B3060A6302CAAB500DF04A0 /* AI_PRINCIPLES.md in Resources */,
 				7B3060DA302DAB5000DF04A0 /* AI Priority Matrix.md in Resources */,
+				7B3060FF302EE31700DF04A0 /* CONTRIBUTING.md in Resources */,
+				7B306101302EE3A400DF04A0 /* LICENSE.md in Resources */,
 				7B30603D3029EAA300DF04A0 /* AI_CONTEXT_ARCHITECTURE.md in Resources */,
 				7B3060313029E67E00DF04A0 /* AI_COACH_PRINCIPLES.md in Resources */,
 				7B3060A4302CA88A00DF04A0 /* ARCHITECTURE.md in Resources */,

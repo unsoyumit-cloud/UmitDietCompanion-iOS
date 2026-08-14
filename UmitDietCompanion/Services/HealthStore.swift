@@ -97,20 +97,20 @@ final class HealthStore {
             steps = metrics.steps
             sleepHours = metrics.sleepHours
             activeEnergy = metrics.activeCaloriesBurned
+            restingHeartRate = metrics.restingHeartRate
 
-            // Remaining values are still provided by
-            // DevelopmentHealthProvider until their
-            // HealthKit implementations are completed.
+            // Weight is still provided by
+            // DevelopmentHealthProvider until its
+            // HealthKit implementation is completed.
 
             weight = developmentProvider.weight
-            restingHeartRate = developmentProvider.restingHeartRate
 
             print("✅ HealthStore refreshed")
 
             print("Steps:", steps)
             print("Sleep:", sleepHours)
             print("Active Energy:", activeEnergy)
-
+            print("Resting Heart Rate:", restingHeartRate)
         } catch {
 
             print("❌ Health refresh failed:")
@@ -123,11 +123,11 @@ final class HealthStore {
     // MARK: - Models
 
     var profile: UserProfile {
-        
+
         var profile = UserProfile(
-            
+
             name: "Ümit",
-            
+
             birthDate: Calendar.current.date(
                 from: DateComponents(
                     year: 1983,
@@ -135,28 +135,29 @@ final class HealthStore {
                     day: 7
                 )
             )!,
-            
+
             gender: .male,
-            
+
             height: 178,
-            
+
             startWeight: 89,
-            
+
             targetWeight: 75,
-            
+
             activityLevel: .moderate,
-            
+
             eatingStyle: .standard,
-            
+
             calorieGoal: energyTarget,
-            
+
             waterGoal: Int(waterTarget),
-            
+
             stepGoal: stepsTarget,
-            
+
             sleepGoal: sleepTarget
-            
+
         )
+
         profile.coaching = CoachingProfile(
 
             coachPersonality: .balanced,
