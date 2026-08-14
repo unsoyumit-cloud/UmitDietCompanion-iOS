@@ -98,12 +98,7 @@ final class HealthStore {
             sleepHours = metrics.sleepHours
             activeEnergy = metrics.activeCaloriesBurned
             restingHeartRate = metrics.restingHeartRate
-
-            // Weight is still provided by
-            // DevelopmentHealthProvider until its
-            // HealthKit implementation is completed.
-
-            weight = developmentProvider.weight
+            weight = metrics.weight
 
             print("✅ HealthStore refreshed")
 
@@ -111,6 +106,7 @@ final class HealthStore {
             print("Sleep:", sleepHours)
             print("Active Energy:", activeEnergy)
             print("Resting Heart Rate:", restingHeartRate)
+            print("Weight:", weight)
         } catch {
 
             print("❌ Health refresh failed:")

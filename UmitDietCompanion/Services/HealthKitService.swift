@@ -38,6 +38,10 @@ final class HealthKitService {
 
             HKQuantityType.quantityType(
                 forIdentifier: .restingHeartRate
+            )!,
+
+            HKQuantityType.quantityType(
+                forIdentifier: .bodyMass
             )!
 
         ]
@@ -297,6 +301,66 @@ final class HealthKitService {
 
                 continuation.resume(
                     returning: Int(bpm.rounded())
+                )
+
+            }
+
+            healthStore.execute(query)
+
+        }
+
+    }
+
+    // MARK: - Weight
+
+    func getLatestWeight() async throws -> Double {
+
+        let weightType = HKQuantityType.quantityType(
+            forIdentifier: .bodyMass
+        )!
+
+        let sortDescriptor = NSSortDescriptor(
+            key: HKSampleSortIdentifierEndDate,
+            ascending: false
+        )
+
+        return try await withCheckedThrowingContinuation { continuation in
+
+            let query = HKSampleQuery(
+                sampleType: weightType,
+                predicate: nil,
+                limit: 1,
+                sortDescriptors: [sortDescriptor]
+            ) { _, samples, error in
+
+                if let error {
+
+                    continuation.resume(
+                        throwing: error
+                    )
+
+                    return
+
+                }
+
+                guard
+                    let sample = samples?.first as? HKQuantitySample
+                else {
+
+                    continuation.resume(
+                        returning: 0
+                    )
+
+                    return
+
+                }
+
+                let weight = sample.quantity.doubleValue(
+                    for: .gramUnit(with: .kilo)
+                )
+
+                continuation.resume(
+                    returning: weight
                 )
 
             }
