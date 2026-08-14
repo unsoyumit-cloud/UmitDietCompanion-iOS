@@ -1,4 +1,4 @@
-
+//
 //  HealthCalculator.swift
 //  UmitDietCompanion
 //
@@ -20,7 +20,10 @@ struct HealthCalculator {
 
         guard target > 0 else { return 0 }
 
-        return min(max(current / target, 0), 1.0)
+        return min(
+            max(current / target, 0),
+            1.0
+        )
     }
 
     // MARK: - Sleep
@@ -107,7 +110,10 @@ struct HealthCalculator {
         today: DailyHealthMetrics
     ) -> Double {
 
-        max(today.weight - profile.targetWeight, 0)
+        max(
+            today.weight - profile.targetWeight,
+            0
+        )
     }
 
     static func weightProgress(
@@ -115,16 +121,24 @@ struct HealthCalculator {
         today: DailyHealthMetrics
     ) -> Double {
 
-        let totalToLose = profile.startWeight - profile.targetWeight
+        let totalToLose =
+            profile.startWeight - profile.targetWeight
 
-        guard totalToLose > 0 else { return 0 }
+        guard totalToLose > 0 else {
+            return 0
+        }
 
-        let lost = lostWeight(
-            profile: profile,
-            today: today
+        let lost =
+            profile.startWeight - today.weight
+
+        guard lost > 0 else {
+            return 0
+        }
+
+        return min(
+            lost / totalToLose,
+            1.0
         )
-
-        return min(max(lost / totalToLose, 0), 1)
     }
 
     // MARK: - BMI
@@ -136,19 +150,33 @@ struct HealthCalculator {
 
         let meters = height / 100
 
-        guard meters > 0 else { return 0 }
+        guard meters > 0 else {
+            return 0
+        }
 
         return weight / (meters * meters)
     }
+
     // MARK: - Health Status
 
     static func makeStatus(
         profile: UserProfile,
         metrics: DailyHealthMetrics
-        
     ) -> HealthStatus {
 
-        HealthStatus(
+        let weightProgressValue =
+            weightProgress(
+                profile: profile,
+                today: metrics
+            )
+
+        print("⚖️ Weight Progress Diagnostic")
+        print("Start Weight: \(profile.startWeight)")
+        print("Current Weight: \(metrics.weight)")
+        print("Target Weight: \(profile.targetWeight)")
+        print("Weight Progress: \(weightProgressValue * 100)%")
+
+        return HealthStatus(
 
             stepProgress: progress(
                 current: Double(metrics.steps),
@@ -170,16 +198,15 @@ struct HealthCalculator {
                 goal: profile.sleepGoal
             ),
 
-            weightProgress: weightProgress(
-                profile: profile,
-                today: metrics
-            ),
+            weightProgress: weightProgressValue,
 
             heartProgress: heartRateProgress(
                 restingHeartRate: metrics.restingHeartRate
             ),
+
             nutritionProgress: 1.0,
-            recoveryProgress: 1.0,
+
+            recoveryProgress: 1.0
         )
     }
 }

@@ -64,7 +64,10 @@ struct DashboardView: View {
                                 spacing: spacing
                             ) {
 
-                                ForEach(viewModel.metrics.indices, id: \.self) { index in
+                                ForEach(
+                                    viewModel.metrics.indices,
+                                    id: \.self
+                                ) { index in
 
                                     let metrics = viewModel.metrics
                                     let metric = metrics[index]
@@ -80,18 +83,23 @@ struct DashboardView: View {
                                         case .steps:
 
                                             StepCard(
-                                                dailyStepGoal: viewModel.healthStore.stepsTarget,
-                                                dailySteps: viewModel.healthStore.steps
+                                                dailyStepGoal:
+                                                    viewModel.healthStore.stepsTarget,
+                                                dailySteps:
+                                                    viewModel.healthStore.steps
                                             )
                                             .padding()
 
                                         case .nutrition:
 
                                             EnergyCard(
-                                                activeCalories: viewModel.healthStore.activeEnergy,
-                                                targetCalories: viewModel.healthStore.energyTarget
+                                                activeCalories:
+                                                    viewModel.healthStore.activeEnergy,
+                                                targetCalories:
+                                                    viewModel.healthStore.energyTarget
                                             )
                                             .padding()
+
                                         case .sleep:
 
                                             SleepDetailView()
@@ -99,15 +107,19 @@ struct DashboardView: View {
                                         case .weight:
 
                                             WeightCard(
-                                                currentWeight: viewModel.healthStore.weight,
-                                                targetWeight: viewModel.healthStore.weightTarget
+                                                startWeight: 89.0,
+                                                currentWeight:
+                                                    viewModel.healthStore.weight,
+                                                targetWeight:
+                                                    viewModel.healthStore.weightTarget
                                             )
                                             .padding()
 
                                         case .heart:
 
                                             HeartCard(
-                                                restingHeartRate: viewModel.healthStore.restingHeartRate
+                                                restingHeartRate:
+                                                    viewModel.healthStore.restingHeartRate
                                             )
                                             .padding()
 
@@ -146,7 +158,9 @@ struct DashboardView: View {
 
                     } label: {
 
-                        Image(systemName: "wrench.and.screwdriver")
+                        Image(
+                            systemName: "wrench.and.screwdriver"
+                        )
 
                     }
 

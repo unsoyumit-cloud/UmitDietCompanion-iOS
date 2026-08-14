@@ -45,11 +45,17 @@ final class DashboardViewModel {
     }
 
     var sleepCurrentValue: String {
-        String(format: "%.1f sa", healthStore.sleepHours)
+        String(
+            format: "%.1f sa",
+            healthStore.sleepHours
+        )
     }
 
     var weightCurrentValue: String {
-        String(format: "%.1f kg", healthStore.weight)
+        String(
+            format: "%.1f kg",
+            healthStore.weight
+        )
     }
 
     var heartCurrentValue: String {
@@ -57,11 +63,17 @@ final class DashboardViewModel {
     }
 
     var waterCurrentValue: String {
-        String(format: "%.1f L", waterAmount)
+        String(
+            format: "%.1f L",
+            waterAmount
+        )
     }
 
     var waterTargetValue: String {
-        String(format: "%.1f L", targetWater)
+        String(
+            format: "%.1f L",
+            targetWater
+        )
     }
 
     // MARK: - Scores
@@ -115,6 +127,33 @@ final class DashboardViewModel {
 
     }
 
+    // MARK: - Weight Progress
+
+    var weightProgress: Double {
+
+        let startWeight = 89.0
+        let targetWeight = healthStore.weightTarget
+        let currentWeight = healthStore.weight
+
+        let totalWeightToLose =
+            startWeight - targetWeight
+
+        guard totalWeightToLose > 0 else {
+            return 0
+        }
+
+        let weightLost =
+            startWeight - currentWeight
+
+        return min(
+            max(
+                weightLost / totalWeightToLose,
+                0.0
+            ),
+            1.0
+        )
+    }
+
     // MARK: - Metrics
 
     var metrics: [HealthMetric] {
@@ -160,7 +199,7 @@ final class DashboardViewModel {
 
             HealthMetric(
                 type: .weight,
-                progress: 0,
+                progress: weightProgress,
                 currentValue: weightCurrentValue,
                 targetValue: "75 kg"
             ),
@@ -168,7 +207,8 @@ final class DashboardViewModel {
             HealthMetric(
                 type: .heart,
                 progress: HealthCalculator.heartRateProgress(
-                    restingHeartRate: healthStore.restingHeartRate
+                    restingHeartRate:
+                        healthStore.restingHeartRate
                 ),
                 currentValue: heartCurrentValue,
                 targetValue: nil

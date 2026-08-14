@@ -14,31 +14,61 @@ struct HealthContextBuilder {
         let metrics = snapshot.metrics
         let profile = snapshot.profile
 
+        // MARK: - Weight
+
         let weightProgress = calculateWeightProgress(
             current: metrics.weight,
             start: profile.startWeight,
             target: profile.targetWeight
         )
 
-        let hydrationProgress = min(
-            Double(metrics.waterIntake) / Double(profile.waterGoal),
-            1.0
-        )
+        // MARK: - Hydration
+
+        let hydrationProgress: Double
+
+        if profile.waterGoal > 0 {
+            hydrationProgress = min(
+                Double(metrics.waterIntake) / Double(profile.waterGoal),
+                1.0
+            )
+        } else {
+            hydrationProgress = 0
+        }
+
+        // MARK: - Nutrition
 
         let nutritionProgress = calculateNutritionProgress(
             intake: metrics.calorieIntake,
             goal: profile.calorieGoal
         )
 
-        let movementProgress = min(
-            Double(metrics.steps) / Double(profile.stepGoal),
-            1.0
-        )
+        // MARK: - Movement
 
-        let sleepProgress = min(
-            metrics.sleepHours / profile.sleepGoal,
-            1.0
-        )
+        let movementProgress: Double
+
+        if profile.stepGoal > 0 {
+            movementProgress = min(
+                Double(metrics.steps) / Double(profile.stepGoal),
+                1.0
+            )
+        } else {
+            movementProgress = 0
+        }
+
+        // MARK: - Sleep
+
+        let sleepProgress: Double
+
+        if profile.sleepGoal > 0 {
+            sleepProgress = min(
+                metrics.sleepHours / profile.sleepGoal,
+                1.0
+            )
+        } else {
+            sleepProgress = 0
+        }
+
+        // MARK: - Heart
 
         let heartProgress = calculateHeartProgress(
             restingHeartRate: metrics.restingHeartRate
@@ -53,14 +83,14 @@ struct HealthContextBuilder {
             heartProgress: heartProgress,
             weightProgress: weightProgress
         )
-
     }
-
 }
 
-// MARK: - Private
+// MARK: - Private Calculations
 
 private extension HealthContextBuilder {
+
+    // MARK: Weight Progress
 
     func calculateWeightProgress(
         current: Double,
@@ -68,35 +98,66 @@ private extension HealthContextBuilder {
         target: Double
     ) -> Double {
 
-        guard start != target else { return 1.0 }
+        // Invalid current weight
+        guard current > 0 else {
+            return 0
+        }
 
-        let totalLoss = start - target
-        let currentLoss = start - current
+        // There must be a real weight-loss target
+        guard start > target else {
+            return 0
+        }
 
-        return min(max(currentLoss / totalLoss, 0.0), 1.0)
+        // Already at or below target
+        if current <= target {
+            return 1.0
+        }
 
+        // Calculate how much weight has been lost
+        let totalWeightToLose = start - target
+        let weightLost = start - current
+
+        let progress = weightLost / totalWeightToLose
+
+        return min(
+            max(progress, 0.0),
+            1.0
+        )
     }
+
+    // MARK: Nutrition Progress
 
     func calculateNutritionProgress(
         intake: Int,
         goal: Int
     ) -> Double {
 
-        guard goal > 0 else { return 0 }
+        guard goal > 0 else {
+            return 0
+        }
 
+        // Staying within calorie goal = full progress
         if intake <= goal {
             return 1.0
         }
 
         let excess = Double(intake - goal) / Double(goal)
 
-        return max(0.0, 1.0 - excess)
-
+        return max(
+            0.0,
+            1.0 - excess
+        )
     }
+
+    // MARK: Heart Progress
 
     func calculateHeartProgress(
         restingHeartRate: Int
     ) -> Double {
+
+        guard restingHeartRate > 0 else {
+            return 0
+        }
 
         switch restingHeartRate {
 
@@ -114,9 +175,6 @@ private extension HealthContextBuilder {
 
         default:
             return 0.4
-
         }
-
     }
-
 }
