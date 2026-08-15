@@ -2,7 +2,7 @@
 //  MetricRingCard.swift
 //  UmitDietCompanion
 //
-//  Created by Ümit Ünsoy on 6.07.2026.
+//  Created by Ümit Ünsoy on 05.07.2026.
 //
 
 import SwiftUI
@@ -11,79 +11,110 @@ struct MetricRingCard: View {
 
     let metric: HealthMetric
     let size: CGFloat
-    
+
     var body: some View {
 
-        let safeSize = size.isFinite ? max(size, 0) : 0
-        let safeProgress = metric.progress.isFinite ? min(max(metric.progress, 0), 1) : 0
-        let lineWidth = safeSize * AppTheme.Ring.lineWidthRatio
-        let iconSize = safeSize * AppTheme.Ring.iconRatio
-        let percentageSize = safeSize * AppTheme.Ring.percentageRatio
-        let titleSize = safeSize * AppTheme.Ring.titleRatio
-        let spacing = safeSize * AppTheme.Ring.contentSpacingRatio
+        VStack(spacing: size * 0.08) {
 
-        VStack {
-            
-            VStack(spacing: spacing) {
+            ZStack {
 
-                ZStack {
+                // MARK: - Background Ring
 
-                    Circle()
-                        .stroke(
-                            metric.type.color.opacity(0.15),
-                            lineWidth: lineWidth
+                Circle()
+                    .stroke(
+                        metric.type.color.opacity(0.18),
+                        lineWidth: size * 0.12
+                    )
+
+                // MARK: - Progress Ring
+
+                Circle()
+                    .trim(
+                        from: 0,
+                        to: metric.type == .heart
+                            ? 1.0
+                            : min(
+                                max(metric.progress, 0),
+                                1
+                            )
+                    )
+                    .stroke(
+                        metric.type.color,
+                        style: StrokeStyle(
+                            lineWidth: size * 0.12,
+                            lineCap: .round
                         )
+                    )
+                    .rotationEffect(.degrees(-90))
 
-                    Circle()
-                        .trim(from: 0, to: safeProgress)
-                        .stroke(
-                            metric.type.color,
-                            style: StrokeStyle(
-                                lineWidth: lineWidth,
-                                lineCap: .round
+                // MARK: - Center Content
+
+                VStack(spacing: size * 0.02) {
+
+                    Text(metric.type.icon)
+                        .font(
+                            .system(
+                                size: size * 0.30
                             )
                         )
-                        .rotationEffect(.degrees(-90))
-                        .animation(
-                            .easeInOut(duration: AppTheme.Ring.animationDuration),
-                            value: safeProgress
+
+                    if metric.type == .heart {
+
+                        Text(
+                            metric.currentValue
+                                .replacingOccurrences(
+                                    of: " bpm",
+                                    with: ""
+                                )
                         )
+                        .font(
+                            .system(
+                                size: size * 0.26,
+                                weight: .bold
+                            )
+                        )
+                        .foregroundStyle(.primary)
+                        .lineLimit(1)
+                        .minimumScaleFactor(0.8)
 
-                    VStack(spacing: spacing) {
+                    } else {
 
-                        Text(metric.type.icon)                            .font(.system(size: iconSize))
-
-                        Text("\(Int(safeProgress * 100))%")
-                            .font(.system(size: percentageSize, weight: .bold))
-
+                        Text(
+                            String(
+                                format: "%.0f%%",
+                                metric.progress * 100
+                            )
+                        )
+                        .font(
+                            .system(
+                                size: size * 0.26,
+                                weight: .bold
+                            )
+                        )
+                        .foregroundStyle(.primary)
+                        .lineLimit(1)
+                        .minimumScaleFactor(0.8)
                     }
-
                 }
-                .frame(width: safeSize, height: safeSize)
-
-                Text(metric.type.title)                    .font(.system(size: titleSize, weight: .semibold))
-                    .foregroundStyle(AppTheme.Colors.primaryText)
-
             }
+            .frame(
+                width: size,
+                height: size
+            )
 
+            // MARK: - Metric Title
+
+            Text(metric.type.title)
+                .font(
+                    .system(
+                        size: size * 0.16,
+                        weight: .bold
+                    )
+                )
+                .foregroundStyle(.primary)
+                .lineLimit(1)
+                .minimumScaleFactor(0.8)
         }
-        .buttonStyle(MetricRingButtonStyle())
-        .frame(maxWidth: .infinity)
-
+        .frame(width: size)
     }
-
-}
-
-#Preview {
-
-    MetricRingCard(
-        metric: HealthMetric(
-            type: .water,
-            progress: 0.75,
-            currentValue: "1.9 L",
-            targetValue: "2.5 L"
-        ),
-        size: 100
-    )
-
 }

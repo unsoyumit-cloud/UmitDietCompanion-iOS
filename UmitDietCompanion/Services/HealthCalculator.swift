@@ -75,24 +75,13 @@ struct HealthCalculator {
 
     // MARK: - Heart Rate
 
+    // Heart rate is displayed as measured data.
+    // It is intentionally NOT converted into a health score.
     static func heartRateProgress(
         restingHeartRate: Int
     ) -> Double {
 
-        switch restingHeartRate {
-
-        case 55...65:
-            return 1.0
-
-        case 50..<55, 66...70:
-            return 0.9
-
-        case 45..<50, 71...75:
-            return 0.8
-
-        default:
-            return 0.6
-        }
+        0.0
     }
 
     // MARK: - Weight
@@ -200,9 +189,8 @@ struct HealthCalculator {
 
             weightProgress: weightProgressValue,
 
-            heartProgress: heartRateProgress(
-                restingHeartRate: metrics.restingHeartRate
-            ),
+            // Heart rate is measured data, not a score.
+            heartProgress: 0.0,
 
             nutritionProgress: 1.0,
 

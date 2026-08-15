@@ -58,15 +58,13 @@ struct HealthScoreCalculator {
         Int(progress * 20)
     }
 
+    // Heart rate intentionally has no health score.
+    // The user's measured heart rate is displayed directly.
     static func heartScore(
         restingHeartRate: Int
     ) -> Int {
 
-        Int(
-            HealthCalculator.heartRateProgress(
-                restingHeartRate: restingHeartRate
-            ) * 20
-        )
+        0
     }
 
     // MARK: - Total Score
@@ -79,6 +77,7 @@ struct HealthScoreCalculator {
         energy: Int
     ) -> Int {
 
-        water + steps + sleep + heart + energy
+        // Heart is intentionally excluded from the Health Score.
+        water + steps + sleep + energy
     }
 }
