@@ -23,22 +23,22 @@ enum MetricType: String, CaseIterable, Identifiable {
         switch self {
 
         case .water:
-            return "Su"
+            return "Water"
 
         case .steps:
-            return "Adım"
+            return "Steps"
 
         case .nutrition:
-            return "Beslenme"
+            return "Nutrition"
 
         case .sleep:
-            return "Uyku"
+            return "Sleep"
 
         case .weight:
-            return "Kilo"
+            return "Weight"
 
         case .heart:
-            return "Nabız"
+            return "Heart Rate"
 
         }
 

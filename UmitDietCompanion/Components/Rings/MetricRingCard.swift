@@ -51,12 +51,25 @@ struct MetricRingCard: View {
 
                 VStack(spacing: size * 0.02) {
 
-                    Text(metric.type.icon)
-                        .font(
-                            .system(
-                                size: size * 0.30
+                    if metric.type == .weight {
+
+                        Image("WeightScale")
+                            .resizable()
+                            .scaledToFit()
+                            .frame(
+                                width: size * 0.30,
+                                height: size * 0.30
                             )
-                        )
+
+                    } else {
+
+                        Text(metric.type.icon)
+                            .font(
+                                .system(
+                                    size: size * 0.30
+                                )
+                            )
+                    }
 
                     if metric.type == .heart {
 

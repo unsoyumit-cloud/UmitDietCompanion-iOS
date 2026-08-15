@@ -193,8 +193,13 @@ struct WeightCard: View {
 
                 HStack(spacing: 8) {
 
-                    Text("⚖️")
-                        .font(.title2)
+                    Image("WeightScale")
+                        .resizable()
+                        .scaledToFit()
+                        .frame(
+                            width: 60,
+                            height: 60
+                        )
 
                     Text("Weight")
                         .font(

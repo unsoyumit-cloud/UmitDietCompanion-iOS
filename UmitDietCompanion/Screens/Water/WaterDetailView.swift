@@ -36,7 +36,7 @@ struct WaterDetailView: View {
                 
                 AIInsightCard(
                     title: "AI Coach",
-                    message: "Bugün saat 15:00'e kadar 500 ml daha içersen hedefe rahat ulaşırsın."
+                    message: "You're 500 ml away from your goal. Keep it up! 💧"
                 )
                 
                 // MARK: - Chart Placeholder

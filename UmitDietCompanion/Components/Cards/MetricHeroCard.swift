@@ -13,51 +13,96 @@ struct MetricHeroCard: View {
 
     var body: some View {
 
-        VStack(spacing: 8) {
+        HStack(
+            alignment: .center,
+            spacing: 18
+        ) {
+
+            // MARK: - Metric Icon
 
             Text(metric.type.icon)
-                .font(.system(size: 56))
+                .font(
+                    .system(size: 63)
+                )
+                .frame(
+                    width: 60,
+                    height: 60
+                )
 
-            Text(metric.type.title)
-                .font(.largeTitle.bold())
+            // MARK: - Metric Information
 
-            HStack(spacing: 4) {
+            VStack(
+                alignment: .leading,
+                spacing: 6
+            ) {
 
-                Text(metric.currentValue)
-                    .font(.title2.bold())
+                Text(metric.type.title)
+                    .font(
+                        .system(
+                            size: 28,
+                            weight: .bold
+                        )
+                    )
 
-                if let target = metric.targetValue {
+                HStack(
+                    alignment: .firstTextBaseline,
+                    spacing: 5
+                ) {
 
-                    Text("/")
+                    Text(metric.currentValue)
+                        .font(
+                            .system(
+                                size: 28,
+                                weight: .bold
+                            )
+                        )
 
-                    Text(target)
+                    if let target = metric.targetValue {
 
+                        Text("/")
+                            .font(
+                                .system(size: 22)
+                            )
+
+                        Text(target)
+                            .font(
+                                .system(size: 22)
+                            )
+                    }
                 }
-
+                .foregroundStyle(
+                    AppTheme.Colors.secondaryText
+                )
             }
-            .foregroundStyle(AppTheme.Colors.secondaryText)
 
+            Spacer()
         }
-        .frame(maxWidth: .infinity)
+        .padding(.horizontal, 24)
         .padding(.vertical, 24)
-        .background(AppTheme.Colors.cardBackground)
-        .clipShape(RoundedRectangle(cornerRadius: AppTheme.Layout.cardCornerRadius))
-
+        .frame(maxWidth: .infinity)
+        .background(
+            AppTheme.Colors.cardBackground
+        )
+        .clipShape(
+            RoundedRectangle(
+                cornerRadius:
+                    AppTheme.Layout.cardCornerRadius
+            )
+        )
     }
-
 }
+
+
+// MARK: - Preview
 
 #Preview {
 
     MetricHeroCard(
-
         metric: HealthMetric(
             type: .water,
             progress: 0.84,
-            currentValue: "2.1 L",
+            currentValue: "2.10 L",
             targetValue: "2.5 L"
         )
-
     )
-
 }
