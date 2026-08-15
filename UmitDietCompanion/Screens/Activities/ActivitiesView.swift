@@ -9,10 +9,9 @@ struct ActivitiesView: View {
 
     @State private var healthStore = HealthStore.shared
 
-    @StateObject private var viewModel =
-        ActivitiesViewModel()
-
     // MARK: - Temporary workout display data
+    // These will be replaced by ActivitiesViewModel
+    // when workout data is fully connected to HealthKit.
 
     private let workouts: [WorkoutDisplayItem] = []
 
@@ -24,7 +23,7 @@ struct ActivitiesView: View {
 
     private var stepDistance: Double {
         // Temporary estimate until walking/running distance
-        // is connected directly to the card UI.
+        // is connected directly to HealthKit.
         Double(steps) * 0.0007
     }
 
@@ -33,16 +32,11 @@ struct ActivitiesView: View {
     }
 
     private var workoutCalories: Int {
-        workouts.reduce(0) {
-            $0 + $1.calories
-        }
+        workouts.reduce(0) { $0 + $1.calories }
     }
 
     private var movementCalories: Int {
-        max(
-            activeCalories - workoutCalories,
-            0
-        )
+        max(activeCalories - workoutCalories, 0)
     }
 
     // Resting calories from HealthKit / HealthStore.
@@ -63,9 +57,7 @@ struct ActivitiesView: View {
             AppTheme.Colors.dashboardBackground
                 .ignoresSafeArea()
 
-            ScrollView(
-                showsIndicators: false
-            ) {
+            ScrollView(showsIndicators: false) {
 
                 VStack(spacing: 18) {
 
@@ -75,15 +67,30 @@ struct ActivitiesView: View {
 
                     // MARK: Steps
 
-                    stepsCard
+                    NavigationLink {
+                        StepsDetailView()
+                    } label: {
+                        stepsCard
+                    }
+                    .buttonStyle(.plain)
 
                     // MARK: Active Calories
 
-                    activeCaloriesCard
+                    NavigationLink {
+                        ActiveCaloriesDetailView()
+                    } label: {
+                        activeCaloriesCard
+                    }
+                    .buttonStyle(.plain)
 
                     // MARK: Resting Calories
 
-                    restingCaloriesCard
+                    NavigationLink {
+                        RestingCaloriesDetailView()
+                    } label: {
+                        restingCaloriesCard
+                    }
+                    .buttonStyle(.plain)
 
                     // MARK: Workouts
 
@@ -105,15 +112,7 @@ struct ActivitiesView: View {
         }
         .task {
 
-            // Keep the existing HealthStore refresh
-            // for the current Activities screen.
-
             await healthStore.refresh()
-
-            // Load the new Activities data layer,
-            // including the 7-day history.
-
-            await viewModel.loadActivities()
         }
     }
 
@@ -124,25 +123,12 @@ struct ActivitiesView: View {
         HStack(spacing: 18) {
 
             Image(systemName: "dumbbell.fill")
-                .font(
-                    .system(
-                        size: 46,
-                        weight: .medium
-                    )
-                )
+                .font(.system(size: 46, weight: .medium))
                 .foregroundStyle(.blue)
-                .frame(
-                    width: 70,
-                    height: 70
-                )
+                .frame(width: 70, height: 70)
 
             Text("Activities")
-                .font(
-                    .system(
-                        size: 34,
-                        weight: .bold
-                    )
-                )
+                .font(.system(size: 34, weight: .bold))
                 .foregroundStyle(.primary)
 
             Spacer()
@@ -151,9 +137,7 @@ struct ActivitiesView: View {
         .padding(.vertical, 22)
         .background(.white)
         .clipShape(
-            RoundedRectangle(
-                cornerRadius: 28
-            )
+            RoundedRectangle(cornerRadius: 28)
         )
     }
 
@@ -161,10 +145,7 @@ struct ActivitiesView: View {
 
     private var stepsCard: some View {
 
-        VStack(
-            alignment: .leading,
-            spacing: 16
-        ) {
+        VStack(alignment: .leading, spacing: 16) {
 
             HStack {
 
@@ -178,10 +159,7 @@ struct ActivitiesView: View {
                             )
                         )
                         .foregroundStyle(.green)
-                        .frame(
-                            width: 42,
-                            height: 42
-                        )
+                        .frame(width: 42, height: 42)
                         .background(
                             Color.green.opacity(0.12)
                         )
@@ -201,12 +179,8 @@ struct ActivitiesView: View {
                             )
 
                         Text("Today's steps and distance")
-                            .font(
-                                .system(size: 14)
-                            )
-                            .foregroundStyle(
-                                .secondary
-                            )
+                            .font(.system(size: 14))
+                            .foregroundStyle(.secondary)
                     }
                 }
 
@@ -234,48 +208,35 @@ struct ActivitiesView: View {
                         spacing: 6
                     ) {
 
-                        Text(
-                            "\(steps.formatted())"
-                        )
-                        .font(
-                            .system(
-                                size: 32,
-                                weight: .medium
+                        Text("\(steps.formatted())")
+                            .font(
+                                .system(
+                                    size: 32,
+                                    weight: .medium
+                                )
                             )
-                        )
 
                         Text("steps")
-                            .font(
-                                .system(size: 17)
-                            )
-                            .foregroundStyle(
-                                .secondary
-                            )
+                            .font(.system(size: 17))
+                            .foregroundStyle(.secondary)
                     }
 
                     Text(
                         String(
-                            format:
-                                "%.1f km distance",
+                            format: "%.1f km distance",
                             stepDistance
                         )
                     )
-                    .font(
-                        .system(size: 17)
-                    )
-                    .foregroundStyle(
-                        .secondary
-                    )
+                    .font(.system(size: 17))
+                    .foregroundStyle(.secondary)
                 }
 
                 Spacer()
 
                 let progress =
                     min(
-                        Double(steps) /
-                        Double(
-                            healthStore.stepsTarget
-                        ),
+                        Double(steps)
+                        / Double(healthStore.stepsTarget),
                         1.0
                     )
 
@@ -294,26 +255,23 @@ struct ActivitiesView: View {
                         )
                         .stroke(
                             Color.green,
-                            style:
-                                StrokeStyle(
-                                    lineWidth: 6,
-                                    lineCap: .round
-                                )
+                            style: StrokeStyle(
+                                lineWidth: 6,
+                                lineCap: .round
+                            )
                         )
                         .rotationEffect(
                             .degrees(-90)
                         )
 
-                    Text(
-                        "\(Int(progress * 100))%"
-                    )
-                    .font(
-                        .system(
-                            size: 16,
-                            weight: .medium
+                    Text("\(Int(progress * 100))%")
+                        .font(
+                            .system(
+                                size: 16,
+                                weight: .medium
+                            )
                         )
-                    )
-                    .foregroundStyle(.green)
+                        .foregroundStyle(.green)
                 }
                 .frame(
                     width: 58,
@@ -324,9 +282,7 @@ struct ActivitiesView: View {
         .padding(20)
         .background(.white)
         .clipShape(
-            RoundedRectangle(
-                cornerRadius: 26
-            )
+            RoundedRectangle(cornerRadius: 26)
         )
     }
 
@@ -374,12 +330,8 @@ struct ActivitiesView: View {
                             )
 
                         Text("Calories from movement")
-                            .font(
-                                .system(size: 14)
-                            )
-                            .foregroundStyle(
-                                .secondary
-                            )
+                            .font(.system(size: 14))
+                            .foregroundStyle(.secondary)
                     }
                 }
 
@@ -390,24 +342,18 @@ struct ActivitiesView: View {
                     spacing: 5
                 ) {
 
-                    Text(
-                        "\(activeCalories)"
-                    )
-                    .font(
-                        .system(
-                            size: 25,
-                            weight: .medium
+                    Text("\(activeCalories)")
+                        .font(
+                            .system(
+                                size: 25,
+                                weight: .medium
+                            )
                         )
-                    )
-                    .foregroundStyle(.orange)
+                        .foregroundStyle(.orange)
 
                     Text("kcal")
-                        .font(
-                            .system(size: 15)
-                        )
-                        .foregroundStyle(
-                            .secondary
-                        )
+                        .font(.system(size: 15))
+                        .foregroundStyle(.secondary)
                 }
 
                 Image(systemName: "chevron.right")
@@ -455,33 +401,25 @@ struct ActivitiesView: View {
                     spacing: 4
                 ) {
 
-                    Text(
-                        "\(activeCalories)"
-                    )
-                    .font(
-                        .system(
-                            size: 23,
-                            weight: .medium
+                    Text("\(activeCalories)")
+                        .font(
+                            .system(
+                                size: 23,
+                                weight: .medium
+                            )
                         )
-                    )
-                    .foregroundStyle(.orange)
+                        .foregroundStyle(.orange)
 
                     Text("kcal")
-                        .font(
-                            .system(size: 14)
-                        )
-                        .foregroundStyle(
-                            .secondary
-                        )
+                        .font(.system(size: 14))
+                        .foregroundStyle(.secondary)
                 }
             }
         }
         .padding(20)
         .background(.white)
         .clipShape(
-            RoundedRectangle(
-                cornerRadius: 26
-            )
+            RoundedRectangle(cornerRadius: 26)
         )
     }
 
@@ -531,12 +469,8 @@ struct ActivitiesView: View {
                         Text(
                             "Calories your body uses at rest"
                         )
-                        .font(
-                            .system(size: 14)
-                        )
-                        .foregroundStyle(
-                            .secondary
-                        )
+                        .font(.system(size: 14))
+                        .foregroundStyle(.secondary)
                     }
                 }
 
@@ -549,24 +483,18 @@ struct ActivitiesView: View {
 
                     if restingCalories > 0 {
 
-                        Text(
-                            "\(restingCalories)"
-                        )
-                        .font(
-                            .system(
-                                size: 25,
-                                weight: .medium
+                        Text("\(restingCalories)")
+                            .font(
+                                .system(
+                                    size: 25,
+                                    weight: .medium
+                                )
                             )
-                        )
-                        .foregroundStyle(.purple)
+                            .foregroundStyle(.purple)
 
                         Text("kcal")
-                            .font(
-                                .system(size: 15)
-                            )
-                            .foregroundStyle(
-                                .secondary
-                            )
+                            .font(.system(size: 15))
+                            .foregroundStyle(.secondary)
 
                     } else {
 
@@ -624,15 +552,9 @@ struct ActivitiesView: View {
                             )
                         )
 
-                    Text(
-                        "Total energy burned today"
-                    )
-                    .font(
-                        .system(size: 14)
-                    )
-                    .foregroundStyle(
-                        .secondary
-                    )
+                    Text("Total energy burned today")
+                        .font(.system(size: 14))
+                        .foregroundStyle(.secondary)
                 }
 
                 Spacer()
@@ -656,21 +578,15 @@ struct ActivitiesView: View {
                     .foregroundStyle(.purple)
 
                     Text("kcal")
-                        .font(
-                            .system(size: 14)
-                        )
-                        .foregroundStyle(
-                            .secondary
-                        )
+                        .font(.system(size: 14))
+                        .foregroundStyle(.secondary)
                 }
             }
         }
         .padding(20)
         .background(.white)
         .clipShape(
-            RoundedRectangle(
-                cornerRadius: 26
-            )
+            RoundedRectangle(cornerRadius: 26)
         )
     }
 
@@ -717,15 +633,9 @@ struct ActivitiesView: View {
                                 )
                             )
 
-                        Text(
-                            "Your selected activities"
-                        )
-                        .font(
-                            .system(size: 14)
-                        )
-                        .foregroundStyle(
-                            .secondary
-                        )
+                        Text("Your selected activities")
+                            .font(.system(size: 14))
+                            .foregroundStyle(.secondary)
                     }
                 }
 
@@ -758,14 +668,8 @@ struct ActivitiesView: View {
                             )
                     }
                     .foregroundStyle(.blue)
-                    .padding(
-                        .horizontal,
-                        14
-                    )
-                    .padding(
-                        .vertical,
-                        8
-                    )
+                    .padding(.horizontal, 14)
+                    .padding(.vertical, 8)
                     .overlay(
                         Capsule()
                             .stroke(
@@ -785,37 +689,27 @@ struct ActivitiesView: View {
                         systemName:
                             "figure.walk.motion"
                     )
-                    .font(
-                        .system(size: 25)
-                    )
-                    .foregroundStyle(
-                        .secondary
-                    )
+                    .font(.system(size: 25))
+                    .foregroundStyle(.secondary)
 
                     VStack(
                         alignment: .leading,
                         spacing: 3
                     ) {
 
-                        Text(
-                            "No workouts selected"
-                        )
-                        .font(
-                            .system(
-                                size: 16,
-                                weight: .medium
+                        Text("No workouts selected")
+                            .font(
+                                .system(
+                                    size: 16,
+                                    weight: .medium
+                                )
                             )
-                        )
 
                         Text(
                             "Add a workout when you start one."
                         )
-                        .font(
-                            .system(size: 14)
-                        )
-                        .foregroundStyle(
-                            .secondary
-                        )
+                        .font(.system(size: 14))
+                        .foregroundStyle(.secondary)
                     }
 
                     Spacer()
@@ -824,8 +718,7 @@ struct ActivitiesView: View {
 
             } else {
 
-                ForEach(workouts) {
-                    workout in
+                ForEach(workouts) { workout in
 
                     workoutRow(workout)
                 }
@@ -834,9 +727,7 @@ struct ActivitiesView: View {
         .padding(20)
         .background(.white)
         .clipShape(
-            RoundedRectangle(
-                cornerRadius: 26
-            )
+            RoundedRectangle(cornerRadius: 26)
         )
     }
 
@@ -848,22 +739,17 @@ struct ActivitiesView: View {
 
         HStack(spacing: 12) {
 
-            Image(
-                systemName:
-                    workout.icon
-            )
-            .font(
-                .system(size: 21)
-            )
-            .foregroundStyle(.blue)
-            .frame(
-                width: 42,
-                height: 42
-            )
-            .background(
-                Color.blue.opacity(0.10)
-            )
-            .clipShape(Circle())
+            Image(systemName: workout.icon)
+                .font(.system(size: 21))
+                .foregroundStyle(.blue)
+                .frame(
+                    width: 42,
+                    height: 42
+                )
+                .background(
+                    Color.blue.opacity(0.10)
+                )
+                .clipShape(Circle())
 
             VStack(
                 alignment: .leading,
@@ -880,8 +766,7 @@ struct ActivitiesView: View {
 
                 HStack(spacing: 8) {
 
-                    if let duration =
-                        workout.duration {
+                    if let duration = workout.duration {
 
                         Label(
                             duration,
@@ -889,8 +774,7 @@ struct ActivitiesView: View {
                         )
                     }
 
-                    if let distance =
-                        workout.distance {
+                    if let distance = workout.distance {
 
                         Label(
                             distance,
@@ -903,12 +787,8 @@ struct ActivitiesView: View {
                         systemImage: "flame.fill"
                     )
                 }
-                .font(
-                    .system(size: 13)
-                )
-                .foregroundStyle(
-                    .secondary
-                )
+                .font(.system(size: 13))
+                .foregroundStyle(.secondary)
             }
 
             Spacer()
@@ -920,9 +800,7 @@ struct ActivitiesView: View {
                         weight: .semibold
                     )
                 )
-                .foregroundStyle(
-                    .secondary
-                )
+                .foregroundStyle(.secondary)
         }
         .padding(.vertical, 4)
     }
@@ -937,12 +815,9 @@ struct ActivitiesView: View {
         ) {
 
             Image(
-                systemName:
-                    "info.circle.fill"
+                systemName: "info.circle.fill"
             )
-            .font(
-                .system(size: 20)
-            )
+            .font(.system(size: 20))
             .foregroundStyle(.blue)
 
             Text(
@@ -950,25 +825,17 @@ struct ActivitiesView: View {
                 + "(steps) and workouts. Resting calories represent "
                 + "the energy your body uses at rest."
             )
-            .font(
-                .system(size: 13)
-            )
-            .foregroundStyle(
-                .secondary
-            )
+            .font(.system(size: 13))
+            .foregroundStyle(.secondary)
 
-            Spacer(
-                minLength: 0
-            )
+            Spacer(minLength: 0)
         }
         .padding(15)
         .background(
             Color.blue.opacity(0.08)
         )
         .clipShape(
-            RoundedRectangle(
-                cornerRadius: 16
-            )
+            RoundedRectangle(cornerRadius: 16)
         )
     }
 
@@ -1020,12 +887,8 @@ struct ActivitiesView: View {
                 if value > 0 {
 
                     Text("kcal")
-                        .font(
-                            .system(size: 12)
-                        )
-                        .foregroundStyle(
-                            .secondary
-                        )
+                        .font(.system(size: 12))
+                        .foregroundStyle(.secondary)
                 }
             }
         }
@@ -1034,8 +897,7 @@ struct ActivitiesView: View {
 
 // MARK: - Workout Display Model
 
-private struct WorkoutDisplayItem:
-    Identifiable {
+private struct WorkoutDisplayItem: Identifiable {
 
     let id = UUID()
 
