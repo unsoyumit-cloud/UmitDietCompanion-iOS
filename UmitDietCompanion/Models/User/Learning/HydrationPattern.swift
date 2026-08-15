@@ -1,5 +1,5 @@
 //
-//  HydrationPatter.swift
+//  HydrationPattern.swift
 //  UmitDietCompanion
 //
 //  Created by Ümit Ünsoy on 10.08.2026.

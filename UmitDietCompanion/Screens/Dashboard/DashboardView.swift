@@ -19,15 +19,19 @@ struct DashboardView: View {
 
             GeometryReader { geo in
 
-                let horizontalPadding = AppTheme.Layout.screenPadding
-                let spacing = geo.size.width * AppTheme.Layout.gridSpacingRatio
+                let horizontalPadding =
+                    AppTheme.Layout.screenPadding
+
+                let spacing =
+                    geo.size.width *
+                    AppTheme.Layout.gridSpacingRatio
 
                 let ringSize =
-                (
-                    geo.size.width
-                    - (horizontalPadding * 2)
-                    - (spacing * 2)
-                ) / 3
+                    (
+                        geo.size.width
+                        - (horizontalPadding * 2)
+                        - (spacing * 2)
+                    ) / 3
 
                 ZStack {
 
@@ -36,93 +40,139 @@ struct DashboardView: View {
 
                     ScrollView(showsIndicators: false) {
 
-                        VStack(spacing: AppTheme.Layout.sectionSpacing) {
+                        VStack(
+                            spacing:
+                                AppTheme.Layout.sectionSpacing
+                        ) {
+
+                            // MARK: - Header
 
                             DashboardHeaderView(
-                                greeting: "🌤️ İyi Günler, Ümit",
-                                todayString: "7 Temmuz 2026 Salı"
+                                greeting:
+                                    "🌤️ İyi Günler, Ümit",
+                                todayString:
+                                    "7 Temmuz 2026 Salı"
                             )
+
+                            // MARK: - AI Insight
 
                             InsightCard(
-                                insight: viewModel.coachMessage.message
+                                insight:
+                                    viewModel.coachMessage.message
                             )
 
+                            // MARK: - Daily Score
+
                             ScoreCard(
-                                score: viewModel.totalScore,
-                                waterScore: viewModel.waterScore,
-                                stepScore: 15,
-                                sleepScore: 15,
-                                restingHeartRateScore: 20
+                                score:
+                                    viewModel.totalScore,
+                                waterScore:
+                                    viewModel.waterScore,
+                                stepScore:
+                                    15,
+                                sleepScore:
+                                    15,
+                                restingHeartRateScore:
+                                    20
                             )
+
+                            // MARK: - Metric Rings
 
                             LazyVGrid(
                                 columns: [
-                                    GridItem(.flexible(), spacing: spacing),
-                                    GridItem(.flexible(), spacing: spacing),
-                                    GridItem(.flexible())
+
+                                    GridItem(
+                                        .flexible(),
+                                        spacing: spacing
+                                    ),
+
+                                    GridItem(
+                                        .flexible(),
+                                        spacing: spacing
+                                    ),
+
+                                    GridItem(
+                                        .flexible()
+                                    )
+
                                 ],
                                 spacing: spacing
                             ) {
 
                                 ForEach(
-                                    viewModel.metrics.indices,
-                                    id: \.self
-                                ) { index in
-
-                                    let metrics = viewModel.metrics
-                                    let metric = metrics[index]
+                                    viewModel.metrics
+                                ) { metric in
 
                                     NavigationLink {
 
                                         switch metric.type {
 
+                                        // MARK: Water
+
                                         case .water:
 
                                             WaterDetailView()
 
-                                        case .steps:
+                                        // MARK: Activities
 
-                                            StepCard(
-                                                dailyStepGoal:
-                                                    viewModel.healthStore.stepsTarget,
-                                                dailySteps:
-                                                    viewModel.healthStore.steps
-                                            )
-                                            .padding()
+                                        case .activities:
+
+                                            ActivitiesView()
+
+                                        // MARK: Nutrition
 
                                         case .nutrition:
 
                                             EnergyCard(
                                                 activeCalories:
-                                                    viewModel.healthStore.activeEnergy,
+                                                    viewModel
+                                                    .healthStore
+                                                    .activeEnergy,
+
                                                 targetCalories:
-                                                    viewModel.healthStore.energyTarget
+                                                    viewModel
+                                                    .healthStore
+                                                    .energyTarget
                                             )
                                             .padding()
+
+                                        // MARK: Sleep
 
                                         case .sleep:
 
                                             SleepDetailView()
 
+                                        // MARK: Weight
+
                                         case .weight:
 
                                             WeightCard(
-                                                startWeight: 89.0,
+                                                startWeight:
+                                                    89.0,
+
                                                 currentWeight:
-                                                    viewModel.healthStore.weight,
+                                                    viewModel
+                                                    .healthStore
+                                                    .weight,
+
                                                 targetWeight:
-                                                    viewModel.healthStore.weightTarget
+                                                    viewModel
+                                                    .healthStore
+                                                    .weightTarget
                                             )
                                             .padding()
+
+                                        // MARK: Heart
 
                                         case .heart:
 
                                             HeartCard(
                                                 restingHeartRate:
-                                                    viewModel.healthStore.restingHeartRate
+                                                    viewModel
+                                                    .healthStore
+                                                    .restingHeartRate
                                             )
                                             .padding()
-
                                         }
 
                                     } label: {
@@ -131,26 +181,25 @@ struct DashboardView: View {
                                             metric: metric,
                                             size: ringSize
                                         )
-
                                     }
                                     .buttonStyle(.plain)
-
                                 }
-
                             }
-
                         }
                         .padding(.horizontal, horizontalPadding)
                         .padding(.vertical)
-
                     }
-
                 }
-
             }
+
+            // MARK: - Toolbar
+
             .toolbar {
 
-                ToolbarItem(placement: .topBarTrailing) {
+                ToolbarItem(
+                    placement:
+                        .topBarTrailing
+                ) {
 
                     Button {
 
@@ -159,33 +208,34 @@ struct DashboardView: View {
                     } label: {
 
                         Image(
-                            systemName: "wrench.and.screwdriver"
+                            systemName:
+                                "wrench.and.screwdriver"
                         )
-
                     }
-
                 }
-
             }
-            .sheet(isPresented: $showReactorConsole) {
+
+            // MARK: - AI Reactor Console
+
+            .sheet(
+                isPresented:
+                    $showReactorConsole
+            ) {
 
                 AIReactorConsoleView()
-
             }
+
+            // MARK: - HealthKit Refresh
+
             .task {
 
                 await HealthStore.shared.refresh()
-
             }
-
         }
-
     }
-
 }
 
 #Preview {
 
     DashboardView()
-
 }

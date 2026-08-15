@@ -2,21 +2,21 @@
 //  HealthMetric.swift
 //  UmitDietCompanion
 //
-//  Created by Ümit Ünsoy on 6.07.2026.
-//
 
 import SwiftUI
 
 enum MetricType: String, CaseIterable, Identifiable {
 
     case water
-    case steps
+    case activities
     case nutrition
     case sleep
     case weight
     case heart
 
-    var id: String { rawValue }
+    var id: String {
+        rawValue
+    }
 
     var title: String {
 
@@ -25,8 +25,8 @@ enum MetricType: String, CaseIterable, Identifiable {
         case .water:
             return "Water"
 
-        case .steps:
-            return "Steps"
+        case .activities:
+            return "Activities"
 
         case .nutrition:
             return "Nutrition"
@@ -51,8 +51,8 @@ enum MetricType: String, CaseIterable, Identifiable {
         case .water:
             return "💧"
 
-        case .steps:
-            return "👣"
+        case .activities:
+            return "🏋️"
 
         case .nutrition:
             return "🥗"
@@ -77,7 +77,7 @@ enum MetricType: String, CaseIterable, Identifiable {
         case .water:
             return .blue
 
-        case .steps:
+        case .activities:
             return .green
 
         case .nutrition:

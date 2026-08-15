@@ -20,7 +20,7 @@ final class AppleHealthProvider: HealthDataProvider {
 
         try await healthKit.requestAuthorization()
 
-        // MARK: - Health Data
+        // MARK: - Basic Health Data
 
         let steps =
             try await healthKit.getTodayStepCount()
@@ -31,13 +31,16 @@ final class AppleHealthProvider: HealthDataProvider {
         let activeEnergy =
             try await healthKit.getTodayActiveEnergy()
 
+        let restingEnergy =
+            try await healthKit.getTodayRestingEnergy()
+
         let restingHeartRate =
             try await healthKit.getRestingHeartRate()
 
         let weight =
             try await healthKit.getLatestWeight()
 
-        // MARK: - Night Metrics
+        // MARK: - Night / Recovery Metrics
 
         let hrv =
             try await healthKit.getLastNightHRV()
@@ -62,103 +65,99 @@ final class AppleHealthProvider: HealthDataProvider {
         // MARK: - Debug
 
         print("===================================")
-        print("🌙 Apple Health Metrics")
-        print("===================================")
-
-        print("Steps: \(steps)")
-
-        print(
-            "Total Sleep: " +
-            "\(sleepMetrics.totalSleepHours) h"
-        )
-
-        print(
-            "Deep Sleep: " +
-            "\(sleepMetrics.deepSleep / 60) min"
-        )
-
-        print(
-            "Core Sleep: " +
-            "\(sleepMetrics.coreSleep / 60) min"
-        )
-
-        print(
-            "REM Sleep: " +
-            "\(sleepMetrics.remSleep / 60) min"
-        )
-
-        print(
-            "Awake Time: " +
-            "\(sleepMetrics.awakeTime / 60) min"
-        )
-
-        print(
-            "Time in Bed: " +
-            "\(sleepMetrics.timeInBedHours) h"
-        )
-
-        print(
-            "Sleep Efficiency: " +
-            "\(sleepMetrics.sleepEfficiency)%"
-        )
-
-        print(
-            "Active Energy: \(activeEnergy)"
-        )
-
-        print(
-            "Resting Heart Rate: " +
-            "\(restingHeartRate) bpm"
-        )
-
-        print(
-            "Weight: \(weight) kg"
-        )
-
-        print("")
-        print("===================================")
-        print("❤️ HRV")
+        print("🍎 Apple Health Provider")
         print("===================================")
 
         print(
-            "HRV: \(hrv) ms"
+            "Steps:",
+            steps
         )
 
         print(
-            "HRV Data Available: " +
-            "\(hasHRVData)"
+            "Total Sleep:",
+            sleepMetrics.totalSleepHours,
+            "h"
         )
 
-        print("")
+        print(
+            "Deep Sleep:",
+            sleepMetrics.deepSleep / 60,
+            "min"
+        )
+
+        print(
+            "Core Sleep:",
+            sleepMetrics.coreSleep / 60,
+            "min"
+        )
+
+        print(
+            "REM Sleep:",
+            sleepMetrics.remSleep / 60,
+            "min"
+        )
+
+        print(
+            "Awake Time:",
+            sleepMetrics.awakeTime / 60,
+            "min"
+        )
+
+        print(
+            "Time in Bed:",
+            sleepMetrics.timeInBedHours,
+            "h"
+        )
+
+        print(
+            "Sleep Efficiency:",
+            sleepMetrics.sleepEfficiency,
+            "%"
+        )
+
+        print(
+            "Active Energy:",
+            activeEnergy,
+            "kcal"
+        )
+
+        print(
+            "Resting Energy:",
+            restingEnergy,
+            "kcal"
+        )
+
+        print(
+            "Resting Heart Rate:",
+            restingHeartRate,
+            "bpm"
+        )
+
+        print(
+            "HRV:",
+            hrv,
+            "ms"
+        )
+
+        print(
+            "SpO2:",
+            spo2,
+            "%"
+        )
+
+        print(
+            "Respiratory Rate:",
+            respiratoryRate,
+            "breaths/min"
+        )
+
+        print(
+            "Weight:",
+            weight,
+            "kg"
+        )
+
         print("===================================")
-        print("🫁 SpO₂")
-        print("===================================")
-
-        print(
-            "SpO2: \(spo2)%"
-        )
-
-        print(
-            "SpO2 Data Available: " +
-            "\(hasSpO2Data)"
-        )
-
-        print("")
-        print("===================================")
-        print("🌬 Respiratory Rate")
-        print("===================================")
-
-        print(
-            "Respiratory Rate: " +
-            "\(respiratoryRate) breaths/min"
-        )
-
-        print(
-            "Respiratory Rate Data Available: " +
-            "\(hasRespiratoryRateData)"
-        )
-
-        print("")
 
         // MARK: - Normalized Metrics
 
@@ -166,18 +165,25 @@ final class AppleHealthProvider: HealthDataProvider {
 
             // MARK: Identity
 
-            date: date,
+            date:
+                date,
 
             // MARK: Activity & Nutrition
 
-            steps: steps,
+            steps:
+                steps,
 
-            waterIntake: 0,
+            waterIntake:
+                0,
 
-            calorieIntake: 0,
+            calorieIntake:
+                0,
 
             activeCaloriesBurned:
                 activeEnergy,
+
+            restingCaloriesBurned:
+                restingEnergy,
 
             // MARK: Sleep
 

@@ -168,7 +168,7 @@ final class DashboardViewModel {
             ),
 
             HealthMetric(
-                type: .steps,
+                type: .activities,
                 progress: HealthCalculator.progress(
                     current: Double(healthStore.steps),
                     target: Double(healthStore.stepsTarget)

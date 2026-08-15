@@ -25,6 +25,8 @@ struct DailyHealthMetrics {
 
     var activeCaloriesBurned: Int
 
+    var restingCaloriesBurned: Int
+
     // MARK: - Sleep
 
     var sleepHours: Double
@@ -38,7 +40,7 @@ struct DailyHealthMetrics {
     var awakeTime: TimeInterval
 
     var timeInBed: TimeInterval
-    
+
     var deepSleepPercentage: Double
 
     var coreSleepPercentage: Double

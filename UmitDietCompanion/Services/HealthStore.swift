@@ -34,6 +34,7 @@ final class HealthStore {
 
         steps = developmentProvider.steps
         activeEnergy = developmentProvider.activeEnergy
+        restingEnergy = 0
         sleepHours = developmentProvider.sleepHours
         weight = developmentProvider.weight
         restingHeartRate = developmentProvider.restingHeartRate
@@ -48,6 +49,8 @@ final class HealthStore {
     var steps: Int
 
     var activeEnergy: Int
+
+    var restingEnergy: Int
 
     // MARK: - Sleep
 
@@ -132,10 +135,14 @@ final class HealthStore {
 
             // MARK: - Apple Health Metrics
 
-            steps = metrics.steps
+            steps =
+                metrics.steps
 
             activeEnergy =
                 metrics.activeCaloriesBurned
+
+            restingEnergy =
+                metrics.restingCaloriesBurned
 
             sleepHours =
                 metrics.sleepHours
@@ -242,6 +249,18 @@ final class HealthStore {
             )
 
             print(
+                "Active Energy:",
+                activeEnergy,
+                "kcal"
+            )
+
+            print(
+                "Resting Energy:",
+                restingEnergy,
+                "kcal"
+            )
+
+            print(
                 "Sleep:",
                 sleepHours
             )
@@ -280,11 +299,6 @@ final class HealthStore {
                 "Sleep Efficiency:",
                 sleepEfficiency,
                 "%"
-            )
-
-            print(
-                "Active Energy:",
-                activeEnergy
             )
 
             print(
@@ -366,7 +380,8 @@ final class HealthStore {
 
             // MARK: Activity & Nutrition
 
-            steps: steps,
+            steps:
+                steps,
 
             waterIntake:
                 Int(waterAmount),
@@ -376,6 +391,9 @@ final class HealthStore {
 
             activeCaloriesBurned:
                 activeEnergy,
+
+            restingCaloriesBurned:
+                restingEnergy,
 
             // MARK: Sleep
 

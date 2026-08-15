@@ -113,21 +113,28 @@ struct HeartCard: View {
             spacing: 16
         ) {
 
-            HStack {
+            HStack(
+                alignment: .center,
+                spacing: 14
+            ) {
 
-                HStack(spacing: 8) {
+                // Large heart icon
+                Text("❤️")
+                    .font(
+                        .system(size: 46)
+                    )
+                    .frame(
+                        width: 60,
+                        height: 60
+                    )
 
-                    Text("❤️")
-                        .font(.title2)
-
-                    Text("Heart")
-                        .font(
-                            .title2.weight(
-                                .semibold
-                            )
+                Text("Heart")
+                    .font(
+                        .system(
+                            size: 28,
+                            weight: .bold
                         )
-
-                }
+                    )
 
                 Spacer()
 
