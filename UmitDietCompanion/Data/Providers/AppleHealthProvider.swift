@@ -7,10 +7,13 @@ import Foundation
 import HealthKit
 
 /// Reads health data from Apple Health (HealthKit)
-/// and converts it into normalized DailyHealthMetrics.
+/// and converts it into normalized application models.
 final class AppleHealthProvider: HealthDataProvider {
 
-    private let healthKit = HealthKitService()
+    private let healthKit =
+        HealthKitService()
+
+    // MARK: - Daily Metrics
 
     func fetchDailyMetrics(
         for date: Date
@@ -217,10 +220,12 @@ final class AppleHealthProvider: HealthDataProvider {
             sleepEfficiency:
                 sleepMetrics.sleepEfficiency,
 
-            // MARK: Night Metrics
+            // MARK: Heart
 
             restingHeartRate:
                 restingHeartRate,
+
+            // MARK: Night Metrics
 
             hrv:
                 hrv,
@@ -245,5 +250,306 @@ final class AppleHealthProvider: HealthDataProvider {
             weight:
                 weight
         )
+    }
+
+    // MARK: - Today's Activities
+
+    func fetchTodayActivities()
+        async throws -> ActivitiesData {
+
+        try await healthKit.requestAuthorization()
+
+        async let steps =
+            healthKit.getTodayStepCount()
+
+        async let distance =
+            healthKit.getTodayWalkingRunningDistance()
+
+        async let activeCalories =
+            healthKit.getTodayActiveEnergy()
+
+        async let restingCalories =
+            healthKit.getTodayRestingEnergy()
+
+        async let workouts =
+            healthKit.getTodayWorkouts()
+
+        let (
+            todaySteps,
+            todayDistance,
+            todayActiveCalories,
+            todayRestingCalories,
+            todayWorkouts
+        ) = try await (
+            steps,
+            distance,
+            activeCalories,
+            restingCalories,
+            workouts
+        )
+
+        let mappedWorkouts =
+            todayWorkouts.map {
+                workout in
+
+                ActivityWorkout(
+
+                    id:
+                        workout.id,
+
+                    activityName:
+                        activityName(
+                            for:
+                                workout.activityType
+                        ),
+
+                    duration:
+                        workout.duration,
+
+                    distanceKm:
+                        workout.totalDistance.map {
+                            $0 / 1000.0
+                        },
+
+                    calories:
+                        Int(
+                            (
+                                workout
+                                    .totalEnergyBurned
+                                ?? 0
+                            ).rounded()
+                        ),
+
+                    startDate:
+                        workout.startDate
+                )
+            }
+
+        let workoutCalories =
+            mappedWorkouts.reduce(0) {
+                total,
+                workout in
+
+                total +
+                    workout.calories
+            }
+
+        /*
+         Active Energy already includes
+         workout calories.
+
+         Therefore:
+
+         Movement Calories =
+         Active Energy - Workout Calories
+
+         This prevents double counting.
+         */
+
+        let dailyMovementCalories =
+            max(
+                0,
+                todayActiveCalories -
+                    workoutCalories
+            )
+
+        return ActivitiesData(
+
+            steps:
+                todaySteps,
+
+            stepsGoal:
+                10_000,
+
+            walkingRunningDistanceKm:
+                todayDistance,
+
+            activeCalories:
+                todayActiveCalories,
+
+            workoutCalories:
+                workoutCalories,
+
+            dailyMovementCalories:
+                dailyMovementCalories,
+
+            restingCalories:
+                todayRestingCalories,
+
+            workouts:
+                mappedWorkouts,
+
+            history:
+                []
+        )
+    }
+
+    // MARK: - Seven Day Activity History
+
+    func fetchSevenDayActivityHistory()
+        async throws -> [DailyActivityData] {
+
+        try await healthKit.requestAuthorization()
+
+        let calendar =
+            Calendar.current
+
+        let today =
+            calendar.startOfDay(
+                for:
+                    Date()
+            )
+
+        var results:
+            [DailyActivityData] = []
+
+        // Oldest → newest
+
+        for offset in stride(
+            from: 6,
+            through: 0,
+            by: -1
+        ) {
+
+            guard
+                let date =
+                    calendar.date(
+                        byAdding: .day,
+                        value: -offset,
+                        to: today
+                    )
+            else {
+                continue
+            }
+
+            let steps =
+                try await healthKit
+                    .getStepCount(
+                        for:
+                            date
+                    )
+
+            let activeCalories =
+                try await healthKit
+                    .getActiveEnergy(
+                        for:
+                            date
+                    )
+
+            let restingCalories =
+                try await healthKit
+                    .getRestingEnergy(
+                        for:
+                            date
+                    )
+
+            let distance =
+                try await healthKit
+                    .getWalkingRunningDistance(
+                        for:
+                            date
+                    )
+
+            let workouts =
+                try await healthKit
+                    .getWorkouts(
+                        for:
+                            date
+                    )
+
+            let workoutCalories =
+                workouts.reduce(0) {
+                    total,
+                    workout in
+
+                    total +
+                        Int(
+                            (
+                                workout
+                                    .totalEnergyBurned
+                                ?? 0
+                            ).rounded()
+                        )
+                }
+
+            results.append(
+
+                DailyActivityData(
+
+                    id:
+                        date,
+
+                    date:
+                        date,
+
+                    steps:
+                        steps,
+
+                    activeCalories:
+                        activeCalories,
+
+                    restingCalories:
+                        restingCalories,
+
+                    walkingRunningDistanceKm:
+                        distance,
+
+                    workoutCalories:
+                        workoutCalories,
+
+                    workoutCount:
+                        workouts.count
+                )
+            )
+        }
+
+        return results
+    }
+
+    // MARK: - Activity Name
+
+    private func activityName(
+        for type:
+            HKWorkoutActivityType
+    ) -> String {
+
+        switch type {
+
+        case .running:
+            return "Running"
+
+        case .cycling:
+            return "Cycling"
+
+        case .swimming:
+            return "Swimming"
+
+        case .walking:
+            return "Walking"
+
+        case .hiking:
+            return "Hiking"
+
+        case .rowing:
+            return "Rowing"
+
+        case .elliptical:
+            return "Elliptical"
+
+        case .traditionalStrengthTraining:
+            return "Strength Training"
+
+        case .functionalStrengthTraining:
+            return "Functional Strength"
+
+        case .highIntensityIntervalTraining:
+            return "HIIT"
+
+        case .yoga:
+            return "Yoga"
+
+        default:
+            return "Workout"
+        }
     }
 }

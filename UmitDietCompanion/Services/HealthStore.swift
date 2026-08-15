@@ -11,111 +11,335 @@ final class HealthStore {
 
     // MARK: - Singleton
 
-    static let shared = HealthStore()
+    static let shared =
+        HealthStore()
 
     // MARK: - Providers
 
-    private let appleHealthProvider = AppleHealthProvider()
-    private let developmentProvider = DevelopmentHealthProvider.shared
+    private let appleHealthProvider =
+        AppleHealthProvider()
+
+    private let developmentProvider =
+        DevelopmentHealthProvider.shared
+
+    // MARK: - Profile
+
+    private(set) var profile:
+        UserProfile
+
+    private(set) var currentProfileVersionID:
+        UUID
+
+    private(set) var profileHistory:
+        [UserProfileHistory]
 
     // MARK: - Initialization
 
     private init() {
 
-        let savedWater = PersistenceService.loadWater()
+        let savedWater =
+            PersistenceService.loadWater()
 
         if savedWater > 0 {
-            waterAmount = savedWater
+            waterAmount =
+                savedWater
         }
 
         // Development fallback values.
         // These remain in place until each metric
         // is fully migrated to Apple Health.
 
-        steps = developmentProvider.steps
-        activeEnergy = developmentProvider.activeEnergy
-        restingEnergy = 0
-        sleepHours = developmentProvider.sleepHours
-        weight = developmentProvider.weight
-        restingHeartRate = developmentProvider.restingHeartRate
+        steps =
+            developmentProvider.steps
+
+        activeEnergy =
+            developmentProvider.activeEnergy
+
+        restingEnergy =
+            0
+
+        sleepHours =
+            developmentProvider.sleepHours
+
+        weight =
+            developmentProvider.weight
+
+        restingHeartRate =
+            developmentProvider.restingHeartRate
+
+        // MARK: - Profile
+
+        if let existingProfileHistory =
+            PersistenceService
+                .loadCurrentProfileHistory() {
+
+            self.profile =
+                existingProfileHistory.profile
+
+            self.currentProfileVersionID =
+                existingProfileHistory.id
+
+            self.profileHistory =
+                [
+                    existingProfileHistory
+                ]
+
+            print(
+                "👤 Existing profile version loaded:"
+            )
+
+            print(
+                existingProfileHistory.id
+            )
+
+        } else {
+
+            var initialProfile =
+                UserProfile(
+
+                    name:
+                        "Ümit",
+
+                    birthDate:
+                        Calendar.current.date(
+                            from:
+                                DateComponents(
+                                    year: 1983,
+                                    month: 3,
+                                    day: 7
+                                )
+                        )!,
+
+                    gender:
+                        .male,
+
+                    height:
+                        178,
+
+                    startWeight:
+                        89,
+
+                    targetWeight:
+                        75,
+
+                    activityLevel:
+                        .moderate,
+
+                    eatingStyle:
+                        .standard,
+
+                    calorieGoal:
+                        energyTarget,
+
+                    waterGoal:
+                        Int(
+                            waterTarget
+                        ),
+
+                    stepGoal:
+                        stepsTarget,
+
+                    sleepGoal:
+                        sleepTarget
+                )
+
+            initialProfile.coaching =
+                CoachingProfile(
+
+                    coachPersonality:
+                        .balanced,
+
+                    opportunityCoachingEnabled:
+                        true,
+
+                    allowHabitLearning:
+                        true
+                )
+
+            let initialProfileVersionID =
+                UUID()
+
+            let initialProfileHistory =
+                UserProfileHistory(
+
+                    id:
+                        initialProfileVersionID,
+
+                    validFrom:
+                        Date(),
+
+                    validTo:
+                        nil,
+
+                    profile:
+                        initialProfile
+                )
+
+            self.profile =
+                initialProfile
+
+            self.currentProfileVersionID =
+                initialProfileVersionID
+
+            self.profileHistory =
+                [
+                    initialProfileHistory
+                ]
+
+            PersistenceService
+                .saveProfileHistory(
+                    initialProfileHistory
+                )
+
+            print(
+                "👤 Initial profile version created:"
+            )
+
+            print(
+                initialProfileVersionID
+            )
+        }
     }
 
     // MARK: - Current Values
 
-    var waterAmount: Double = 2.1
+    var waterAmount:
+        Double = 2.1
 
     // MARK: - Activity
 
-    var steps: Int
+    var steps:
+        Int
 
-    var activeEnergy: Int
+    var activeEnergy:
+        Int
 
-    var restingEnergy: Int
+    var restingEnergy:
+        Int
+
+    private(set) var activitiesData:
+        ActivitiesData = .empty
+
+    var activities:
+        [ActivityWorkout] {
+
+        activitiesData.workouts
+    }
+
+    var workoutCalories:
+        Int {
+
+        activitiesData.workoutCalories
+    }
+
+    var dailyMovementCalories:
+        Int {
+
+        activitiesData.dailyMovementCalories
+    }
+
+    var walkingRunningDistanceKm:
+        Double {
+
+        activitiesData.walkingRunningDistanceKm
+    }
+
+    var activityHistory:
+        [DailyActivityData] {
+
+        activitiesData.history
+    }
 
     // MARK: - Sleep
 
-    var sleepHours: Double
+    var sleepHours:
+        Double
 
-    var deepSleep: TimeInterval = 0
+    var deepSleep:
+        TimeInterval = 0
 
-    var coreSleep: TimeInterval = 0
+    var coreSleep:
+        TimeInterval = 0
 
-    var remSleep: TimeInterval = 0
+    var remSleep:
+        TimeInterval = 0
 
-    var awakeTime: TimeInterval = 0
+    var awakeTime:
+        TimeInterval = 0
 
-    var timeInBed: TimeInterval = 0
+    var timeInBed:
+        TimeInterval = 0
 
-    var deepSleepPercentage: Double = 0
+    var deepSleepPercentage:
+        Double = 0
 
-    var coreSleepPercentage: Double = 0
+    var coreSleepPercentage:
+        Double = 0
 
-    var remSleepPercentage: Double = 0
+    var remSleepPercentage:
+        Double = 0
 
-    var sleepEfficiency: Double = 0
+    var sleepEfficiency:
+        Double = 0
 
     // MARK: - Heart
 
-    var restingHeartRate: Int
+    var restingHeartRate:
+        Int
 
     // MARK: - Night Metrics
 
-    var hrv: Double = 0
+    var hrv:
+        Double = 0
 
-    var hasHRVData: Bool = false
+    var hasHRVData:
+        Bool = false
 
-    var spo2: Double = 0
+    var spo2:
+        Double = 0
 
-    var hasSpO2Data: Bool = false
+    var hasSpO2Data:
+        Bool = false
 
-    var respiratoryRate: Double = 0
+    var respiratoryRate:
+        Double = 0
 
-    var hasRespiratoryRateData: Bool = false
+    var hasRespiratoryRateData:
+        Bool = false
 
     // MARK: - Body
 
-    var weight: Double
+    var weight:
+        Double
 
     // MARK: - Targets
 
-    let waterTarget: Double = 2.5
+    let waterTarget:
+        Double = 2.5
 
-    let stepsTarget: Int = 10_000
+    let stepsTarget:
+        Int = 10_000
 
-    let energyTarget: Int = 2_500
+    let energyTarget:
+        Int = 2_500
 
-    let sleepTarget: Double = 8.0
+    let sleepTarget:
+        Double = 8.0
 
-    let weightTarget: Double = 75.0
+    let weightTarget:
+        Double = 75.0
 
     // MARK: - Water
 
-    func updateWater(by amount: Double) {
+    func updateWater(
+        by amount: Double
+    ) {
 
-        waterAmount = max(
-            0,
-            waterAmount + amount
-        )
+        waterAmount =
+            max(
+                0,
+                waterAmount + amount
+            )
 
         PersistenceService.saveWater(
             waterAmount
@@ -129,9 +353,64 @@ final class HealthStore {
 
         do {
 
-            let metrics = try await appleHealthProvider.fetchDailyMetrics(
-                for: Date()
-            )
+            // MARK: - Daily Health Metrics
+
+            let metrics =
+                try await
+                appleHealthProvider
+                    .fetchDailyMetrics(
+                        for:
+                            Date()
+                    )
+
+            // MARK: - Activities
+
+            let todayActivities =
+                try await
+                appleHealthProvider
+                    .fetchTodayActivities()
+
+            let activityHistory =
+                try await
+                appleHealthProvider
+                    .fetchSevenDayActivityHistory()
+
+            activitiesData =
+                ActivitiesData(
+
+                    steps:
+                        todayActivities.steps,
+
+                    stepsGoal:
+                        todayActivities.stepsGoal,
+
+                    walkingRunningDistanceKm:
+                        todayActivities
+                            .walkingRunningDistanceKm,
+
+                    activeCalories:
+                        todayActivities
+                            .activeCalories,
+
+                    workoutCalories:
+                        todayActivities
+                            .workoutCalories,
+
+                    dailyMovementCalories:
+                        todayActivities
+                            .dailyMovementCalories,
+
+                    restingCalories:
+                        todayActivities
+                            .restingCalories,
+
+                    workouts:
+                        todayActivities
+                            .workouts,
+
+                    history:
+                        activityHistory
+                )
 
             // MARK: - Apple Health Metrics
 
@@ -200,11 +479,90 @@ final class HealthStore {
             hasRespiratoryRateData =
                 metrics.hasRespiratoryRateData
 
+            // MARK: - Save Activities
+
+            for activity in activities {
+
+                PersistenceService
+                    .saveActivity(
+                        activity
+                    )
+            }
+
+            // MARK: - Activity Diagnostics
+
+            print(
+                "==================================="
+            )
+
+            print(
+                "🏃 ACTIVITIES"
+            )
+
+            print(
+                "==================================="
+            )
+
+            print(
+                "Workouts:",
+                activities.count
+            )
+
+            print(
+                "Workout Calories:",
+                workoutCalories,
+                "kcal"
+            )
+
+            print(
+                "Active Energy:",
+                activeEnergy,
+                "kcal"
+            )
+
+            print(
+                "Daily Movement:",
+                dailyMovementCalories,
+                "kcal"
+            )
+
+            print(
+                "Walking / Running:",
+                walkingRunningDistanceKm,
+                "km"
+            )
+
+            for activity in activities {
+
+                print(
+                    "•",
+                    activity.activityName,
+                    "|",
+                    activity.formattedDuration,
+                    "|",
+                    activity.formattedCalories,
+                    "|",
+                    activity.startDate
+                )
+            }
+
+            print(
+                "==================================="
+            )
+
             // MARK: - Diagnostics
 
-            print("===================================")
-            print("❤️ HealthStore Night Metrics")
-            print("===================================")
+            print(
+                "==================================="
+            )
+
+            print(
+                "❤️ HealthStore Night Metrics"
+            )
+
+            print(
+                "==================================="
+            )
 
             print(
                 "HRV:",
@@ -239,9 +597,13 @@ final class HealthStore {
                 hasRespiratoryRateData
             )
 
-            print("===================================")
+            print(
+                "==================================="
+            )
 
-            print("✅ HealthStore refreshed")
+            print(
+                "✅ HealthStore refreshed"
+            )
 
             print(
                 "Steps:",
@@ -311,72 +673,46 @@ final class HealthStore {
                 weight
             )
 
+            // MARK: - Persistence
+
+            let snapshot =
+                dailySnapshot
+
+            PersistenceService
+                .saveDailySnapshot(
+                    snapshot
+                )
+
+            print(
+                "💾 Daily snapshot saved to SQLite"
+            )
+
+            // MARK: - Debug Database Verification
+
+            PersistenceService
+                .printDatabaseStatus()
+
         } catch {
 
             print(
                 "❌ Health refresh failed:"
             )
 
-            print(error)
+            print(
+                error
+            )
         }
-    }
-
-    // MARK: - Profile
-
-    var profile: UserProfile {
-
-        var profile = UserProfile(
-
-            name: "Ümit",
-
-            birthDate: Calendar.current.date(
-                from: DateComponents(
-                    year: 1983,
-                    month: 3,
-                    day: 7
-                )
-            )!,
-
-            gender: .male,
-
-            height: 178,
-
-            startWeight: 89,
-
-            targetWeight: 75,
-
-            activityLevel: .moderate,
-
-            eatingStyle: .standard,
-
-            calorieGoal: energyTarget,
-
-            waterGoal: Int(waterTarget),
-
-            stepGoal: stepsTarget,
-
-            sleepGoal: sleepTarget
-        )
-
-        profile.coaching = CoachingProfile(
-
-            coachPersonality: .balanced,
-
-            opportunityCoachingEnabled: true,
-
-            allowHabitLearning: true
-        )
-
-        return profile
     }
 
     // MARK: - Daily Metrics
 
-    var dailyMetrics: DailyHealthMetrics {
+    var dailyMetrics:
+        DailyHealthMetrics {
 
         DailyHealthMetrics(
 
-            date: Date(),
+            date:
+                Date(),
 
             // MARK: Activity & Nutrition
 
@@ -384,7 +720,9 @@ final class HealthStore {
                 steps,
 
             waterIntake:
-                Int(waterAmount),
+                Int(
+                    waterAmount
+                ),
 
             calorieIntake:
                 0,
@@ -461,17 +799,25 @@ final class HealthStore {
 
     // MARK: - Daily Snapshot
 
-    var dailySnapshot: DailyHealthSnapshot {
+    var dailySnapshot:
+        DailyHealthSnapshot {
 
         DailyHealthSnapshot(
 
-            date: Date(),
+            date:
+                Date(),
 
-            profile: profile,
+            profile:
+                profile,
 
-            metrics: dailyMetrics,
+            profileVersionID:
+                currentProfileVersionID,
 
-            healthScore: 80
+            metrics:
+                dailyMetrics,
+
+            healthScore:
+                80
         )
     }
 }

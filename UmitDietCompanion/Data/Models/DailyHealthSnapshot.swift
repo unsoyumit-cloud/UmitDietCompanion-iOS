@@ -22,6 +22,10 @@ struct DailyHealthSnapshot {
     /// User profile and personalised goals.
     let profile: UserProfile
 
+    /// Identifies the profile version that was active
+    /// when this snapshot was created.
+    let profileVersionID: UUID
+
     // MARK: - Health Metrics
 
     /// Complete set of normalized health metrics.
@@ -34,5 +38,4 @@ struct DailyHealthSnapshot {
     /// This value is intended for presentation purposes and should not
     /// be used by the AI Decision Engine when generating coaching.
     let healthScore: Int
-
 }
