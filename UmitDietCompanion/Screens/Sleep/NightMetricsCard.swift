@@ -34,7 +34,10 @@ struct NightMetricsCard<Destination: View>: View {
 
                 // MARK: Content
 
-                VStack(alignment: .leading, spacing: 6) {
+                VStack(
+                    alignment: .leading,
+                    spacing: 6
+                ) {
 
                     Text("Night Metrics")
                         .font(.headline)
@@ -44,7 +47,6 @@ struct NightMetricsCard<Destination: View>: View {
                         .foregroundStyle(.secondary)
                         .lineLimit(1)
                         .minimumScaleFactor(0.8)
-
                 }
 
                 Spacer()
@@ -54,7 +56,6 @@ struct NightMetricsCard<Destination: View>: View {
                 Image(systemName: "chevron.right")
                     .font(.caption)
                     .foregroundStyle(.tertiary)
-
             }
             .padding(20)
             .frame(
@@ -70,12 +71,9 @@ struct NightMetricsCard<Destination: View>: View {
                     style: .continuous
                 )
             )
-
         }
         .buttonStyle(.plain)
-
     }
-
 }
 
 #Preview {
@@ -86,10 +84,7 @@ struct NightMetricsCard<Destination: View>: View {
 
             Text("Night Metrics")
                 .navigationTitle("Night Metrics")
-
         }
         .padding()
-
     }
-
 }

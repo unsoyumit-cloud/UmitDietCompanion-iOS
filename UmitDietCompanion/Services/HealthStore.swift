@@ -41,6 +41,7 @@ final class HealthStore {
             PersistenceService.loadWater()
 
         if savedWater > 0 {
+
             waterAmount =
                 savedWater
         }
@@ -351,6 +352,17 @@ final class HealthStore {
     @MainActor
     func refresh() async {
 
+        // Reload Water first.
+        //
+        // PersistenceService now checks whether the
+        // saved Water value belongs to today.
+        //
+        // This makes Water automatically reset to 0
+        // when a new calendar day starts.
+
+        waterAmount =
+            PersistenceService.loadWater()
+
         do {
 
             // MARK: - Daily Health Metrics
@@ -550,7 +562,7 @@ final class HealthStore {
                 "==================================="
             )
 
-            // MARK: - Diagnostics
+            // MARK: - Night Metrics Diagnostics
 
             print(
                 "==================================="
@@ -596,6 +608,12 @@ final class HealthStore {
                 "Respiratory Rate Data:",
                 hasRespiratoryRateData
             )
+
+            print(
+                "==================================="
+            )
+
+            // MARK: - Diagnostics
 
             print(
                 "==================================="
@@ -671,6 +689,12 @@ final class HealthStore {
             print(
                 "Weight:",
                 weight
+            )
+
+            print(
+                "Water:",
+                waterAmount,
+                "L"
             )
 
             // MARK: - Persistence

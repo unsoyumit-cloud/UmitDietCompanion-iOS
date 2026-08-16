@@ -49,21 +49,51 @@ struct DailyHealthMetrics {
 
     var sleepEfficiency: Double
 
-    // MARK: - Night Metrics
+    // MARK: - Heart
 
     var restingHeartRate: Int
 
+    /// Average heart rate during the night.
+    var nightAverageHeartRate: Double = 0
+
+    // MARK: - HRV
+
+    /// Average HRV during the night.
     var hrv: Double
 
     var hasHRVData: Bool
 
+    /// Average HRV over the last 7 days.
+    var sevenDayAverageHRV: Double = 0
+
+    // MARK: - Oxygen
+
+    /// Average SpO₂ during the night.
     var spo2: Double
 
     var hasSpO2Data: Bool
 
+    /// Lowest SpO₂ recorded during the night.
+    var minimumSpO2: Double = 0
+
+    // MARK: - Respiratory
+
+    /// Average respiratory rate during the night.
     var respiratoryRate: Double
 
     var hasRespiratoryRateData: Bool
+
+    /// Lowest respiratory rate recorded during the night.
+    var minimumRespiratoryRate: Double = 0
+
+    // MARK: - Sleep / Recovery Extensions
+
+    /// Sleeping wrist temperature when HealthKit provides it.
+    /// nil means HealthKit has no usable value.
+    var sleepingWristTemperature: Double? = nil
+
+    /// Whether Apple Health reported elevated breathing disturbances.
+    var breathingDisturbancesElevated: Bool? = nil
 
     // MARK: - Body
 

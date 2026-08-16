@@ -8,53 +8,88 @@ import Charts
 
 struct StepsDetailView: View {
 
-    private let history = ActivityHistorySample.history
+    // MARK: - Data Source
 
-    // MARK: - Current Day
+    @State private var healthStore =
+        HealthStore.shared
 
-    private var today: ActivityHistoryDay? {
+    // MARK: - Current Data
+
+    private var history:
+        [DailyActivityData] {
+
+        healthStore.activityHistory
+    }
+
+    private var today:
+        DailyActivityData? {
+
         history.last
     }
 
     // MARK: - Weekly Calculations
 
-    private var averageSteps: Int {
-        guard !history.isEmpty else { return 0 }
+    private var averageSteps:
+        Int {
 
-        let total = history.reduce(0) {
-            $0 + $1.steps
+        guard !history.isEmpty else {
+            return 0
         }
 
+        let total =
+            history.reduce(0) {
+                $0 + $1.steps
+            }
+
         return Int(
-            (Double(total) / Double(history.count)).rounded()
+            (
+                Double(total) /
+                Double(history.count)
+            ).rounded()
         )
     }
 
-    private var averageDistance: Double {
-        guard !history.isEmpty else { return 0 }
+    private var averageDistance:
+        Double {
 
-        let total = history.reduce(0.0) {
-            $0 + $1.distance
+        guard !history.isEmpty else {
+            return 0
         }
 
-        return total / Double(history.count)
+        let total =
+            history.reduce(0.0) {
+                $0 +
+                $1.walkingRunningDistanceKm
+            }
+
+        return total /
+            Double(history.count)
     }
 
-    private var bestStepsDay: ActivityHistoryDay? {
+    private var bestStepsDay:
+        DailyActivityData? {
+
         history.max {
             $0.steps < $1.steps
         }
     }
 
-    private var bestDistanceDay: ActivityHistoryDay? {
+    private var bestDistanceDay:
+        DailyActivityData? {
+
         history.max {
-            $0.distance < $1.distance
+            $0.walkingRunningDistanceKm <
+            $1.walkingRunningDistanceKm
         }
     }
 
+    // MARK: - Body
+
     var body: some View {
 
-        ScrollView(showsIndicators: false) {
+        ScrollView(
+            showsIndicators: false
+        ) {
 
             VStack(
                 alignment: .leading,
@@ -70,18 +105,25 @@ struct StepsDetailView: View {
 
                     Label(
                         "Steps",
-                        systemImage: "figure.walk"
+                        systemImage:
+                            "figure.walk"
                     )
                     .font(
                         .largeTitle.bold()
                     )
-                    .foregroundStyle(.green)
+                    .foregroundStyle(
+                        .green
+                    )
 
                     Text(
                         "Your movement over the last 7 days"
                     )
-                    .font(.subheadline)
-                    .foregroundStyle(.secondary)
+                    .font(
+                        .subheadline
+                    )
+                    .foregroundStyle(
+                        .secondary
+                    )
                 }
 
                 // MARK: - Summary Card
@@ -94,13 +136,16 @@ struct StepsDetailView: View {
                     // Today's values
 
                     HStack(
-                        alignment: .firstTextBaseline,
+                        alignment:
+                            .firstTextBaseline,
                         spacing: 8
                     ) {
 
                         Text(
                             today.map {
-                                formatSteps($0.steps)
+                                formatSteps(
+                                    $0.steps
+                                )
                             } ?? "0"
                         )
                         .font(
@@ -111,32 +156,47 @@ struct StepsDetailView: View {
                         )
 
                         Text("steps")
-                            .font(.title3)
-                            .foregroundStyle(.secondary)
+                            .font(
+                                .title3
+                            )
+                            .foregroundStyle(
+                                .secondary
+                            )
 
                         Spacer()
 
                         Text(
                             today.map {
                                 String(
-                                    format: "%.2f km",
-                                    $0.distance
+                                    format:
+                                        "%.2f km",
+                                    $0.walkingRunningDistanceKm
                                 )
                             } ?? "0.00 km"
                         )
-                        .font(.title3.bold())
-                        .foregroundStyle(.green)
+                        .font(
+                            .title3.bold()
+                        )
+                        .foregroundStyle(
+                            .green
+                        )
                     }
 
                     Text("Today")
-                        .font(.subheadline)
-                        .foregroundStyle(.secondary)
+                        .font(
+                            .subheadline
+                        )
+                        .foregroundStyle(
+                            .secondary
+                        )
 
                     Divider()
 
                     // MARK: - 2 × 2 Weekly Summary
 
-                    VStack(spacing: 0) {
+                    VStack(
+                        spacing: 0
+                    ) {
 
                         HStack(
                             alignment: .top,
@@ -144,19 +204,28 @@ struct StepsDetailView: View {
                         ) {
 
                             summaryItem(
-                                title: "7-day avg steps/day",
-                                value: formatSteps(averageSteps)
+                                title:
+                                    "7-day avg steps/day",
+                                value:
+                                    formatSteps(
+                                        averageSteps
+                                    )
                             )
 
                             Divider()
-                                .frame(height: 58)
+                                .frame(
+                                    height: 58
+                                )
 
                             summaryItem(
-                                title: "7-day avg km/day",
-                                value: String(
-                                    format: "%.2f km",
-                                    averageDistance
-                                )
+                                title:
+                                    "7-day avg km/day",
+                                value:
+                                    String(
+                                        format:
+                                            "%.2f km",
+                                        averageDistance
+                                    )
                             )
                         }
 
@@ -168,23 +237,30 @@ struct StepsDetailView: View {
                         ) {
 
                             summaryItem(
-                                title: "Best day steps",
+                                title:
+                                    "Best day steps",
                                 value:
                                     bestStepsDay.map {
-                                        formatSteps($0.steps)
+                                        formatSteps(
+                                            $0.steps
+                                        )
                                     } ?? "—"
                             )
 
                             Divider()
-                                .frame(height: 58)
+                                .frame(
+                                    height: 58
+                                )
 
                             summaryItem(
-                                title: "Best day km",
+                                title:
+                                    "Best day km",
                                 value:
                                     bestDistanceDay.map {
                                         String(
-                                            format: "%.2f km",
-                                            $0.distance
+                                            format:
+                                                "%.2f km",
+                                            $0.walkingRunningDistanceKm
                                         )
                                     } ?? "—"
                             )
@@ -192,7 +268,9 @@ struct StepsDetailView: View {
                     }
                 }
                 .padding(20)
-                .background(.background)
+                .background(
+                    .background
+                )
                 .clipShape(
                     RoundedRectangle(
                         cornerRadius: 24
@@ -207,45 +285,80 @@ struct StepsDetailView: View {
                 ) {
 
                     Text("Last 7 days")
-                        .font(.title2.bold())
+                        .font(
+                            .title2.bold()
+                        )
 
-                    Chart(history) { day in
+                    if history.isEmpty {
 
-                        BarMark(
-                            x: .value(
-                                "Day",
-                                day.label
-                            ),
-                            y: .value(
-                                "Steps",
-                                day.steps
+                        ContentUnavailableView(
+                            "No step data",
+                            systemImage:
+                                "figure.walk",
+                            description:
+                                Text(
+                                    "No movement data is available yet."
+                                )
+                        )
+                        .frame(
+                            maxWidth: .infinity
+                        )
+                        .frame(
+                            height: 240
+                        )
+
+                    } else {
+
+                        Chart(history) { day in
+
+                            BarMark(
+                                x: .value(
+                                    "Day",
+                                    day.shortDayName
+                                ),
+                                y: .value(
+                                    "Steps",
+                                    day.steps
+                                )
                             )
-                        )
-                        .foregroundStyle(
-                            day.isToday
-                            ? Color.green
-                            : Color.green.opacity(0.25)
-                        )
-                        .clipShape(
-                            RoundedRectangle(
-                                cornerRadius: 7
+                            .foregroundStyle(
+                                Calendar.current
+                                    .isDateInToday(
+                                        day.date
+                                    )
+                                ? Color.green
+                                : Color.green
+                                    .opacity(0.25)
                             )
-                        )
-                    }
-                    .chartYAxis {
-                        AxisMarks(
-                            position: .leading
-                        )
-                    }
-                    .chartXAxis {
-                        AxisMarks { _ in
-                            AxisValueLabel()
+                            .clipShape(
+                                RoundedRectangle(
+                                    cornerRadius: 7
+                                )
+                            )
                         }
+                        .chartYAxis {
+
+                            AxisMarks(
+                                position:
+                                    .leading
+                            )
+                        }
+                        .chartXAxis {
+
+                            AxisMarks { _ in
+
+                                AxisValueLabel()
+                            }
+                        }
+                        .frame(
+                            height: 240
+                        )
                     }
-                    .frame(height: 240)
                 }
                 .padding(20)
-                .background(.background)
+                .background(
+                    .background
+                )
                 .clipShape(
                     RoundedRectangle(
                         cornerRadius: 24
@@ -263,15 +376,22 @@ struct StepsDetailView: View {
 
                         Label(
                             "Ümit's take",
-                            systemImage: "sparkles"
+                            systemImage:
+                                "sparkles"
                         )
-                        .font(.headline)
-                        .foregroundStyle(.green)
+                        .font(
+                            .headline
+                        )
+                        .foregroundStyle(
+                            .green
+                        )
 
                         Text(
-                            "Your most active day was \(bestStepsDay.label) with \(formatSteps(bestStepsDay.steps)) steps."
+                            "Your most active day was \(bestStepsDay.shortDayName) with \(formatSteps(bestStepsDay.steps)) steps."
                         )
-                        .font(.body)
+                        .font(
+                            .body
+                        )
                     }
                     .padding(20)
                     .frame(
@@ -279,7 +399,8 @@ struct StepsDetailView: View {
                         alignment: .leading
                     )
                     .background(
-                        Color.green.opacity(0.10)
+                        Color.green
+                            .opacity(0.10)
                     )
                     .clipShape(
                         RoundedRectangle(
@@ -291,11 +412,15 @@ struct StepsDetailView: View {
             .padding(20)
         }
         .background(
-            Color(.systemGroupedBackground)
-                .ignoresSafeArea()
+            Color(
+                .systemGroupedBackground
+            )
+            .ignoresSafeArea()
         )
         .navigationTitle("Steps")
-        .navigationBarTitleDisplayMode(.inline)
+        .navigationBarTitleDisplayMode(
+            .inline
+        )
     }
 
     // MARK: - Helpers
@@ -304,15 +429,21 @@ struct StepsDetailView: View {
         _ value: Int
     ) -> String {
 
-        if value >= 1000 {
+        let formatter =
+            NumberFormatter()
 
-            return String(
-                format: "%.1fk",
-                Double(value) / 1000.0
-            )
-        }
+        formatter.numberStyle =
+            .decimal
 
-        return "\(value)"
+        formatter.maximumFractionDigits =
+            0
+
+        return formatter.string(
+            from:
+                NSNumber(
+                    value: value
+                )
+        ) ?? "\(value)"
     }
 
     private func summaryItem(
@@ -331,8 +462,12 @@ struct StepsDetailView: View {
                 )
 
             Text(title)
-                .font(.caption)
-                .foregroundStyle(.secondary)
+                .font(
+                    .caption
+                )
+                .foregroundStyle(
+                    .secondary
+                )
                 .fixedSize(
                     horizontal: false,
                     vertical: true
@@ -348,19 +483,45 @@ struct StepsDetailView: View {
     }
 }
 
+// MARK: - Preview
+
+#Preview {
+
+    NavigationStack {
+        StepsDetailView()
+    }
+}
+
 // MARK: - Shared Activity History
+//
+// Temporary compatibility models.
+// These are still used by ActiveCaloriesDetailView
+// and RestingCaloriesDetailView.
+//
 
 struct ActivityHistoryDay:
     Identifiable {
 
-    let id = UUID()
+    let id =
+        UUID()
 
-    let label: String
-    let steps: Int
-    let activeCalories: Int
-    let restingCalories: Int
-    let distance: Double
-    let isToday: Bool
+    let label:
+        String
+
+    let steps:
+        Int
+
+    let activeCalories:
+        Int
+
+    let restingCalories:
+        Int
+
+    let distance:
+        Double
+
+    let isToday:
+        Bool
 }
 
 enum ActivityHistorySample {
@@ -369,73 +530,143 @@ enum ActivityHistorySample {
         [ActivityHistoryDay] = [
 
         ActivityHistoryDay(
-            label: "Paz",
-            steps: 2412,
-            activeCalories: 550,
-            restingCalories: 1723,
-            distance: 3.15,
-            isToday: false
+            label:
+                "Paz",
+
+            steps:
+                2412,
+
+            activeCalories:
+                550,
+
+            restingCalories:
+                1723,
+
+            distance:
+                3.15,
+
+            isToday:
+                false
         ),
 
         ActivityHistoryDay(
-            label: "Pzt",
-            steps: 5894,
-            activeCalories: 1508,
-            restingCalories: 1812,
-            distance: 6.95,
-            isToday: false
+            label:
+                "Pzt",
+
+            steps:
+                5894,
+
+            activeCalories:
+                1508,
+
+            restingCalories:
+                1812,
+
+            distance:
+                6.95,
+
+            isToday:
+                false
         ),
 
         ActivityHistoryDay(
-            label: "Sal",
-            steps: 3418,
-            activeCalories: 713,
-            restingCalories: 1729,
-            distance: 4.32,
-            isToday: false
+            label:
+                "Sal",
+
+            steps:
+                3418,
+
+            activeCalories:
+                713,
+
+            restingCalories:
+                1729,
+
+            distance:
+                4.32,
+
+            isToday:
+                false
         ),
 
         ActivityHistoryDay(
-            label: "Çar",
-            steps: 5740,
-            activeCalories: 837,
-            restingCalories: 1787,
-            distance: 7.14,
-            isToday: false
+            label:
+                "Çar",
+
+            steps:
+                5740,
+
+            activeCalories:
+                837,
+
+            restingCalories:
+                1787,
+
+            distance:
+                7.14,
+
+            isToday:
+                false
         ),
 
         ActivityHistoryDay(
-            label: "Per",
-            steps: 4169,
-            activeCalories: 667,
-            restingCalories: 1778,
-            distance: 5.15,
-            isToday: false
+            label:
+                "Per",
+
+            steps:
+                4169,
+
+            activeCalories:
+                667,
+
+            restingCalories:
+                1778,
+
+            distance:
+                5.15,
+
+            isToday:
+                false
         ),
 
         ActivityHistoryDay(
-            label: "Cum",
-            steps: 2459,
-            activeCalories: 464,
-            restingCalories: 1716,
-            distance: 2.64,
-            isToday: false
+            label:
+                "Cum",
+
+            steps:
+                2459,
+
+            activeCalories:
+                464,
+
+            restingCalories:
+                1716,
+
+            distance:
+                2.64,
+
+            isToday:
+                false
         ),
 
         ActivityHistoryDay(
-            label: "Cmt",
-            steps: 567,
-            activeCalories: 126,
-            restingCalories: 1265,
-            distance: 0.78,
-            isToday: true
+            label:
+                "Cmt",
+
+            steps:
+                567,
+
+            activeCalories:
+                126,
+
+            restingCalories:
+                1265,
+
+            distance:
+                0.78,
+
+            isToday:
+                true
         )
     ]
-}
-
-#Preview {
-
-    NavigationStack {
-        StepsDetailView()
-    }
 }

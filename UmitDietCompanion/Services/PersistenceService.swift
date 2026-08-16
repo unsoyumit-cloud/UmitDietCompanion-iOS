@@ -23,27 +23,67 @@ struct PersistenceService {
             to: sqlite3_destructor_type.self
         )
 
-    // MARK: - Legacy Water
+    // MARK: - Water
 
     private static let waterKey =
         "waterAmount"
 
-    // MARK: - Water
+    private static let waterDateKey =
+        "waterDate"
 
     static func saveWater(
         _ amount: Double
     ) {
 
-        UserDefaults.standard.set(
+        let defaults =
+            UserDefaults.standard
+
+        defaults.set(
             amount,
-            forKey: waterKey
+            forKey:
+                waterKey
+        )
+
+        defaults.set(
+            calendarDateString(
+                Date()
+            ),
+            forKey:
+                waterDateKey
         )
     }
 
     static func loadWater() -> Double {
 
-        UserDefaults.standard.double(
-            forKey: waterKey
+        let defaults =
+            UserDefaults.standard
+
+        guard
+            let savedDate =
+                defaults.string(
+                    forKey:
+                        waterDateKey
+                )
+        else {
+
+            return 0
+        }
+
+        let today =
+            calendarDateString(
+                Date()
+            )
+
+        guard
+            savedDate == today
+        else {
+
+            return 0
+        }
+
+        return defaults.double(
+            forKey:
+                waterKey
         )
     }
 

@@ -23,19 +23,39 @@ final class AppleHealthProvider: HealthDataProvider {
 
         try await healthKit.requestAuthorization()
 
+        // MARK: - Night Metrics Diagnostic
+
+        await healthKit.diagnoseNightMetrics(
+            for: date
+        )
+
+        // MARK: - Seven Day Metrics Diagnostic
+
+        await healthKit.diagnoseSevenDayNightMetrics(
+            endingAt: date
+        )
+
         // MARK: - Basic Health Data
 
         let steps =
-            try await healthKit.getTodayStepCount()
+            try await healthKit.getStepCount(
+                for: date
+            )
 
         let sleepMetrics =
-            try await healthKit.getLastNightSleepMetrics()
+            try await healthKit.getLastNightSleepMetrics(
+                for: date
+            )
 
         let activeEnergy =
-            try await healthKit.getTodayActiveEnergy()
+            try await healthKit.getActiveEnergy(
+                for: date
+            )
 
         let restingEnergy =
-            try await healthKit.getTodayRestingEnergy()
+            try await healthKit.getRestingEnergy(
+                for: date
+            )
 
         let restingHeartRate =
             try await healthKit.getRestingHeartRate()
@@ -43,33 +63,23 @@ final class AppleHealthProvider: HealthDataProvider {
         let weight =
             try await healthKit.getLatestWeight()
 
-        // MARK: - Night / Recovery Metrics
+        // MARK: - Night Metrics
 
-        let hrv =
-            try await healthKit.getLastNightHRV()
-
-        let spo2 =
-            try await healthKit.getLastNightSpO2()
-
-        let respiratoryRate =
-            try await healthKit.getLastNightRespiratoryRate()
-
-        // MARK: - Data Availability
-
-        let hasHRVData =
-            hrv > 0
-
-        let hasSpO2Data =
-            spo2 > 0
-
-        let hasRespiratoryRateData =
-            respiratoryRate > 0
+        let nightMetrics =
+            try await healthKit.getLastNightMetrics(
+                for: date
+            )
 
         // MARK: - Debug
 
         print("===================================")
         print("🍎 Apple Health Provider")
         print("===================================")
+
+        print(
+            "Date:",
+            date
+        )
 
         print(
             "Steps:",
@@ -137,21 +147,58 @@ final class AppleHealthProvider: HealthDataProvider {
         )
 
         print(
-            "HRV:",
-            hrv,
+            "Night Average HR:",
+            nightMetrics.averageHeartRate,
+            "bpm"
+        )
+
+        print(
+            "Night Average HRV:",
+            nightMetrics.averageHRV,
             "ms"
         )
 
         print(
-            "SpO2:",
-            spo2,
+            "7-Day Average HRV:",
+            nightMetrics.sevenDayAverageHRV,
+            "ms"
+        )
+
+        print(
+            "Average SpO2:",
+            nightMetrics.averageSpO2,
             "%"
         )
 
         print(
-            "Respiratory Rate:",
-            respiratoryRate,
+            "Minimum SpO2:",
+            nightMetrics.minimumSpO2,
+            "%"
+        )
+
+        print(
+            "Average Respiratory Rate:",
+            nightMetrics.averageRespiratoryRate,
             "breaths/min"
+        )
+
+        print(
+            "Minimum Respiratory Rate:",
+            nightMetrics.minimumRespiratoryRate,
+            "breaths/min"
+        )
+
+        print(
+            "Sleeping Wrist Temperature:",
+            nightMetrics.sleepingWristTemperature
+                ?? 0,
+            "°C"
+        )
+
+        print(
+            "Breathing Disturbances:",
+            nightMetrics.breathingDisturbancesElevated
+                as Any
         )
 
         print(
@@ -225,25 +272,49 @@ final class AppleHealthProvider: HealthDataProvider {
             restingHeartRate:
                 restingHeartRate,
 
-            // MARK: Night Metrics
+            nightAverageHeartRate:
+                nightMetrics.averageHeartRate,
+
+            // MARK: HRV
 
             hrv:
-                hrv,
+                nightMetrics.averageHRV,
 
             hasHRVData:
-                hasHRVData,
+                nightMetrics.hasHRVData,
+
+            sevenDayAverageHRV:
+                nightMetrics.sevenDayAverageHRV,
+
+            // MARK: SpO2
 
             spo2:
-                spo2,
+                nightMetrics.averageSpO2,
 
             hasSpO2Data:
-                hasSpO2Data,
+                nightMetrics.hasSpO2Data,
+
+            minimumSpO2:
+                nightMetrics.minimumSpO2,
+
+            // MARK: Respiratory
 
             respiratoryRate:
-                respiratoryRate,
+                nightMetrics.averageRespiratoryRate,
 
             hasRespiratoryRateData:
-                hasRespiratoryRateData,
+                nightMetrics.hasRespiratoryRateData,
+
+            minimumRespiratoryRate:
+                nightMetrics.minimumRespiratoryRate,
+
+            // MARK: Extensions
+
+            sleepingWristTemperature:
+                nightMetrics.sleepingWristTemperature,
+
+            breathingDisturbancesElevated:
+                nightMetrics.breathingDisturbancesElevated,
 
             // MARK: Body
 

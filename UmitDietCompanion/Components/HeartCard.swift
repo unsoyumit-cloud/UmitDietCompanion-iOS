@@ -1214,141 +1214,54 @@ struct HeartCard: View {
 
     }
 
-    // MARK: - Heart Rate History
+    // MARK: - Resting Heart Rate History
 
     private func loadHeartRateHistory() async {
 
-        let healthStore =
-            HKHealthStore()
+        let healthKitService =
+            HealthKitService()
 
-        guard
-            let heartRateType =
-                HKQuantityType.quantityType(
-                    forIdentifier:
-                        .heartRate
-                )
-        else {
-            return
-        }
+        do {
 
-        let calendar =
-            Calendar.current
+            let history =
+                try await healthKitService
+                    .getRestingHeartRateHistory(
+                        days: 7
+                    )
 
-        let endDate =
-            Date()
+            let points =
+                history.map { item in
 
-        guard
-            let startDate =
-                calendar.date(
-                    byAdding:
-                        .day,
-                    value:
-                        -6,
-                    to:
-                        endDate
-                )
-        else {
-            return
-        }
-
-        let predicate =
-            HKQuery.predicateForSamples(
-                withStart:
-                    calendar.startOfDay(
-                        for:
-                            startDate
-                    ),
-                end:
-                    endDate,
-                options:
-                    .strictStartDate
-            )
-
-        let sortDescriptor =
-            NSSortDescriptor(
-                key:
-                    HKSampleSortIdentifierEndDate,
-                ascending:
-                    true
-            )
-
-        await withCheckedContinuation {
-            continuation in
-
-            let query =
-                HKSampleQuery(
-                    sampleType:
-                        heartRateType,
-                    predicate:
-                        predicate,
-                    limit:
-                        HKObjectQueryNoLimit,
-                    sortDescriptors:
-                        [sortDescriptor]
-                ) { _, samples, error in
-
-                    guard
-                        error == nil,
-                        let samples =
-                            samples
-                            as? [
-                                HKQuantitySample
-                            ]
-                    else {
-
-                        continuation.resume()
-
-                        return
-                    }
-
-                    let points =
-                        samples.compactMap {
-                            sample
-                            -> HeartRatePoint?
-                            in
-
-                            let bpm =
-                                sample.quantity
-                                    .doubleValue(
-                                        for:
-                                            HKUnit
-                                            .count()
-                                            .unitDivided(
-                                                by:
-                                                    .minute()
-                                            )
-                                    )
-
-                            return HeartRatePoint(
-                                date:
-                                    sample.endDate,
-                                bpm:
-                                    Int(
-                                        bpm.rounded()
-                                    )
-                            )
-
-                        }
-
-                    Task { @MainActor in
-
-                        heartRateHistory =
-                            points
-
-                        continuation.resume()
-
-                    }
+                    HeartRatePoint(
+                        date: item.date,
+                        bpm: item.bpm
+                    )
 
                 }
 
-            healthStore.execute(
-                query
+            await MainActor.run {
+
+                heartRateHistory =
+                    points
+
+            }
+
+        } catch {
+
+            print(
+                "❌ Resting heart rate history failed:"
             )
 
+            print(error)
+
+            await MainActor.run {
+
+                heartRateHistory = []
+
+            }
+
         }
-
     }
-
     // MARK: - Blood Pressure History
 
     private func loadBloodPressureHistory() async {
