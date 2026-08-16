@@ -1,4 +1,4 @@
-# ADR-10 — Dashboard Represents Health Domains, Not Raw Metrics
+# ADR-010 — Dashboard Represents Health Domains, Not Raw Metrics
 
 **Status:** Accepted
 

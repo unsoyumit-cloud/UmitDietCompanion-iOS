@@ -31,6 +31,9 @@ struct DailyHealthMetrics {
 
     var sleepHours: Double
 
+    /// Actual sleep occurring between 00:00 and 03:00.
+    var primeSleepHours: Double = 0
+
     var deepSleep: TimeInterval
 
     var coreSleep: TimeInterval

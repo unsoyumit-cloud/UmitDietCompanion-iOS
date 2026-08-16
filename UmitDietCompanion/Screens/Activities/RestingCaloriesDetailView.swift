@@ -8,59 +8,110 @@ import Charts
 
 struct RestingCaloriesDetailView: View {
 
-    private let history = ActivityHistorySample.history
+    @State private var healthStore =
+        HealthStore.shared
+
+    private var history:
+        [DailyActivityData] {
+
+        healthStore.activityHistory
+    }
+
+    private var today:
+        DailyActivityData? {
+
+        history.last
+    }
 
     private var totalResting: Int {
+
         history.reduce(0) {
             $0 + $1.restingCalories
         }
     }
 
     private var averageResting: Int {
-        guard !history.isEmpty else { return 0 }
+
+        guard !history.isEmpty else {
+            return 0
+        }
+
         return totalResting / history.count
     }
 
-    private var highestDay: ActivityHistoryDay? {
+    private var lowestDay:
+        DailyActivityData? {
+
+        history.min {
+            $0.restingCalories <
+            $1.restingCalories
+        }
+    }
+
+    private var highestDay:
+        DailyActivityData? {
+
         history.max {
-            $0.restingCalories < $1.restingCalories
+            $0.restingCalories <
+            $1.restingCalories
         }
     }
 
     var body: some View {
 
-        ScrollView(showsIndicators: false) {
+        ScrollView(
+            showsIndicators: false
+        ) {
 
-            VStack(alignment: .leading, spacing: 24) {
+            VStack(
+                alignment: .leading,
+                spacing: 24
+            ) {
 
                 // MARK: - Header
 
-                VStack(alignment: .leading, spacing: 6) {
+                VStack(
+                    alignment: .leading,
+                    spacing: 6
+                ) {
 
                     Label(
                         "Resting Calories",
-                        systemImage: "moon.fill"
+                        systemImage:
+                            "moon.fill"
                     )
-                    .font(.largeTitle.bold())
-                    .foregroundStyle(.purple)
+                    .font(
+                        .largeTitle.bold()
+                    )
+                    .foregroundStyle(
+                        .purple
+                    )
 
                     Text(
                         "Energy your body uses at rest"
                     )
-                    .font(.subheadline)
-                    .foregroundStyle(.secondary)
+                    .font(
+                        .subheadline
+                    )
+                    .foregroundStyle(
+                        .secondary
+                    )
                 }
 
                 // MARK: - Summary
 
-                VStack(alignment: .leading, spacing: 18) {
+                VStack(
+                    alignment: .leading,
+                    spacing: 18
+                ) {
 
-                    // Today's value is the primary number
-
-                    HStack(alignment: .firstTextBaseline) {
+                    HStack(
+                        alignment:
+                            .firstTextBaseline
+                    ) {
 
                         Text(
-                            "\(history.last?.restingCalories ?? 0)"
+                            "\(today?.restingCalories ?? 0)"
                         )
                         .font(
                             .system(
@@ -69,174 +120,364 @@ struct RestingCaloriesDetailView: View {
                             )
                         )
 
-                        Text("kcal today")
-                            .font(.title3)
-                            .foregroundStyle(.secondary)
+                        Text(
+                            "kcal today"
+                        )
+                        .font(
+                            .title3
+                        )
+                        .foregroundStyle(
+                            .secondary
+                        )
 
                         Spacer()
                     }
 
-                    // Weekly context
-
-                    HStack(spacing: 0) {
+                    HStack(
+                        spacing: 0
+                    ) {
 
                         summaryItem(
-                            title: "7-day average",
-                            value: "\(averageResting) kcal/day"
+                            title:
+                                "7-day average",
+                            value:
+                                "\(averageResting) kcal/day"
                         )
 
                         Divider()
-                            .frame(height: 45)
+                            .frame(
+                                height: 45
+                            )
 
                         summaryItem(
-                            title: "Highest",
-                            value: highestDay.map {
-                                "\($0.restingCalories) kcal"
-                            } ?? "—"
+                            title:
+                                "Lowest",
+                            value:
+                                lowestDay.map {
+                                    "\($0.restingCalories) kcal"
+                                } ?? "—"
+                        )
+
+                        Divider()
+                            .frame(
+                                height: 45
+                            )
+
+                        summaryItem(
+                            title:
+                                "Highest",
+                            value:
+                                highestDay.map {
+                                    "\($0.restingCalories) kcal"
+                                } ?? "—"
                         )
                     }
                 }
                 .padding(20)
-                .background(.background)
+                .background(
+                    .background
+                )
                 .clipShape(
-                    RoundedRectangle(cornerRadius: 24)
+                    RoundedRectangle(
+                        cornerRadius: 24
+                    )
                 )
 
                 // MARK: - Chart
 
-                VStack(alignment: .leading, spacing: 16) {
+                VStack(
+                    alignment: .leading,
+                    spacing: 16
+                ) {
 
-                    Text("Last 7 days")
-                        .font(.title2.bold())
+                    Text(
+                        "Last 7 days"
+                    )
+                    .font(
+                        .title2.bold()
+                    )
 
-                    Chart(history) { day in
+                    if history.isEmpty {
 
-                        BarMark(
-                            x: .value("Day", day.label),
-                            y: .value(
-                                "Calories",
-                                day.restingCalories
+                        emptyHistoryMessage
+
+                    } else {
+
+                        Chart(history) {
+                            day in
+
+                            BarMark(
+                                x: .value(
+                                    "Day",
+                                    day.shortDayName
+                                ),
+                                y: .value(
+                                    "Calories",
+                                    day.restingCalories
+                                )
                             )
-                        )
-                        .foregroundStyle(
-                            day.isToday
-                            ? Color.purple
-                            : Color.purple.opacity(0.25)
-                        )
-                        .clipShape(
-                            RoundedRectangle(cornerRadius: 7)
+                            .foregroundStyle(
+                                isToday(day)
+                                ? Color.purple
+                                : Color.purple
+                                    .opacity(
+                                        0.25
+                                    )
+                            )
+                            .clipShape(
+                                RoundedRectangle(
+                                    cornerRadius: 7
+                                )
+                            )
+                        }
+                        .chartYAxis {
+
+                            AxisMarks(
+                                position:
+                                    .leading
+                            )
+                        }
+                        .chartXAxis {
+
+                            AxisMarks()
+                        }
+                        .frame(
+                            height: 240
                         )
                     }
-                    .chartYAxis {
-                        AxisMarks(position: .leading)
-                    }
-                    .chartXAxis {
-                        AxisMarks()
-                    }
-                    .frame(height: 240)
                 }
                 .padding(20)
-                .background(.background)
+                .background(
+                    .background
+                )
                 .clipShape(
-                    RoundedRectangle(cornerRadius: 24)
+                    RoundedRectangle(
+                        cornerRadius: 24
+                    )
                 )
 
                 // MARK: - Explanation
 
-                VStack(alignment: .leading, spacing: 12) {
+                VStack(
+                    alignment: .leading,
+                    spacing: 12
+                ) {
 
                     Label(
                         "What does this mean?",
-                        systemImage: "info.circle"
+                        systemImage:
+                            "info.circle"
                     )
-                    .font(.headline)
+                    .font(
+                        .headline
+                    )
 
                     Text(
                         "Resting calories represent the energy your body uses to maintain essential functions while at rest."
                     )
-                    .font(.body)
+                    .font(
+                        .body
+                    )
 
                     Text(
                         "This isn't a target to maximize or minimize. We mainly look at the pattern over time."
                     )
-                    .font(.subheadline)
-                    .foregroundStyle(.secondary)
+                    .font(
+                        .subheadline
+                    )
+                    .foregroundStyle(
+                        .secondary
+                    )
                 }
                 .padding(20)
                 .frame(
                     maxWidth: .infinity,
-                    alignment: .leading
+                    alignment:
+                        .leading
                 )
                 .background(
-                    Color.purple.opacity(0.10)
+                    Color.purple
+                        .opacity(
+                            0.10
+                        )
                 )
                 .clipShape(
-                    RoundedRectangle(cornerRadius: 24)
+                    RoundedRectangle(
+                        cornerRadius: 24
+                    )
                 )
 
                 // MARK: - Insight
 
-                VStack(alignment: .leading, spacing: 10) {
+                VStack(
+                    alignment: .leading,
+                    spacing: 10
+                ) {
 
                     Label(
                         "Ümit's take",
-                        systemImage: "sparkles"
+                        systemImage:
+                            "sparkles"
                     )
-                    .font(.headline)
-                    .foregroundStyle(.purple)
+                    .font(
+                        .headline
+                    )
+                    .foregroundStyle(
+                        .purple
+                    )
 
-                    Text(
-                        "Your resting energy has been fairly consistent across the last 7 days."
-                    )
-                    .font(.body)
+                    if let highestDay {
+
+                        Text(
+                            "Your highest resting energy day was \(highestDay.shortDayName) with \(highestDay.restingCalories) kcal."
+                        )
+                        .font(
+                            .body
+                        )
+
+                    } else {
+
+                        Text(
+                            "We'll show the pattern here once enough Health data is available."
+                        )
+                        .font(
+                            .body
+                        )
+                    }
                 }
                 .padding(20)
                 .frame(
                     maxWidth: .infinity,
-                    alignment: .leading
+                    alignment:
+                        .leading
                 )
                 .background(
-                    Color.purple.opacity(0.08)
+                    Color.purple
+                        .opacity(
+                            0.08
+                        )
                 )
                 .clipShape(
-                    RoundedRectangle(cornerRadius: 24)
+                    RoundedRectangle(
+                        cornerRadius: 24
+                    )
                 )
             }
             .padding(20)
         }
         .background(
-            Color(.systemGroupedBackground)
-                .ignoresSafeArea()
+            Color(
+                .systemGroupedBackground
+            )
+            .ignoresSafeArea()
         )
-        .navigationTitle("Resting Calories")
-        .navigationBarTitleDisplayMode(.inline)
+        .navigationTitle(
+            "Resting Calories"
+        )
+        .navigationBarTitleDisplayMode(
+            .inline
+        )
+        .task {
+
+            await healthStore.refresh()
+        }
     }
 
     // MARK: - Helpers
+
+    private func isToday(
+        _ day: DailyActivityData
+    ) -> Bool {
+
+        Calendar.current.isDateInToday(
+            day.date
+        )
+    }
+
+    private var emptyHistoryMessage:
+        some View {
+
+        VStack(
+            spacing: 8
+        ) {
+
+            Image(
+                systemName:
+                    "chart.bar.xaxis"
+            )
+            .font(
+                .system(
+                    size: 28
+                )
+            )
+            .foregroundStyle(
+                .secondary
+            )
+
+            Text(
+                "No activity history yet."
+            )
+            .font(
+                .headline
+            )
+
+            Text(
+                "Health data will appear here once it is available."
+            )
+            .font(
+                .subheadline
+            )
+            .foregroundStyle(
+                .secondary
+            )
+            .multilineTextAlignment(
+                .center
+            )
+        }
+        .frame(
+            maxWidth: .infinity
+        )
+        .padding(
+            .vertical,
+            40
+        )
+    }
 
     private func summaryItem(
         title: String,
         value: String
     ) -> some View {
 
-        VStack(alignment: .leading, spacing: 4) {
+        VStack(
+            alignment: .leading,
+            spacing: 4
+        ) {
 
             Text(value)
-                .font(.headline)
+                .font(
+                    .headline
+                )
 
             Text(title)
-                .font(.caption)
-                .foregroundStyle(.secondary)
+                .font(
+                    .caption
+                )
+                .foregroundStyle(
+                    .secondary
+                )
         }
         .frame(
             maxWidth: .infinity,
-            alignment: .leading
+            alignment:
+                .leading
         )
     }
 }
 
 #Preview {
+
     NavigationStack {
+
         RestingCaloriesDetailView()
     }
 }

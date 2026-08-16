@@ -26,55 +26,77 @@ final class AppleHealthProvider: HealthDataProvider {
         // MARK: - Night Metrics Diagnostic
 
         await healthKit.diagnoseNightMetrics(
-            for: date
+            for:
+                date
         )
 
         // MARK: - Seven Day Metrics Diagnostic
 
         await healthKit.diagnoseSevenDayNightMetrics(
-            endingAt: date
+            endingAt:
+                date
         )
 
         // MARK: - Basic Health Data
 
         let steps =
-            try await healthKit.getStepCount(
-                for: date
+            try await
+            healthKit.getStepCount(
+                for:
+                    date
             )
 
         let sleepMetrics =
-            try await healthKit.getLastNightSleepMetrics(
-                for: date
+            try await
+            healthKit.getLastNightSleepMetrics(
+                for:
+                    date
             )
 
         let activeEnergy =
-            try await healthKit.getActiveEnergy(
-                for: date
+            try await
+            healthKit.getActiveEnergy(
+                for:
+                    date
             )
 
         let restingEnergy =
-            try await healthKit.getRestingEnergy(
-                for: date
+            try await
+            healthKit.getRestingEnergy(
+                for:
+                    date
             )
 
         let restingHeartRate =
-            try await healthKit.getRestingHeartRate()
+            try await
+            healthKit.getRestingHeartRate()
 
         let weight =
-            try await healthKit.getLatestWeight()
+            try await
+            healthKit.getLatestWeight()
 
         // MARK: - Night Metrics
 
         let nightMetrics =
-            try await healthKit.getLastNightMetrics(
-                for: date
+            try await
+            healthKit.getLastNightMetrics(
+                for:
+                    date
             )
 
         // MARK: - Debug
 
-        print("===================================")
-        print("🍎 Apple Health Provider")
-        print("===================================")
+        print(
+            "==================================="
+        )
+
+        print(
+            "🍎 Apple Health Provider"
+        )
+
+        print(
+            "==================================="
+        )
 
         print(
             "Date:",
@@ -89,6 +111,12 @@ final class AppleHealthProvider: HealthDataProvider {
         print(
             "Total Sleep:",
             sleepMetrics.totalSleepHours,
+            "h"
+        )
+
+        print(
+            "Prime Sleep (00:00–03:00):",
+            sleepMetrics.primeSleepHours,
             "h"
         )
 
@@ -207,7 +235,9 @@ final class AppleHealthProvider: HealthDataProvider {
             "kg"
         )
 
-        print("===================================")
+        print(
+            "==================================="
+        )
 
         // MARK: - Normalized Metrics
 
@@ -239,6 +269,9 @@ final class AppleHealthProvider: HealthDataProvider {
 
             sleepHours:
                 sleepMetrics.totalSleepHours,
+
+            primeSleepHours:
+                sleepMetrics.primeSleepHours,
 
             deepSleep:
                 sleepMetrics.deepSleep,
@@ -328,7 +361,8 @@ final class AppleHealthProvider: HealthDataProvider {
     func fetchTodayActivities()
         async throws -> ActivitiesData {
 
-        try await healthKit.requestAuthorization()
+        try await
+            healthKit.requestAuthorization()
 
         async let steps =
             healthKit.getTodayStepCount()
@@ -460,7 +494,8 @@ final class AppleHealthProvider: HealthDataProvider {
     func fetchSevenDayActivityHistory()
         async throws -> [DailyActivityData] {
 
-        try await healthKit.requestAuthorization()
+        try await
+            healthKit.requestAuthorization()
 
         let calendar =
             Calendar.current
@@ -477,56 +512,62 @@ final class AppleHealthProvider: HealthDataProvider {
         // Oldest → newest
 
         for offset in stride(
-            from: 6,
-            through: 0,
-            by: -1
+            from:
+                6,
+            through:
+                0,
+            by:
+                -1
         ) {
 
             guard
                 let date =
                     calendar.date(
-                        byAdding: .day,
-                        value: -offset,
-                        to: today
+                        byAdding:
+                            .day,
+                        value:
+                            -offset,
+                        to:
+                            today
                     )
             else {
                 continue
             }
 
             let steps =
-                try await healthKit
-                    .getStepCount(
-                        for:
-                            date
-                    )
+                try await
+                healthKit.getStepCount(
+                    for:
+                        date
+                )
 
             let activeCalories =
-                try await healthKit
-                    .getActiveEnergy(
-                        for:
-                            date
-                    )
+                try await
+                healthKit.getActiveEnergy(
+                    for:
+                        date
+                )
 
             let restingCalories =
-                try await healthKit
-                    .getRestingEnergy(
-                        for:
-                            date
-                    )
+                try await
+                healthKit.getRestingEnergy(
+                    for:
+                        date
+                )
 
             let distance =
-                try await healthKit
-                    .getWalkingRunningDistance(
-                        for:
-                            date
-                    )
+                try await
+                healthKit.getWalkingRunningDistance(
+                    for:
+                        date
+                )
 
             let workouts =
-                try await healthKit
-                    .getWorkouts(
-                        for:
-                            date
-                    )
+                try await
+                healthKit.getWorkouts(
+                    for:
+                        date
+                )
 
             let workoutCalories =
                 workouts.reduce(0) {

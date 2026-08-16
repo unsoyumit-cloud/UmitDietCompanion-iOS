@@ -256,6 +256,9 @@ final class HealthStore {
     var sleepHours:
         Double
 
+    var primeSleepHours:
+        Double = 0
+
     var deepSleep:
         TimeInterval = 0
 
@@ -437,6 +440,9 @@ final class HealthStore {
 
             sleepHours =
                 metrics.sleepHours
+
+            primeSleepHours =
+                metrics.primeSleepHours
 
             deepSleep =
                 metrics.deepSleep
@@ -646,6 +652,12 @@ final class HealthStore {
             )
 
             print(
+                "Prime Sleep (00:00–03:00):",
+                primeSleepHours,
+                "h"
+            )
+
+            print(
                 "Deep Sleep:",
                 deepSleep / 60,
                 "min"
@@ -762,6 +774,9 @@ final class HealthStore {
             sleepHours:
                 sleepHours,
 
+            primeSleepHours:
+                primeSleepHours,
+
             deepSleep:
                 deepSleep,
 
@@ -841,7 +856,53 @@ final class HealthStore {
                 dailyMetrics,
 
             healthScore:
-                80
+                HealthScoreCalculator.totalScore(
+
+                    waterScore:
+                        HealthScoreCalculator.waterScore(
+                            current:
+                                waterAmount,
+
+                            target:
+                                waterTarget
+                        ),
+
+                    activitiesScore:
+                        HealthScoreCalculator.activitiesScore(
+                            currentSteps:
+                                steps,
+
+                            targetSteps:
+                                stepsTarget
+                        ),
+
+                    sleepScore:
+                        HealthScoreCalculator.sleepScore(
+                            sleepHours:
+                                sleepHours,
+
+                            primeSleepHours:
+                                primeSleepHours,
+
+                            hasHRVData:
+                                hasHRVData,
+
+                            hrv:
+                                hrv,
+
+                            hasSpO2Data:
+                                hasSpO2Data,
+
+                            spo2:
+                                spo2,
+
+                            hasRespiratoryRateData:
+                                hasRespiratoryRateData,
+
+                            respiratoryRate:
+                                respiratoryRate
+                        )
+                )
         )
     }
 }
