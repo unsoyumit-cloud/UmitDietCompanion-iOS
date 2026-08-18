@@ -13,7 +13,12 @@ struct StepsDetailView: View {
     @State private var healthStore =
         HealthStore.shared
 
-    // MARK: - Current Data
+    // MARK: - Selected Day
+
+    @State private var selectedDay:
+        DailyActivityData?
+
+    // MARK: - History
 
     private var history:
         [DailyActivityData] {
@@ -21,13 +26,23 @@ struct StepsDetailView: View {
         healthStore.activityHistory
     }
 
-    private var today:
+    // MARK: - Displayed Day
+
+    private var displayedDay:
         DailyActivityData? {
 
-        history.last
+        selectedDay ?? history.last
     }
 
     // MARK: - Weekly Calculations
+
+    private var totalSteps:
+        Int {
+
+        history.reduce(0) {
+            $0 + $1.steps
+        }
+    }
 
     private var averageSteps:
         Int {
@@ -36,50 +51,16 @@ struct StepsDetailView: View {
             return 0
         }
 
-        let total =
-            history.reduce(0) {
-                $0 + $1.steps
-            }
-
-        return Int(
-            (
-                Double(total) /
-                Double(history.count)
-            ).rounded()
-        )
+        return totalSteps /
+            history.count
     }
 
-    private var averageDistance:
-        Double {
-
-        guard !history.isEmpty else {
-            return 0
-        }
-
-        let total =
-            history.reduce(0.0) {
-                $0 +
-                $1.walkingRunningDistanceKm
-            }
-
-        return total /
-            Double(history.count)
-    }
-
-    private var bestStepsDay:
+    private var bestDay:
         DailyActivityData? {
 
         history.max {
-            $0.steps < $1.steps
-        }
-    }
-
-    private var bestDistanceDay:
-        DailyActivityData? {
-
-        history.max {
-            $0.walkingRunningDistanceKm <
-            $1.walkingRunningDistanceKm
+            $0.steps <
+            $1.steps
         }
     }
 
@@ -112,11 +93,11 @@ struct StepsDetailView: View {
                         .largeTitle.bold()
                     )
                     .foregroundStyle(
-                        .green
+                        .blue
                     )
 
                     Text(
-                        "Your movement over the last 7 days"
+                        "Your daily movement through steps"
                     )
                     .font(
                         .subheadline
@@ -126,27 +107,20 @@ struct StepsDetailView: View {
                     )
                 }
 
-                // MARK: - Summary Card
+                // MARK: - Summary
 
                 VStack(
                     alignment: .leading,
-                    spacing: 20
+                    spacing: 18
                 ) {
-
-                    // Today's values
 
                     HStack(
                         alignment:
-                            .firstTextBaseline,
-                        spacing: 8
+                            .firstTextBaseline
                     ) {
 
                         Text(
-                            today.map {
-                                formatSteps(
-                                    $0.steps
-                                )
-                            } ?? "0"
+                            "\(displayedDay?.steps ?? 0)"
                         )
                         .font(
                             .system(
@@ -155,116 +129,59 @@ struct StepsDetailView: View {
                             )
                         )
 
-                        Text("steps")
-                            .font(
-                                .title3
-                            )
-                            .foregroundStyle(
-                                .secondary
-                            )
-
-                        Spacer()
-
                         Text(
-                            today.map {
-                                String(
-                                    format:
-                                        "%.2f km",
-                                    $0.walkingRunningDistanceKm
-                                )
-                            } ?? "0.00 km"
+                            "steps"
                         )
                         .font(
-                            .title3.bold()
+                            .title3
                         )
                         .foregroundStyle(
-                            .green
+                            .secondary
                         )
+
+                        Spacer()
                     }
 
-                    Text("Today")
+                    if let displayedDay {
+
+                        Text(
+                            dayTitle(
+                                for:
+                                    displayedDay
+                            )
+                        )
                         .font(
                             .subheadline
                         )
                         .foregroundStyle(
                             .secondary
                         )
+                    }
 
-                    Divider()
-
-                    // MARK: - 2 × 2 Weekly Summary
-
-                    VStack(
+                    HStack(
                         spacing: 0
                     ) {
 
-                        HStack(
-                            alignment: .top,
-                            spacing: 0
-                        ) {
-
-                            summaryItem(
-                                title:
-                                    "7-day avg steps/day",
-                                value:
-                                    formatSteps(
-                                        averageSteps
-                                    )
-                            )
-
-                            Divider()
-                                .frame(
-                                    height: 58
-                                )
-
-                            summaryItem(
-                                title:
-                                    "7-day avg km/day",
-                                value:
-                                    String(
-                                        format:
-                                            "%.2f km",
-                                        averageDistance
-                                    )
-                            )
-                        }
+                        summaryItem(
+                            title:
+                                "7-day average",
+                            value:
+                                "\(averageSteps.formatted()) steps/day"
+                        )
 
                         Divider()
-
-                        HStack(
-                            alignment: .top,
-                            spacing: 0
-                        ) {
-
-                            summaryItem(
-                                title:
-                                    "Best day steps",
-                                value:
-                                    bestStepsDay.map {
-                                        formatSteps(
-                                            $0.steps
-                                        )
-                                    } ?? "—"
+                            .frame(
+                                height: 45
                             )
 
-                            Divider()
-                                .frame(
-                                    height: 58
-                                )
-
-                            summaryItem(
-                                title:
-                                    "Best day km",
-                                value:
-                                    bestDistanceDay.map {
-                                        String(
-                                            format:
-                                                "%.2f km",
-                                            $0.walkingRunningDistanceKm
-                                        )
-                                    } ?? "—"
-                            )
-                        }
+                        summaryItem(
+                            title:
+                                "Best day",
+                            value:
+                                bestDay.map {
+                                    "\($0.steps.formatted()) steps"
+                                } ?? "—"
+                        )
                     }
                 }
                 .padding(20)
@@ -284,57 +201,81 @@ struct StepsDetailView: View {
                     spacing: 16
                 ) {
 
-                    Text("Last 7 days")
-                        .font(
-                            .title2.bold()
-                        )
+                    Text(
+                        "Last 7 days"
+                    )
+                    .font(
+                        .title2.bold()
+                    )
 
                     if history.isEmpty {
 
-                        ContentUnavailableView(
-                            "No step data",
-                            systemImage:
-                                "figure.walk",
-                            description:
-                                Text(
-                                    "No movement data is available yet."
-                                )
-                        )
-                        .frame(
-                            maxWidth: .infinity
-                        )
-                        .frame(
-                            height: 240
-                        )
+                        emptyHistoryMessage
 
                     } else {
 
-                        Chart(history) { day in
+                        Chart {
 
-                            BarMark(
-                                x: .value(
-                                    "Day",
-                                    day.shortDayName
-                                ),
-                                y: .value(
-                                    "Steps",
-                                    day.steps
+                            ForEach(
+                                history,
+                                id: \.id
+                            ) { day in
+
+                                BarMark(
+                                    x:
+                                        .value(
+                                            "Day",
+                                            day.date
+                                        ),
+                                    y:
+                                        .value(
+                                            "Steps",
+                                            day.steps
+                                        ),
+                                    width: .fixed(36)
                                 )
-                            )
-                            .foregroundStyle(
-                                Calendar.current
-                                    .isDateInToday(
-                                        day.date
+                                .foregroundStyle(
+                                    isSelected(
+                                        day
                                     )
-                                ? Color.green
-                                : Color.green
-                                    .opacity(0.25)
-                            )
-                            .clipShape(
-                                RoundedRectangle(
-                                    cornerRadius: 7
+                                    ? Color.blue
+                                    : Color.blue
+                                        .opacity(
+                                            0.25
+                                        )
                                 )
-                            )
+                                .clipShape(
+                                    RoundedRectangle(
+                                        cornerRadius: 7
+                                    )
+                                )
+                            }
+                        }
+                        .chartXScale(
+                            domain:
+                                xAxisDomain
+                        )
+                        .chartXAxis {
+
+                            AxisMarks(
+                                values:
+                                    history.map {
+                                        $0.date
+                                    }
+                            ) {
+
+                                AxisGridLine()
+
+                                AxisTick()
+
+                                AxisValueLabel(
+                                    format:
+                                        .dateTime
+                                        .weekday(
+                                            .narrow
+                                        )
+                                )
+                            }
                         }
                         .chartYAxis {
 
@@ -343,11 +284,33 @@ struct StepsDetailView: View {
                                     .leading
                             )
                         }
-                        .chartXAxis {
+                        .chartOverlay { proxy in
 
-                            AxisMarks { _ in
+                            GeometryReader {
+                                geometry in
 
-                                AxisValueLabel()
+                                Rectangle()
+                                    .fill(
+                                        .clear
+                                    )
+                                    .contentShape(
+                                        Rectangle()
+                                    )
+                                    .gesture(
+                                        SpatialTapGesture()
+                                            .onEnded {
+                                                value in
+
+                                                selectDay(
+                                                    at:
+                                                        value.location,
+                                                    in:
+                                                        proxy,
+                                                    geometry:
+                                                        geometry
+                                                )
+                                            }
+                                    )
                             }
                         }
                         .frame(
@@ -365,9 +328,163 @@ struct StepsDetailView: View {
                     )
                 )
 
+                // MARK: - Selected Day Details
+
+                VStack(
+                    alignment: .leading,
+                    spacing: 16
+                ) {
+
+                    Text(
+                        displayedDay.map {
+                            dayTitle(
+                                for:
+                                    $0
+                            )
+                        } ?? "Today"
+                    )
+                    .font(
+                        .title2.bold()
+                    )
+
+                    stepDetailRow(
+                        title:
+                            "Steps",
+                        value:
+                            displayedDay?.steps ?? 0
+                    )
+
+                    stepDetailRow(
+                        title:
+                            "Walking / Running",
+                        value:
+                            nil,
+                        distance:
+                            displayedDay?
+                                .walkingRunningDistanceKm
+                    )
+
+                    Divider()
+
+                    HStack {
+
+                        Text(
+                            "Step goal"
+                        )
+                        .font(
+                            .headline
+                        )
+
+                        Spacer()
+
+                        Text(
+                            "\(healthStore.stepsTarget.formatted())"
+                        )
+                        .font(
+                            .headline
+                        )
+                        .foregroundStyle(
+                            .blue
+                        )
+                    }
+
+                    if let displayedDay {
+
+                        let progress =
+                            min(
+                                1.0,
+                                Double(
+                                    displayedDay.steps
+                                )
+                                /
+                                Double(
+                                    healthStore.stepsTarget
+                                )
+                            )
+
+                        ProgressView(
+                            value:
+                                progress
+                        )
+                        .tint(
+                            .blue
+                        )
+
+                        Text(
+                            "\(Int(progress * 100))% of daily goal"
+                        )
+                        .font(
+                            .caption
+                        )
+                        .foregroundStyle(
+                            .secondary
+                        )
+                    }
+                }
+                .padding(20)
+                .background(
+                    .background
+                )
+                .clipShape(
+                    RoundedRectangle(
+                        cornerRadius: 24
+                    )
+                )
+
+                // MARK: - Explanation
+
+                VStack(
+                    alignment: .leading,
+                    spacing: 12
+                ) {
+
+                    Label(
+                        "What does this mean?",
+                        systemImage:
+                            "info.circle"
+                    )
+                    .font(
+                        .headline
+                    )
+
+                    Text(
+                        "Steps are one of the simplest ways to understand your daily movement."
+                    )
+                    .font(
+                        .body
+                    )
+
+                    Text(
+                        "There is no need to hit a perfect number every day. We care more about your overall pattern and consistency."
+                    )
+                    .font(
+                        .subheadline
+                    )
+                    .foregroundStyle(
+                        .secondary
+                    )
+                }
+                .padding(20)
+                .frame(
+                    maxWidth: .infinity,
+                    alignment:
+                        .leading
+                )
+                .background(
+                    Color.blue
+                        .opacity(
+                            0.10
+                        )
+                )
+                .clipShape(
+                    RoundedRectangle(
+                        cornerRadius: 24
+                    )
+                )
+
                 // MARK: - Insight
 
-                if let bestStepsDay {
+                if let bestDay {
 
                     VStack(
                         alignment: .leading,
@@ -383,11 +500,11 @@ struct StepsDetailView: View {
                             .headline
                         )
                         .foregroundStyle(
-                            .green
+                            .blue
                         )
 
                         Text(
-                            "Your most active day was \(bestStepsDay.shortDayName) with \(formatSteps(bestStepsDay.steps)) steps."
+                            "Your most active step day was \(bestDay.shortDayName) with \(bestDay.steps.formatted()) steps."
                         )
                         .font(
                             .body
@@ -396,11 +513,14 @@ struct StepsDetailView: View {
                     .padding(20)
                     .frame(
                         maxWidth: .infinity,
-                        alignment: .leading
+                        alignment:
+                            .leading
                     )
                     .background(
-                        Color.green
-                            .opacity(0.10)
+                        Color.blue
+                            .opacity(
+                                0.10
+                            )
                     )
                     .clipShape(
                         RoundedRectangle(
@@ -417,34 +537,235 @@ struct StepsDetailView: View {
             )
             .ignoresSafeArea()
         )
-        .navigationTitle("Steps")
+        .navigationTitle(
+            "Steps"
+        )
         .navigationBarTitleDisplayMode(
             .inline
         )
+        .task {
+
+            await healthStore.refresh()
+
+            if selectedDay == nil {
+
+                selectedDay =
+                    healthStore.activityHistory.last
+            }
+        }
     }
 
-    // MARK: - Helpers
+    // MARK: - Chart Domain
 
-    private func formatSteps(
-        _ value: Int
+    private var xAxisDomain:
+        ClosedRange<Date> {
+
+        guard let first =
+            history.first?.date,
+              let last =
+                history.last?.date
+        else {
+
+            let now =
+                Date()
+
+            return now...now
+        }
+
+        let calendar =
+            Calendar.current
+
+        let start =
+            calendar.startOfDay(
+                for:
+                    first
+            )
+
+        let end =
+            calendar.date(
+                byAdding:
+                    .day,
+                value:
+                    1,
+                to:
+                    calendar.startOfDay(
+                        for:
+                            last
+                    )
+            )!
+
+        return start...end
+    }
+
+    // MARK: - Selection
+
+    private func isSelected(
+        _ day:
+            DailyActivityData
+    ) -> Bool {
+
+        guard let selectedDay else {
+            return false
+        }
+
+        return Calendar.current.isDate(
+            selectedDay.date,
+            inSameDayAs:
+                day.date
+        )
+    }
+
+    private func selectDay(
+        at location:
+            CGPoint,
+        in proxy:
+            ChartProxy,
+        geometry:
+            GeometryProxy
+    ) {
+
+        let plotFrame =
+            geometry[
+                proxy.plotAreaFrame
+            ]
+
+        let x =
+            location.x -
+            plotFrame.origin.x
+
+        guard x >= 0,
+              x <= plotFrame.size.width
+        else {
+            return
+        }
+
+        guard let date:
+            Date =
+                proxy.value(
+                    atX:
+                        x
+                )
+        else {
+            return
+        }
+
+        guard let nearestDay =
+            history.min(
+                by: {
+
+                    abs(
+                        $0.date.timeIntervalSince(
+                            date
+                        )
+                    )
+                    <
+                    abs(
+                        $1.date.timeIntervalSince(
+                            date
+                        )
+                    )
+                }
+            )
+        else {
+            return
+        }
+
+        withAnimation(
+            .easeInOut(
+                duration:
+                    0.20
+            )
+        ) {
+
+            selectedDay =
+                nearestDay
+        }
+    }
+
+    // MARK: - Day Title
+
+    private func dayTitle(
+        for day:
+            DailyActivityData
     ) -> String {
 
+        if Calendar.current.isDateInToday(
+            day.date
+        ) {
+
+            return "Today"
+        }
+
         let formatter =
-            NumberFormatter()
+            DateFormatter()
 
-        formatter.numberStyle =
-            .decimal
+        formatter.locale =
+            Locale(
+                identifier:
+                    "en_US_POSIX"
+            )
 
-        formatter.maximumFractionDigits =
-            0
+        formatter.dateFormat =
+            "EEEE"
 
         return formatter.string(
             from:
-                NSNumber(
-                    value: value
-                )
-        ) ?? "\(value)"
+                day.date
+        )
     }
+
+    // MARK: - Empty State
+
+    private var emptyHistoryMessage:
+        some View {
+
+        VStack(
+            spacing: 8
+        ) {
+
+            Image(
+                systemName:
+                    "chart.bar.xaxis"
+            )
+            .font(
+                .system(
+                    size: 28
+                )
+            )
+            .foregroundStyle(
+                .secondary
+            )
+
+            Text(
+                "No activity history yet."
+            )
+            .font(
+                .headline
+            )
+
+            Text(
+                "Health data will appear here once it is available."
+            )
+            .font(
+                .subheadline
+            )
+            .foregroundStyle(
+                .secondary
+            )
+            .multilineTextAlignment(
+                .center
+            )
+        }
+        .frame(
+            maxWidth: .infinity
+        )
+        .padding(
+            .vertical,
+            40
+        )
+    }
+
+    // MARK: - Summary Item
 
     private func summaryItem(
         title: String,
@@ -453,12 +774,12 @@ struct StepsDetailView: View {
 
         VStack(
             alignment: .leading,
-            spacing: 5
+            spacing: 4
         ) {
 
             Text(value)
                 .font(
-                    .title3.bold()
+                    .headline
                 )
 
             Text(title)
@@ -468,18 +789,65 @@ struct StepsDetailView: View {
                 .foregroundStyle(
                     .secondary
                 )
-                .fixedSize(
-                    horizontal: false,
-                    vertical: true
-                )
         }
         .frame(
             maxWidth: .infinity,
-            minHeight: 58,
-            alignment: .topLeading
+            alignment:
+                .leading
         )
-        .padding(.vertical, 8)
-        .padding(.horizontal, 4)
+    }
+
+    // MARK: - Step Detail Row
+
+    private func stepDetailRow(
+        title: String,
+        value: Int?,
+        distance: Double? = nil
+    ) -> some View {
+
+        HStack {
+
+            Text(
+                title
+            )
+
+            Spacer()
+
+            if let value {
+
+                Text(
+                    "\(value.formatted()) steps"
+                )
+                .foregroundStyle(
+                    .secondary
+                )
+
+            } else if let distance {
+
+                Text(
+                    String(
+                        format:
+                            "%.2f km",
+                        distance
+                    )
+                )
+                .foregroundStyle(
+                    .secondary
+                )
+
+            } else {
+
+                Text(
+                    "—"
+                )
+                .foregroundStyle(
+                    .secondary
+                )
+            }
+        }
+        .font(
+            .body
+        )
     }
 }
 
@@ -488,7 +856,7 @@ struct StepsDetailView: View {
 #Preview {
 
     NavigationStack {
+
         StepsDetailView()
     }
 }
-

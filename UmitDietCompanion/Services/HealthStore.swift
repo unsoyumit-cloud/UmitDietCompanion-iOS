@@ -221,6 +221,9 @@ final class HealthStore {
     private(set) var activitiesData:
         ActivitiesData = .empty
 
+    private(set) var workoutHistoryData:
+        [ActivityWorkout] = []
+
     var activities:
         [ActivityWorkout] {
 
@@ -249,6 +252,12 @@ final class HealthStore {
         [DailyActivityData] {
 
         activitiesData.history
+    }
+
+    var workoutHistory:
+        [ActivityWorkout] {
+
+        workoutHistoryData
     }
 
     // MARK: - Sleep
@@ -355,20 +364,210 @@ final class HealthStore {
     @MainActor
     func refresh() async {
 
-        // Reload Water first.
-        //
-        // PersistenceService now checks whether the
-        // saved Water value belongs to today.
-        //
-        // This makes Water automatically reset to 0
-        // when a new calendar day starts.
-
         waterAmount =
             PersistenceService.loadWater()
 
+        // =================================================
+        // MARK: - Activities
+        // =================================================
+        //
+        // Activities are now loaded entirely from Apple Health.
+        //
+        // HealthKit
+        //     ↓
+        // AppleHealthProvider
+        //     ↓
+        // activitiesData
+        //
+
         do {
 
-            // MARK: - Daily Health Metrics
+            async let todayActivities =
+                appleHealthProvider
+                    .fetchTodayActivities()
+
+            async let sevenDayHistory =
+                appleHealthProvider
+                    .fetchSevenDayActivityHistory()
+
+            async let sevenDayWorkouts =
+                appleHealthProvider
+                    .fetchSevenDayWorkouts()
+
+            let (
+                today,
+                history,
+                allWorkouts
+            ) = try await (
+                todayActivities,
+                sevenDayHistory,
+                sevenDayWorkouts
+            )
+
+            workoutHistoryData =
+                allWorkouts
+
+            activitiesData =
+                ActivitiesData(
+
+                    steps:
+                        today.steps,
+
+                    stepsGoal:
+                        today.stepsGoal,
+
+                    walkingRunningDistanceKm:
+                        today.walkingRunningDistanceKm,
+
+                    activeCalories:
+                        today.activeCalories,
+
+                    workoutCalories:
+                        today.workoutCalories,
+
+                    dailyMovementCalories:
+                        today.dailyMovementCalories,
+
+                    restingCalories:
+                        today.restingCalories,
+
+                    workouts:
+                        today.workouts,
+
+                    history:
+                        history
+                )
+
+            // Activity is the single source of truth for
+            // today's steps and active calories.
+
+            steps =
+                activitiesData.steps
+
+            activeEnergy =
+                activitiesData.activeCalories
+
+            restingEnergy =
+                activitiesData.restingCalories
+
+            // Persist today's workouts.
+
+            for activity in activities {
+
+                PersistenceService
+                    .saveActivity(
+                        activity
+                    )
+            }
+
+            // =================================================
+            // MARK: - Activity Diagnostics
+            // =================================================
+
+            print(
+                "==================================="
+            )
+
+            print(
+                "🍎 APPLE HEALTH ACTIVITIES"
+            )
+
+            print(
+                "==================================="
+            )
+
+            print(
+                "Today's Steps:",
+                activitiesData.steps
+            )
+
+            print(
+                "Today's Workouts:",
+                activities.count
+            )
+
+            print(
+                "Workout Calories:",
+                workoutCalories,
+                "kcal"
+            )
+
+            print(
+                "Active Energy:",
+                activeEnergy,
+                "kcal"
+            )
+
+            print(
+                "Daily Movement:",
+                dailyMovementCalories,
+                "kcal"
+            )
+
+            print(
+                "Walking / Running:",
+                walkingRunningDistanceKm,
+                "km"
+            )
+
+            print(
+                "7-Day Activity History:",
+                activityHistory.count,
+                "days"
+            )
+
+            print(
+                "7-Day Workout History:",
+                workoutHistoryData.count,
+                "workouts"
+            )
+
+            for activity in activities {
+
+                print(
+                    "•",
+                    activity.activityName,
+                    "|",
+                    activity.formattedDuration,
+                    "|",
+                    activity.formattedCalories,
+                    "|",
+                    activity.startDate
+                )
+            }
+
+            print(
+                "==================================="
+            )
+
+        } catch {
+
+            // Activity data is now HealthKit-backed.
+            // Keep the last known activity values if the
+            // current refresh fails.
+
+            print(
+                "⚠️ Apple Health Activity refresh failed:"
+            )
+
+            print(
+                error
+            )
+
+            print(
+                "ℹ️ Keeping last known Activity data."
+            )
+        }
+
+        // =================================================
+        // MARK: - Apple Health Daily Metrics
+        // =================================================
+        //
+        // Sleep, heart, body and the remaining daily metrics
+        // are loaded independently from Activities.
+        //
+
+        do {
 
             let metrics =
                 try await
@@ -378,65 +577,14 @@ final class HealthStore {
                             Date()
                     )
 
-            // MARK: - Activities
-
-            let todayActivities =
-                try await
-                appleHealthProvider
-                    .fetchTodayActivities()
-
-            let activityHistory =
-                try await
-                appleHealthProvider
-                    .fetchSevenDayActivityHistory()
-
-            activitiesData =
-                ActivitiesData(
-
-                    steps:
-                        todayActivities.steps,
-
-                    stepsGoal:
-                        todayActivities.stepsGoal,
-
-                    walkingRunningDistanceKm:
-                        todayActivities
-                            .walkingRunningDistanceKm,
-
-                    activeCalories:
-                        todayActivities
-                            .activeCalories,
-
-                    workoutCalories:
-                        todayActivities
-                            .workoutCalories,
-
-                    dailyMovementCalories:
-                        todayActivities
-                            .dailyMovementCalories,
-
-                    restingCalories:
-                        todayActivities
-                            .restingCalories,
-
-                    workouts:
-                        todayActivities
-                            .workouts,
-
-                    history:
-                        activityHistory
-                )
-
-            // MARK: - Apple Health Metrics
-
-            steps =
-                metrics.steps
-
-            activeEnergy =
-                metrics.activeCaloriesBurned
+            // MARK: - Resting Energy
 
             restingEnergy =
                 metrics.restingCaloriesBurned
+
+            // Active Energy remains sourced from Activities.
+
+            // MARK: - Sleep
 
             sleepHours =
                 metrics.sleepHours
@@ -471,8 +619,12 @@ final class HealthStore {
             sleepEfficiency =
                 metrics.sleepEfficiency
 
+            // MARK: - Heart
+
             restingHeartRate =
                 metrics.restingHeartRate
+
+            // MARK: - Body
 
             weight =
                 metrics.weight
@@ -497,78 +649,13 @@ final class HealthStore {
             hasRespiratoryRateData =
                 metrics.hasRespiratoryRateData
 
-            // MARK: - Save Activities
-
-            for activity in activities {
-
-                PersistenceService
-                    .saveActivity(
-                        activity
-                    )
-            }
-
-            // MARK: - Activity Diagnostics
-
             print(
-                "==================================="
+                "🍎 Apple Health Provider loaded successfully"
             )
 
-            print(
-                "🏃 ACTIVITIES"
-            )
-
-            print(
-                "==================================="
-            )
-
-            print(
-                "Workouts:",
-                activities.count
-            )
-
-            print(
-                "Workout Calories:",
-                workoutCalories,
-                "kcal"
-            )
-
-            print(
-                "Active Energy:",
-                activeEnergy,
-                "kcal"
-            )
-
-            print(
-                "Daily Movement:",
-                dailyMovementCalories,
-                "kcal"
-            )
-
-            print(
-                "Walking / Running:",
-                walkingRunningDistanceKm,
-                "km"
-            )
-
-            for activity in activities {
-
-                print(
-                    "•",
-                    activity.activityName,
-                    "|",
-                    activity.formattedDuration,
-                    "|",
-                    activity.formattedCalories,
-                    "|",
-                    activity.startDate
-                )
-            }
-
-            print(
-                "==================================="
-            )
-
+            // =================================================
             // MARK: - Night Metrics Diagnostics
+            // =================================================
 
             print(
                 "==================================="
@@ -619,7 +706,9 @@ final class HealthStore {
                 "==================================="
             )
 
-            // MARK: - Diagnostics
+            // =================================================
+            // MARK: - General Diagnostics
+            // =================================================
 
             print(
                 "==================================="
@@ -709,35 +798,48 @@ final class HealthStore {
                 "L"
             )
 
-            // MARK: - Persistence
-
-            let snapshot =
-                dailySnapshot
-
-            PersistenceService
-                .saveDailySnapshot(
-                    snapshot
-                )
-
-            print(
-                "💾 Daily snapshot saved to SQLite"
-            )
-
-            // MARK: - Debug Database Verification
-
-            PersistenceService
-                .printDatabaseStatus()
-
         } catch {
 
+            // An Apple Health daily-metrics failure must NOT
+            // destroy valid Activity data.
+            //
+            // Keep the last known Apple Health values.
+
             print(
-                "❌ Health refresh failed:"
+                "⚠️ Apple Health daily metrics refresh failed:"
             )
 
             print(
                 error
             )
+
+            print(
+                "ℹ️ Activity data remains available from Apple Health."
+            )
         }
+
+        // =================================================
+        // MARK: - Persistence
+        // =================================================
+
+        let snapshot =
+            dailySnapshot
+
+        PersistenceService
+            .saveDailySnapshot(
+                snapshot
+            )
+
+        print(
+            "💾 Daily snapshot saved to SQLite"
+        )
+
+        // =================================================
+        // MARK: - Debug Database Verification
+        // =================================================
+
+        PersistenceService
+            .printDatabaseStatus()
     }
 
     // MARK: - Daily Metrics
@@ -835,7 +937,6 @@ final class HealthStore {
                 weight
         )
     }
-
     // MARK: - Daily Snapshot
 
     var dailySnapshot:
@@ -906,3 +1007,4 @@ final class HealthStore {
         )
     }
 }
+

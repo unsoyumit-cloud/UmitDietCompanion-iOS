@@ -395,38 +395,8 @@ final class AppleHealthProvider: HealthDataProvider {
 
         let mappedWorkouts =
             todayWorkouts.map {
-                workout in
-
-                ActivityWorkout(
-
-                    id:
-                        workout.id,
-
-                    activityName:
-                        activityName(
-                            for:
-                                workout.activityType
-                        ),
-
-                    duration:
-                        workout.duration,
-
-                    distanceKm:
-                        workout.totalDistance.map {
-                            $0 / 1000.0
-                        },
-
-                    calories:
-                        Int(
-                            (
-                                workout
-                                    .totalEnergyBurned
-                                ?? 0
-                            ).rounded()
-                        ),
-
-                    startDate:
-                        workout.startDate
+                mapWorkout(
+                    $0
                 )
             }
 
@@ -487,6 +457,111 @@ final class AppleHealthProvider: HealthDataProvider {
             history:
                 []
         )
+    }
+
+    // MARK: - Workout Mapping
+
+    private func mapWorkout(
+        _ workout:
+            HealthKitWorkoutSummary
+    ) -> ActivityWorkout {
+
+        ActivityWorkout(
+
+            id:
+                workout.id,
+
+            activityName:
+                activityName(
+                    for:
+                        workout.activityType
+                ),
+
+            duration:
+                workout.duration,
+
+            distanceKm:
+                workout.totalDistance.map {
+                    $0 / 1000.0
+                },
+
+            calories:
+                Int(
+                    (
+                        workout.totalEnergyBurned
+                        ?? 0
+                    ).rounded()
+                ),
+
+            startDate:
+                workout.startDate
+        )
+    }
+
+    // MARK: - Seven Day Workout History
+
+    func fetchSevenDayWorkouts()
+        async throws -> [ActivityWorkout] {
+
+        try await
+            healthKit.requestAuthorization()
+
+        let calendar =
+            Calendar.current
+
+        let today =
+            calendar.startOfDay(
+                for:
+                    Date()
+            )
+
+        var results:
+            [ActivityWorkout] = []
+
+        for offset in stride(
+            from:
+                6,
+            through:
+                0,
+            by:
+                -1
+        ) {
+
+            guard
+                let date =
+                    calendar.date(
+                        byAdding:
+                            .day,
+                        value:
+                            -offset,
+                        to:
+                            today
+                    )
+            else {
+                continue
+            }
+
+            let workouts =
+                try await
+                healthKit.getWorkouts(
+                    for:
+                        date
+                )
+
+            results.append(
+                contentsOf:
+                    workouts.map {
+                        mapWorkout(
+                            $0
+                        )
+                    }
+            )
+        }
+
+        return results.sorted {
+            $0.startDate <
+                $1.startDate
+        }
     }
 
     // MARK: - Seven Day Activity History
@@ -665,3 +740,4 @@ final class AppleHealthProvider: HealthDataProvider {
         }
     }
 }
+

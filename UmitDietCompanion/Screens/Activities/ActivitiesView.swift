@@ -977,56 +977,83 @@ struct ActivitiesView: View {
 
             if workouts.isEmpty {
 
-                HStack(
-                    spacing: 12
-                ) {
+                NavigationLink {
 
-                    Image(
-                        systemName:
-                            "figure.walk.motion"
-                    )
-                    .font(
-                        .system(
-                            size: 25
-                        )
-                    )
-                    .foregroundStyle(
-                        .secondary
-                    )
+                    WorkoutDetailView()
 
-                    VStack(
-                        alignment: .leading,
-                        spacing: 3
+                } label: {
+
+                    HStack(
+                        spacing: 12
                     ) {
 
-                        Text(
-                            "No workouts recorded today"
+                        Image(
+                            systemName:
+                                "figure.walk.motion"
+                        )
+                        .font(
+                            .system(
+                                size: 25
+                            )
+                        )
+                        .foregroundStyle(
+                            .secondary
+                        )
+
+                        VStack(
+                            alignment: .leading,
+                            spacing: 3
+                        ) {
+
+                            Text(
+                                "No workouts recorded today"
+                            )
+                            .font(
+                                .system(
+                                    size: 16,
+                                    weight: .medium
+                                )
+                            )
+
+                            Text(
+                                "Tap to view your 7-day workout history."
+                            )
+                            .font(
+                                .system(
+                                    size: 14
+                                )
+                            )
+                            .foregroundStyle(
+                                .secondary
+                            )
+                        }
+
+                        Spacer()
+
+                        Image(
+                            systemName:
+                                "chevron.right"
                         )
                         .font(
                             .system(
                                 size: 16,
-                                weight: .medium
-                            )
-                        )
-
-                        Text(
-                            "Your Health data will appear here when a workout is recorded."
-                        )
-                        .font(
-                            .system(
-                                size: 14
+                                weight: .semibold
                             )
                         )
                         .foregroundStyle(
                             .secondary
                         )
                     }
-
-                    Spacer()
+                    .padding(
+                        .top,
+                        5
+                    )
+                    .contentShape(
+                        Rectangle()
+                    )
                 }
-                .padding(
-                    .top,
-                    5
+                .buttonStyle(
+                    .plain
                 )
 
             } else {
@@ -1035,8 +1062,21 @@ struct ActivitiesView: View {
                     workouts
                 ) { workout in
 
-                    workoutRow(
-                        workout
+                    NavigationLink {
+
+                        WorkoutDetailView(
+                            workout:
+                                workout
+                        )
+
+                    } label: {
+
+                        workoutRow(
+                            workout
+                        )
+                    }
+                    .buttonStyle(
+                        .plain
                     )
                 }
             }

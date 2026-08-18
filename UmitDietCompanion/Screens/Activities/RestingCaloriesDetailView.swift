@@ -8,8 +8,17 @@ import Charts
 
 struct RestingCaloriesDetailView: View {
 
+    // MARK: - Data Source
+
     @State private var healthStore =
         HealthStore.shared
+
+    // MARK: - Selected Day
+
+    @State private var selectedDay:
+        DailyActivityData?
+
+    // MARK: - History
 
     private var history:
         [DailyActivityData] {
@@ -17,26 +26,33 @@ struct RestingCaloriesDetailView: View {
         healthStore.activityHistory
     }
 
-    private var today:
+    // MARK: - Displayed Day
+
+    private var displayedDay:
         DailyActivityData? {
 
-        history.last
+        selectedDay ?? history.last
     }
 
-    private var totalResting: Int {
+    // MARK: - Weekly Calculations
+
+    private var totalResting:
+        Int {
 
         history.reduce(0) {
             $0 + $1.restingCalories
         }
     }
 
-    private var averageResting: Int {
+    private var averageResting:
+        Int {
 
         guard !history.isEmpty else {
             return 0
         }
 
-        return totalResting / history.count
+        return totalResting /
+            history.count
     }
 
     private var lowestDay:
@@ -56,6 +72,8 @@ struct RestingCaloriesDetailView: View {
             $1.restingCalories
         }
     }
+
+    // MARK: - Body
 
     var body: some View {
 
@@ -111,7 +129,7 @@ struct RestingCaloriesDetailView: View {
                     ) {
 
                         Text(
-                            "\(today?.restingCalories ?? 0)"
+                            "\(displayedDay?.restingCalories ?? 0)"
                         )
                         .font(
                             .system(
@@ -121,7 +139,9 @@ struct RestingCaloriesDetailView: View {
                         )
 
                         Text(
-                            "kcal today"
+                            selectedDay == nil
+                            ? "kcal today"
+                            : "kcal"
                         )
                         .font(
                             .title3
@@ -131,6 +151,24 @@ struct RestingCaloriesDetailView: View {
                         )
 
                         Spacer()
+                    }
+
+                    // MARK: - Selected Day
+
+                    if let displayedDay {
+
+                        Text(
+                            dayTitle(
+                                for:
+                                    displayedDay
+                            )
+                        )
+                        .font(
+                            .subheadline
+                        )
+                        .foregroundStyle(
+                            .secondary
+                        )
                     }
 
                     HStack(
@@ -214,10 +252,13 @@ struct RestingCaloriesDetailView: View {
                                 y: .value(
                                     "Calories",
                                     day.restingCalories
-                                )
+                                ),
+                                width: .fixed(36)
                             )
                             .foregroundStyle(
-                                isToday(day)
+                                isSelected(
+                                    day
+                                )
                                 ? Color.purple
                                 : Color.purple
                                     .opacity(
@@ -240,6 +281,35 @@ struct RestingCaloriesDetailView: View {
                         .chartXAxis {
 
                             AxisMarks()
+                        }
+                        .chartOverlay { proxy in
+
+                            GeometryReader {
+                                geometry in
+
+                                Rectangle()
+                                    .fill(
+                                        .clear
+                                    )
+                                    .contentShape(
+                                        Rectangle()
+                                    )
+                                    .gesture(
+                                        SpatialTapGesture()
+                                            .onEnded {
+                                                value in
+
+                                                selectDay(
+                                                    at:
+                                                        value.location,
+                                                    in:
+                                                        proxy,
+                                                    geometry:
+                                                        geometry
+                                                )
+                                            }
+                                    )
+                            }
                         }
                         .frame(
                             height: 240
@@ -380,19 +450,121 @@ struct RestingCaloriesDetailView: View {
         .task {
 
             await healthStore.refresh()
+
+            if selectedDay == nil {
+
+                selectedDay =
+                    healthStore.activityHistory.last
+            }
         }
     }
 
-    // MARK: - Helpers
+    // MARK: - Selection
 
-    private func isToday(
+    private func isSelected(
         _ day: DailyActivityData
     ) -> Bool {
 
-        Calendar.current.isDateInToday(
-            day.date
+        guard let selectedDay else {
+            return false
+        }
+
+        return Calendar.current.isDate(
+            selectedDay.date,
+            inSameDayAs:
+                day.date
         )
     }
+
+    private func selectDay(
+        at location: CGPoint,
+        in proxy:
+            ChartProxy,
+        geometry:
+            GeometryProxy
+    ) {
+
+        let plotFrame =
+            geometry[
+                proxy.plotAreaFrame
+            ]
+
+        let x =
+            location.x -
+            plotFrame.origin.x
+
+        guard x >= 0,
+              x <= plotFrame.size.width
+        else {
+            return
+        }
+
+        guard let selectedLabel:
+            String =
+                proxy.value(
+                    atX:
+                        x
+                )
+        else {
+            return
+        }
+
+        guard let day =
+            history.first(
+                where: {
+                    $0.shortDayName ==
+                    selectedLabel
+                }
+            )
+        else {
+            return
+        }
+
+        withAnimation(
+            .easeInOut(
+                duration:
+                    0.20
+            )
+        ) {
+
+            selectedDay =
+                day
+        }
+    }
+
+    // MARK: - Day Title
+
+    private func dayTitle(
+        for day:
+            DailyActivityData
+    ) -> String {
+
+        if Calendar.current.isDateInToday(
+            day.date
+        ) {
+
+            return "Today"
+        }
+
+        let formatter =
+            DateFormatter()
+
+        formatter.locale =
+            Locale(
+                identifier:
+                    "en_US_POSIX"
+            )
+
+        formatter.dateFormat =
+            "EEEE"
+
+        return formatter.string(
+            from:
+                day.date
+        )
+    }
+
+    // MARK: - Empty State
 
     private var emptyHistoryMessage:
         some View {
@@ -443,6 +615,8 @@ struct RestingCaloriesDetailView: View {
         )
     }
 
+    // MARK: - Summary Item
+
     private func summaryItem(
         title: String,
         value: String
@@ -473,6 +647,8 @@ struct RestingCaloriesDetailView: View {
         )
     }
 }
+
+// MARK: - Preview
 
 #Preview {
 
