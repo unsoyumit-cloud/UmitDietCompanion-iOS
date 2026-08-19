@@ -27,27 +27,84 @@ struct HeartCard: View {
 
     @State private var diastolicInput = ""
 
+    @State private var selectedHeartRateDate:
+        Date?
+
+    // MARK: - English Weekday Format
+
+    private var englishWeekdayFormat:
+        Date.FormatStyle {
+
+        Date.FormatStyle()
+            .weekday(
+                .abbreviated
+            )
+            .locale(
+                Locale(
+                    identifier:
+                        "en_US_POSIX"
+                )
+            )
+    }
+
     // MARK: - Seven Day Heart Change
 
-    private var sevenDayHeartChange: Double? {
-
-        guard heartRateHistory.count >= 2 else {
-            return nil
-        }
+    private var sevenDayHeartChange:
+        Double? {
 
         guard
-            let first = heartRateHistory.first,
-            let last = heartRateHistory.last
+            heartRateHistory.count >= 2
         else {
             return nil
         }
 
-        return Double(last.bpm - first.bpm)
+        guard
+            let first =
+                heartRateHistory.first,
+            let last =
+                heartRateHistory.last
+        else {
+            return nil
+        }
+
+        return Double(
+            last.bpm -
+            first.bpm
+        )
+    }
+
+    // MARK: - Selected Heart Rate Point
+
+    private var selectedHeartRatePoint:
+        HeartRatePoint? {
+
+        guard
+            let selectedDate =
+                selectedHeartRateDate
+        else {
+            return nil
+        }
+
+        return heartRateHistory.min {
+
+            abs(
+                $0.date.timeIntervalSince(
+                    selectedDate
+                )
+            )
+            <
+            abs(
+                $1.date.timeIntervalSince(
+                    selectedDate
+                )
+            )
+        }
     }
 
     // MARK: - Blood Pressure Availability
 
-    private var hasBloodPressureData: Bool {
+    private var hasBloodPressureData:
+        Bool {
 
         !bloodPressureHistory.isEmpty
     }
@@ -60,7 +117,9 @@ struct HeartCard: View {
             showsIndicators: false
         ) {
 
-            VStack(spacing: 20) {
+            VStack(
+                spacing: 20
+            ) {
 
                 heartHeroCard
 
@@ -85,7 +144,9 @@ struct HeartCard: View {
 
         }
         .background(
-            AppTheme.Colors.dashboardBackground
+            AppTheme
+                .Colors
+                .dashboardBackground
                 .ignoresSafeArea()
         )
         .task {
@@ -106,7 +167,8 @@ struct HeartCard: View {
 
     // MARK: - Heart Hero
 
-    private var heartHeroCard: some View {
+    private var heartHeroCard:
+        some View {
 
         VStack(
             alignment: .leading,
@@ -118,10 +180,11 @@ struct HeartCard: View {
                 spacing: 14
             ) {
 
-                // Large heart icon
                 Text("❤️")
                     .font(
-                        .system(size: 46)
+                        .system(
+                            size: 46
+                        )
                     )
                     .frame(
                         width: 60,
@@ -141,7 +204,9 @@ struct HeartCard: View {
                 if let change =
                     sevenDayHeartChange {
 
-                    HStack(spacing: 5) {
+                    HStack(
+                        spacing: 5
+                    ) {
 
                         Image(
                             systemName:
@@ -160,9 +225,10 @@ struct HeartCard: View {
 
                     }
                     .font(
-                        .subheadline.weight(
-                            .semibold
-                        )
+                        .subheadline
+                            .weight(
+                                .semibold
+                            )
                     )
                     .foregroundStyle(
                         change <= 0
@@ -183,7 +249,9 @@ struct HeartCard: View {
                             ? Color.green
                             : Color.orange
                         )
-                        .opacity(0.10)
+                        .opacity(
+                            0.10
+                        )
                     )
                     .clipShape(
                         Capsule()
@@ -209,7 +277,9 @@ struct HeartCard: View {
                 )
 
                 Text("bpm")
-                    .font(.title3)
+                    .font(
+                        .title3
+                    )
                     .foregroundStyle(
                         .secondary
                     )
@@ -221,7 +291,9 @@ struct HeartCard: View {
             Text(
                 "Resting Heart Rate"
             )
-            .font(.subheadline)
+            .font(
+                .subheadline
+            )
             .foregroundStyle(
                 .secondary
             )
@@ -247,7 +319,8 @@ struct HeartCard: View {
 
     // MARK: - Seven Day Chart
 
-    private var sevenDayChartCard: some View {
+    private var sevenDayChartCard:
+        some View {
 
         VStack(
             alignment: .leading,
@@ -257,7 +330,9 @@ struct HeartCard: View {
             HStack {
 
                 Text("Last 7 Days")
-                    .font(.headline)
+                    .font(
+                        .headline
+                    )
 
                 Spacer()
 
@@ -283,15 +358,17 @@ struct HeartCard: View {
 
                 Chart {
 
-                    // Resting Heart Rate
+                    // MARK: - Resting Heart Rate
+
                     ForEach(
                         heartRateHistory
                     ) { point in
 
-                        LineMark(
+                        BarMark(
                             x: .value(
-                                "Time",
-                                point.date
+                                "Day",
+                                point.date,
+                                unit: .day
                             ),
                             y: .value(
                                 "Resting Heart Rate",
@@ -301,35 +378,103 @@ struct HeartCard: View {
                         .foregroundStyle(
                             .red
                         )
-                        .lineStyle(
-                            StrokeStyle(
-                                lineWidth: 2.5
-                            )
+                        .cornerRadius(
+                            5
                         )
-
-                        PointMark(
-                            x: .value(
-                                "Time",
-                                point.date
-                            ),
-                            y: .value(
-                                "Resting Heart Rate",
-                                point.bpm
-                            )
-                        )
-                        .foregroundStyle(
-                            .red
-                        )
-                        .symbolSize(40)
 
                     }
 
-                    // Blood Pressure
+                    // MARK: - Selected Heart Rate
+
+                    if let selected =
+                        selectedHeartRatePoint {
+
+                        RuleMark(
+                            x: .value(
+                                "Selected Day",
+                                selected.date
+                            )
+                        )
+                        .foregroundStyle(
+                            .gray.opacity(
+                                0.35
+                            )
+                        )
+                        .lineStyle(
+                            StrokeStyle(
+                                lineWidth: 1,
+                                dash: [
+                                    4,
+                                    4
+                                ]
+                            )
+                        )
+                        .annotation(
+                            position:
+                                .top,
+                            alignment:
+                                .center
+                        ) {
+
+                            VStack(
+                                spacing: 2
+                            ) {
+
+                                Text(
+                                    selected.date
+                                        .formatted(
+                                            englishWeekdayFormat
+                                        )
+                                )
+                                .font(
+                                    .caption2
+                                )
+                                .foregroundStyle(
+                                    .secondary
+                                )
+
+                                Text(
+                                    "\(selected.bpm) bpm"
+                                )
+                                .font(
+                                    .caption
+                                        .weight(
+                                            .semibold
+                                        )
+                                )
+                                .foregroundStyle(
+                                    .red
+                                )
+
+                            }
+                            .padding(
+                                .horizontal,
+                                8
+                            )
+                            .padding(
+                                .vertical,
+                                6
+                            )
+                            .background(
+                                .thinMaterial
+                            )
+                            .clipShape(
+                                RoundedRectangle(
+                                    cornerRadius: 8
+                                )
+                            )
+                        }
+
+                    }
+
+                    // MARK: - Blood Pressure
+
                     ForEach(
                         bloodPressureHistory
                     ) { point in
 
                         // Systolic
+
                         LineMark(
                             x: .value(
                                 "Time",
@@ -366,9 +511,12 @@ struct HeartCard: View {
                         .foregroundStyle(
                             .blue
                         )
-                        .symbolSize(45)
+                        .symbolSize(
+                            45
+                        )
 
                         // Diastolic
+
                         LineMark(
                             x: .value(
                                 "Time",
@@ -405,11 +553,17 @@ struct HeartCard: View {
                         .foregroundStyle(
                             .purple
                         )
-                        .symbolSize(45)
+                        .symbolSize(
+                            45
+                        )
 
                     }
 
                 }
+                .chartXSelection(
+                    value:
+                        $selectedHeartRateDate
+                )
                 .chartYAxis {
 
                     AxisMarks(
@@ -426,7 +580,12 @@ struct HeartCard: View {
                 }
                 .chartXAxis {
 
-                    AxisMarks {
+                    AxisMarks(
+                        values:
+                            heartRateHistory.map {
+                                $0.date
+                            }
+                    ) {
 
                         AxisGridLine(
                             stroke:
@@ -437,10 +596,7 @@ struct HeartCard: View {
 
                         AxisValueLabel(
                             format:
-                                .dateTime
-                                .weekday(
-                                    .abbreviated
-                                )
+                                englishWeekdayFormat
                         )
 
                     }
@@ -475,9 +631,12 @@ struct HeartCard: View {
 
     // MARK: - Chart Legend
 
-    private var chartLegend: some View {
+    private var chartLegend:
+        some View {
 
-        HStack(spacing: 10) {
+        HStack(
+            spacing: 10
+        ) {
 
             legendItem(
                 color: .red,
@@ -499,7 +658,9 @@ struct HeartCard: View {
             }
 
         }
-        .font(.caption2)
+        .font(
+            .caption2
+        )
 
     }
 
@@ -508,7 +669,9 @@ struct HeartCard: View {
         label: String
     ) -> some View {
 
-        HStack(spacing: 4) {
+        HStack(
+            spacing: 4
+        ) {
 
             Circle()
                 .fill(color)
@@ -528,9 +691,12 @@ struct HeartCard: View {
 
     // MARK: - Measurement Summary
 
-    private var measurementSummary: some View {
+    private var measurementSummary:
+        some View {
 
-        VStack(spacing: 8) {
+        VStack(
+            spacing: 8
+        ) {
 
             HStack {
 
@@ -577,21 +743,28 @@ struct HeartCard: View {
             }
 
         }
-        .font(.caption)
+        .font(
+            .caption
+        )
 
     }
 
     // MARK: - Empty Chart
 
-    private var emptyChartState: some View {
+    private var emptyChartState:
+        some View {
 
-        VStack(spacing: 8) {
+        VStack(
+            spacing: 8
+        ) {
 
             Image(
                 systemName:
                     "heart.text.square"
             )
-            .font(.title2)
+            .font(
+                .title2
+            )
             .foregroundStyle(
                 .secondary
             )
@@ -619,7 +792,8 @@ struct HeartCard: View {
 
     // MARK: - Blood Pressure Summary
 
-    private var bloodPressureSummaryCard: some View {
+    private var bloodPressureSummaryCard:
+        some View {
 
         VStack(
             alignment: .leading,
@@ -631,7 +805,9 @@ struct HeartCard: View {
                 Text(
                     "Blood Pressure"
                 )
-                .font(.headline)
+                .font(
+                    .headline
+                )
 
                 Spacer()
 
@@ -702,7 +878,9 @@ struct HeartCard: View {
                 Text(
                     "Latest reading"
                 )
-                .font(.caption)
+                .font(
+                    .caption
+                )
                 .foregroundStyle(
                     .secondary
                 )
@@ -730,7 +908,8 @@ struct HeartCard: View {
 
     // MARK: - Blood Pressure Entry
 
-    private var bloodPressureEntryCard: some View {
+    private var bloodPressureEntryCard:
+        some View {
 
         VStack(
             alignment: .leading,
@@ -747,12 +926,16 @@ struct HeartCard: View {
                     Text(
                         "Blood Pressure"
                     )
-                    .font(.headline)
+                    .font(
+                        .headline
+                    )
 
                     Text(
                         "Track your readings here when needed."
                     )
-                    .font(.caption)
+                    .font(
+                        .caption
+                    )
                     .foregroundStyle(
                         .secondary
                     )
@@ -800,19 +983,24 @@ struct HeartCard: View {
 
     // MARK: - AI Insight
 
-    private var aiInsightCard: some View {
+    private var aiInsightCard:
+        some View {
 
         VStack(
             alignment: .leading,
             spacing: 12
         ) {
 
-            HStack(spacing: 8) {
+            HStack(
+                spacing: 8
+            ) {
 
                 Text("✨")
 
                 Text("AI Insight")
-                    .font(.headline)
+                    .font(
+                        .headline
+                    )
 
             }
 
@@ -864,7 +1052,8 @@ struct HeartCard: View {
 
     // MARK: - Blood Pressure Sheet
 
-    private var bloodPressureEditor: some View {
+    private var bloodPressureEditor:
+        some View {
 
         NavigationStack {
 
@@ -872,7 +1061,9 @@ struct HeartCard: View {
                 spacing: 24
             ) {
 
-                VStack(spacing: 8) {
+                VStack(
+                    spacing: 8
+                ) {
 
                     Text(
                         "Log Blood Pressure"
@@ -886,7 +1077,9 @@ struct HeartCard: View {
                     Text(
                         "Record a reading from your blood pressure monitor."
                     )
-                    .font(.subheadline)
+                    .font(
+                        .subheadline
+                    )
                     .foregroundStyle(
                         .secondary
                     )
@@ -896,7 +1089,9 @@ struct HeartCard: View {
 
                 }
 
-                HStack(spacing: 12) {
+                HStack(
+                    spacing: 12
+                ) {
 
                     measurementField(
                         title: "Systolic",
@@ -906,7 +1101,9 @@ struct HeartCard: View {
                     )
 
                     Text("/")
-                        .font(.title2)
+                        .font(
+                            .title2
+                        )
                         .foregroundStyle(
                             .secondary
                         )
@@ -937,7 +1134,9 @@ struct HeartCard: View {
                         .cancellationAction
                 ) {
 
-                    Button("Cancel") {
+                    Button(
+                        "Cancel"
+                    ) {
 
                         showBloodPressureEditor =
                             false
@@ -951,7 +1150,9 @@ struct HeartCard: View {
                         .confirmationAction
                 ) {
 
-                    Button("Save") {
+                    Button(
+                        "Save"
+                    ) {
 
                         saveBloodPressure()
 
@@ -976,13 +1177,18 @@ struct HeartCard: View {
     private func measurementField(
         title: String,
         placeholder: String,
-        text: Binding<String>
+        text:
+            Binding<String>
     ) -> some View {
 
-        VStack(spacing: 8) {
+        VStack(
+            spacing: 8
+        ) {
 
             Text(title)
-                .font(.caption)
+                .font(
+                    .caption
+                )
                 .foregroundStyle(
                     .secondary
                 )
@@ -1013,7 +1219,8 @@ struct HeartCard: View {
 
     // MARK: - Blood Pressure Validation
 
-    private var systolicValue: Int? {
+    private var systolicValue:
+        Int? {
 
         Int(
             systolicInput
@@ -1024,7 +1231,8 @@ struct HeartCard: View {
 
     }
 
-    private var diastolicValue: Int? {
+    private var diastolicValue:
+        Int? {
 
         Int(
             diastolicInput
@@ -1035,20 +1243,24 @@ struct HeartCard: View {
 
     }
 
-    private var isBloodPressureInputValid: Bool {
+    private var isBloodPressureInputValid:
+        Bool {
 
         guard
-            let systolic = systolicValue,
-            let diastolic = diastolicValue
+            let systolic =
+                systolicValue,
+            let diastolic =
+                diastolicValue
         else {
             return false
         }
 
-        return systolic > diastolic &&
-               systolic >= 50 &&
-               systolic <= 300 &&
-               diastolic >= 30 &&
-               diastolic <= 200
+        return
+            systolic > diastolic &&
+            systolic >= 50 &&
+            systolic <= 300 &&
+            diastolic >= 30 &&
+            diastolic <= 200
 
     }
 
@@ -1060,7 +1272,8 @@ struct HeartCard: View {
 
         diastolicInput = ""
 
-        showBloodPressureEditor = true
+        showBloodPressureEditor =
+            true
 
     }
 
@@ -1069,8 +1282,10 @@ struct HeartCard: View {
     private func saveBloodPressure() {
 
         guard
-            let systolic = systolicValue,
-            let diastolic = diastolicValue
+            let systolic =
+                systolicValue,
+            let diastolic =
+                diastolicValue
         else {
             return
         }
@@ -1114,7 +1329,9 @@ struct HeartCard: View {
                         unit:
                             .millimeterOfMercury(),
                         doubleValue:
-                            Double(systolic)
+                            Double(
+                                systolic
+                            )
                     )
 
                 let diastolicQuantity =
@@ -1122,10 +1339,13 @@ struct HeartCard: View {
                         unit:
                             .millimeterOfMercury(),
                         doubleValue:
-                            Double(diastolic)
+                            Double(
+                                diastolic
+                            )
                     )
 
-                let now = Date()
+                let now =
+                    Date()
 
                 let systolicSample =
                     HKQuantitySample(
@@ -1151,20 +1371,23 @@ struct HeartCard: View {
                             now
                     )
 
-                try await healthStore.save(
-                    systolicSample
-                )
+                try await healthStore
+                    .save(
+                        systolicSample
+                    )
 
-                try await healthStore.save(
-                    diastolicSample
-                )
+                try await healthStore
+                    .save(
+                        diastolicSample
+                    )
 
                 await MainActor.run {
 
                     bloodPressureHistory
                         .append(
                             BloodPressurePoint(
-                                date: now,
+                                date:
+                                    now,
                                 systolic:
                                     systolic,
                                 diastolic:
@@ -1174,7 +1397,8 @@ struct HeartCard: View {
 
                     bloodPressureHistory
                         .sort {
-                            $0.date < $1.date
+                            $0.date <
+                            $1.date
                         }
 
                     showBloodPressureEditor =
@@ -1198,9 +1422,11 @@ struct HeartCard: View {
 
     // MARK: - HealthKit History
 
-    private func loadHealthHistory() async {
+    private func loadHealthHistory()
+        async {
 
-        isLoadingHistory = true
+        isLoadingHistory =
+            true
 
         await loadHeartRateHistory()
 
@@ -1208,7 +1434,8 @@ struct HeartCard: View {
 
         await MainActor.run {
 
-            isLoadingHistory = false
+            isLoadingHistory =
+                false
 
         }
 
@@ -1216,7 +1443,8 @@ struct HeartCard: View {
 
     // MARK: - Resting Heart Rate History
 
-    private func loadHeartRateHistory() async {
+    private func loadHeartRateHistory()
+        async {
 
         let healthKitService =
             HealthKitService()
@@ -1224,17 +1452,21 @@ struct HeartCard: View {
         do {
 
             let history =
-                try await healthKitService
+                try await
+                healthKitService
                     .getRestingHeartRateHistory(
                         days: 7
                     )
 
             let points =
-                history.map { item in
+                history.map {
+                    item in
 
                     HeartRatePoint(
-                        date: item.date,
-                        bpm: item.bpm
+                        date:
+                            item.date,
+                        bpm:
+                            item.bpm
                     )
 
                 }
@@ -1256,18 +1488,26 @@ struct HeartCard: View {
 
             await MainActor.run {
 
-                heartRateHistory = []
+                heartRateHistory =
+                    []
 
             }
 
         }
+
     }
+
     // MARK: - Blood Pressure History
 
-    private func loadBloodPressureHistory() async {
+    private func loadBloodPressureHistory()
+        async {
 
-        let healthStore =
-            HKHealthStore()
+        guard
+            HKHealthStore
+                .isHealthDataAvailable()
+        else {
+            return
+        }
 
         guard
             let systolicType =
@@ -1322,8 +1562,10 @@ struct HeartCard: View {
     // MARK: - Fetch Quantity Samples
 
     private func fetchQuantitySamples(
-        type: HKQuantityType
-    ) async -> [HKQuantitySample] {
+        type:
+            HKQuantityType
+    ) async ->
+        [HKQuantitySample] {
 
         let healthStore =
             HKHealthStore()
@@ -1349,17 +1591,18 @@ struct HeartCard: View {
         }
 
         let predicate =
-            HKQuery.predicateForSamples(
-                withStart:
-                    calendar.startOfDay(
-                        for:
-                            startDate
-                    ),
-                end:
-                    endDate,
-                options:
-                    .strictStartDate
-            )
+            HKQuery
+                .predicateForSamples(
+                    withStart:
+                        calendar.startOfDay(
+                            for:
+                                startDate
+                        ),
+                    end:
+                        endDate,
+                    options:
+                        .strictStartDate
+                )
 
         let sortDescriptor =
             NSSortDescriptor(
@@ -1369,36 +1612,45 @@ struct HeartCard: View {
                     true
             )
 
-        return await withCheckedContinuation {
-            continuation in
+        return await
+            withCheckedContinuation {
+                continuation
+                    in
 
-            let query =
-                HKSampleQuery(
-                    sampleType:
-                        type,
-                    predicate:
-                        predicate,
-                    limit:
-                        HKObjectQueryNoLimit,
-                    sortDescriptors:
-                        [sortDescriptor]
-                ) { _, samples, _ in
+                let query =
+                    HKSampleQuery(
+                        sampleType:
+                            type,
+                        predicate:
+                            predicate,
+                        limit:
+                            HKObjectQueryNoLimit,
+                        sortDescriptors:
+                            [
+                                sortDescriptor
+                            ]
+                    ) {
+                        _,
+                        samples,
+                        _
+                        in
 
-                    continuation.resume(
-                        returning:
-                            samples
-                            as? [
-                                HKQuantitySample
-                            ] ?? []
-                    )
+                        continuation.resume(
+                            returning:
+                                samples
+                                as? [
+                                    HKQuantitySample
+                                ]
+                                ?? []
+                        )
 
-                }
+                    }
 
-            healthStore.execute(
-                query
-            )
+                healthStore.execute(
+                    query
+                )
 
-        }
+            }
 
     }
 
@@ -1409,35 +1661,46 @@ struct HeartCard: View {
             [HKQuantitySample],
         diastolic:
             [HKQuantitySample]
-    ) -> [BloodPressurePoint] {
+    ) ->
+        [BloodPressurePoint] {
 
         var results:
-            [BloodPressurePoint] = []
+            [BloodPressurePoint] =
+                []
 
-        for systolicSample in systolic {
+        for systolicSample
+            in systolic {
 
             let closest =
                 diastolic.min {
+
                     abs(
-                        $0.endDate.timeIntervalSince(
-                            systolicSample.endDate
-                        )
+                        $0.endDate
+                            .timeIntervalSince(
+                                systolicSample
+                                    .endDate
+                            )
                     )
                     <
                     abs(
-                        $1.endDate.timeIntervalSince(
-                            systolicSample.endDate
-                        )
+                        $1.endDate
+                            .timeIntervalSince(
+                                systolicSample
+                                    .endDate
+                            )
                     )
+
                 }
 
             guard
                 let diastolicSample =
                     closest,
                 abs(
-                    diastolicSample.endDate
+                    diastolicSample
+                        .endDate
                         .timeIntervalSince(
-                            systolicSample.endDate
+                            systolicSample
+                                .endDate
                         )
                 ) <= 60
             else {
@@ -1445,14 +1708,16 @@ struct HeartCard: View {
             }
 
             let systolicValue =
-                systolicSample.quantity
+                systolicSample
+                    .quantity
                     .doubleValue(
                         for:
                             .millimeterOfMercury()
                     )
 
             let diastolicValue =
-                diastolicSample.quantity
+                diastolicSample
+                    .quantity
                     .doubleValue(
                         for:
                             .millimeterOfMercury()
@@ -1461,14 +1726,17 @@ struct HeartCard: View {
             results.append(
                 BloodPressurePoint(
                     date:
-                        systolicSample.endDate,
+                        systolicSample
+                            .endDate,
                     systolic:
                         Int(
-                            systolicValue.rounded()
+                            systolicValue
+                                .rounded()
                         ),
                     diastolic:
                         Int(
-                            diastolicValue.rounded()
+                            diastolicValue
+                                .rounded()
                         )
                 )
             )
@@ -1476,7 +1744,10 @@ struct HeartCard: View {
         }
 
         return results.sorted {
-            $0.date < $1.date
+
+            $0.date <
+            $1.date
+
         }
 
     }
