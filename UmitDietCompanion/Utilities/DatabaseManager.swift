@@ -16,53 +16,73 @@ final class DatabaseManager {
 
     // MARK: - Constants
 
-    private let databaseFileName = "UmitDietCompanion.sqlite"
+    private let databaseFileName =
+        "UmitDietCompanion.sqlite"
 
-    private let currentSchemaVersion = 1
+    private let currentSchemaVersion =
+        2
 
     // MARK: - Database
 
-    private var database: OpaquePointer?
+    private var database:
+        OpaquePointer?
 
     // MARK: - Initialization
 
     private init() {
+
         openDatabase()
+
         enableForeignKeys()
+
         createSchema()
     }
 
     deinit {
+
         closeDatabase()
     }
 
     // MARK: - Database Path
 
-    private var databaseURL: URL {
+    private var databaseURL:
+        URL {
 
-        let fileManager = FileManager.default
+        let fileManager =
+            FileManager.default
 
         let applicationSupportURL =
             fileManager.urls(
-                for: .applicationSupportDirectory,
-                in: .userDomainMask
+                for:
+                    .applicationSupportDirectory,
+                in:
+                    .userDomainMask
             )[0]
 
         let appDirectoryURL =
-            applicationSupportURL.appendingPathComponent(
-                "UmitDietCompanion",
-                isDirectory: true
-            )
+            applicationSupportURL
+                .appendingPathComponent(
+                    "UmitDietCompanion",
+                    isDirectory:
+                        true
+                )
 
         if !fileManager.fileExists(
-            atPath: appDirectoryURL.path
+            atPath:
+                appDirectoryURL.path
         ) {
+
             do {
+
                 try fileManager.createDirectory(
-                    at: appDirectoryURL,
-                    withIntermediateDirectories: true
+                    at:
+                        appDirectoryURL,
+                    withIntermediateDirectories:
+                        true
                 )
+
             } catch {
+
                 print(
                     "❌ Failed to create application directory:",
                     error
@@ -70,21 +90,25 @@ final class DatabaseManager {
             }
         }
 
-        return appDirectoryURL.appendingPathComponent(
-            databaseFileName
-        )
+        return
+            appDirectoryURL
+                .appendingPathComponent(
+                    databaseFileName
+                )
     }
 
     // MARK: - Open Database
 
     private func openDatabase() {
 
-        let path = databaseURL.path
+        let path =
+            databaseURL.path
 
-        let result = sqlite3_open(
-            path,
-            &database
-        )
+        let result =
+            sqlite3_open(
+                path,
+                &database
+            )
 
         if result != SQLITE_OK {
 
@@ -93,15 +117,22 @@ final class DatabaseManager {
             )
 
             if let database {
+
                 print(
                     "SQLite error:",
                     String(
-                        cString: sqlite3_errmsg(database)
+                        cString:
+                            sqlite3_errmsg(
+                                database
+                            )
                     )
                 )
             }
 
-            sqlite3_close(database)
+            sqlite3_close(
+                database
+            )
+
             database = nil
 
             return
@@ -124,9 +155,12 @@ final class DatabaseManager {
             return
         }
 
-        sqlite3_close(database)
+        sqlite3_close(
+            database
+        )
 
-        self.database = nil
+        self.database =
+            nil
 
         print(
             "✅ SQLite database closed"
@@ -149,16 +183,23 @@ final class DatabaseManager {
     private func createSchema() {
 
         guard database != nil else {
+
             print(
                 "❌ Cannot create schema. Database is not open."
             )
+
             return
         }
 
         createUserProfileHistoryTable()
+
         createDailyHealthSnapshotsTable()
+
         createDailyHealthMetricsTable()
+
         createActivitiesTable()
+
+        createMealsTable()
 
         setSchemaVersion()
 
@@ -344,13 +385,45 @@ final class DatabaseManager {
         )
     }
 
+    // MARK: - Meals
+
+    private func createMealsTable() {
+
+        execute(
+            """
+            CREATE TABLE IF NOT EXISTS meals (
+
+                id TEXT PRIMARY KEY,
+
+                meal_type TEXT NOT NULL,
+
+                source TEXT NOT NULL,
+
+                food_description TEXT NOT NULL,
+
+                created_at REAL NOT NULL
+
+            );
+            """
+        )
+
+        execute(
+            """
+            CREATE INDEX IF NOT EXISTS
+            idx_meals_created_at
+            ON meals(created_at);
+            """
+        )
+    }
+
     // MARK: - Schema Version
 
     private func setSchemaVersion() {
 
         execute(
             """
-            PRAGMA user_version = \(currentSchemaVersion);
+            PRAGMA user_version =
+            \(currentSchemaVersion);
             """
         )
     }
@@ -390,7 +463,8 @@ final class DatabaseManager {
                 print(
                     "❌ SQLite error:",
                     String(
-                        cString: errorMessage
+                        cString:
+                            errorMessage
                     )
                 )
 
@@ -413,9 +487,10 @@ final class DatabaseManager {
     // MARK: - Database Access
 
     func withDatabase<T>(
-        _ body: (
-            OpaquePointer
-        ) throws -> T
+        _ body:
+            (
+                OpaquePointer
+            ) throws -> T
     ) rethrows -> T? {
 
         guard let database else {
@@ -427,6 +502,8 @@ final class DatabaseManager {
             return nil
         }
 
-        return try body(database)
+        return try body(
+            database
+        )
     }
 }

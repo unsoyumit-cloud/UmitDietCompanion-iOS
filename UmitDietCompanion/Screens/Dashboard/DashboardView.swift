@@ -123,19 +123,7 @@ struct DashboardView: View {
 
                                         case .nutrition:
 
-                                            EnergyCard(
-                                                activeCalories:
-                                                    viewModel
-                                                    .healthStore
-                                                    .activeEnergy,
-
-                                                targetCalories:
-                                                    viewModel
-                                                    .healthStore
-                                                    .energyTarget
-                                            )
-                                            .padding()
-
+                                            NutritionDetailView()
                                         // MARK: Sleep
 
                                         case .sleep:

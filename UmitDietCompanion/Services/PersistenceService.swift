@@ -87,6 +87,526 @@ struct PersistenceService {
         )
     }
 
+    // MARK: - Meals
+
+    static func saveMeal(
+        _ meal: Meal
+    ) {
+
+        let sql =
+            """
+            INSERT OR REPLACE INTO meals (
+
+                id,
+                meal_type,
+                source,
+                food_description,
+                created_at
+
+            )
+            VALUES (?, ?, ?, ?, ?);
+            """
+
+        database.withDatabase { database in
+
+            var statement:
+                OpaquePointer?
+
+            guard sqlite3_prepare_v2(
+                database,
+                sql,
+                -1,
+                &statement,
+                nil
+            ) == SQLITE_OK
+            else {
+
+                print(
+                    "❌ Failed to prepare meal INSERT."
+                )
+
+                return
+            }
+
+            defer {
+                sqlite3_finalize(
+                    statement
+                )
+            }
+
+            bindText(
+                statement,
+                index: 1,
+                value:
+                    meal.id.uuidString
+            )
+
+            bindText(
+                statement,
+                index: 2,
+                value:
+                    meal.type.rawValue
+            )
+
+            bindText(
+                statement,
+                index: 3,
+                value:
+                    meal.source.rawValue
+            )
+
+            bindText(
+                statement,
+                index: 4,
+                value:
+                    meal.foodDescription
+            )
+
+            bindDate(
+                statement,
+                index: 5,
+                date:
+                    meal.createdAt
+            )
+
+            let result =
+                sqlite3_step(
+                    statement
+                )
+
+            if result != SQLITE_DONE {
+
+                print(
+                    "❌ Failed to save meal:",
+                    result
+                )
+            }
+        }
+    }
+
+    // MARK: - Load Meals
+
+    static func loadMeals() -> [Meal] {
+
+        let sql =
+            """
+            SELECT
+                id,
+                meal_type,
+                source,
+                food_description,
+                created_at
+            FROM meals
+            ORDER BY created_at ASC;
+            """
+
+        return database.withDatabase {
+            database -> [Meal] in
+
+            var meals:
+                [Meal] = []
+
+            var statement:
+                OpaquePointer?
+
+            guard sqlite3_prepare_v2(
+                database,
+                sql,
+                -1,
+                &statement,
+                nil
+            ) == SQLITE_OK
+            else {
+
+                print(
+                    "❌ Failed to prepare meal query."
+                )
+
+                return []
+            }
+
+            defer {
+                sqlite3_finalize(
+                    statement
+                )
+            }
+
+            while sqlite3_step(
+                statement
+            ) == SQLITE_ROW {
+
+                guard
+                    let idCString =
+                        sqlite3_column_text(
+                            statement,
+                            0
+                        ),
+                    let mealTypeCString =
+                        sqlite3_column_text(
+                            statement,
+                            1
+                        ),
+                    let sourceCString =
+                        sqlite3_column_text(
+                            statement,
+                            2
+                        ),
+                    let descriptionCString =
+                        sqlite3_column_text(
+                            statement,
+                            3
+                        )
+                else {
+
+                    print(
+                        "⚠️ Skipping invalid meal row."
+                    )
+
+                    continue
+                }
+
+                let idString =
+                    String(
+                        cString:
+                            idCString
+                    )
+
+                let mealTypeRawValue =
+                    String(
+                        cString:
+                            mealTypeCString
+                    )
+
+                let sourceRawValue =
+                    String(
+                        cString:
+                            sourceCString
+                    )
+
+                let foodDescription =
+                    String(
+                        cString:
+                            descriptionCString
+                    )
+
+                guard
+                    let id =
+                        UUID(
+                            uuidString:
+                                idString
+                        ),
+                    let mealType =
+                        MealType(
+                            rawValue:
+                                mealTypeRawValue
+                        ),
+                    let source =
+                        MealSource(
+                            rawValue:
+                                sourceRawValue
+                        )
+                else {
+
+                    print(
+                        "⚠️ Failed to reconstruct meal."
+                    )
+
+                    continue
+                }
+
+                let createdAt =
+                    Date(
+                        timeIntervalSince1970:
+                            sqlite3_column_double(
+                                statement,
+                                4
+                            )
+                    )
+
+                meals.append(
+                    Meal(
+                        id:
+                            id,
+                        type:
+                            mealType,
+                        source:
+                            source,
+                        foodDescription:
+                            foodDescription,
+                        createdAt:
+                            createdAt
+                    )
+                )
+            }
+
+            return meals
+
+        } ?? []
+    }
+
+    // MARK: - Load Meals For Date
+
+    static func loadMeals(
+        for date: Date
+    ) -> [Meal] {
+
+        let sql =
+            """
+            SELECT
+                id,
+                meal_type,
+                source,
+                food_description,
+                created_at
+            FROM meals
+            WHERE created_at >= ?
+              AND created_at < ?
+            ORDER BY created_at ASC;
+            """
+
+        let calendar =
+            Calendar.current
+
+        let startOfDay =
+            calendar.startOfDay(
+                for:
+                    date
+            )
+
+        guard
+            let endOfDay =
+                calendar.date(
+                    byAdding:
+                        .day,
+                    value:
+                        1,
+                    to:
+                        startOfDay
+                )
+        else {
+
+            return []
+        }
+
+        return database.withDatabase {
+            database -> [Meal] in
+
+            var meals:
+                [Meal] = []
+
+            var statement:
+                OpaquePointer?
+
+            guard sqlite3_prepare_v2(
+                database,
+                sql,
+                -1,
+                &statement,
+                nil
+            ) == SQLITE_OK
+            else {
+
+                print(
+                    "❌ Failed to prepare daily meal query."
+                )
+
+                return []
+            }
+
+            defer {
+                sqlite3_finalize(
+                    statement
+                )
+            }
+
+            bindDate(
+                statement,
+                index: 1,
+                date:
+                    startOfDay
+            )
+
+            bindDate(
+                statement,
+                index: 2,
+                date:
+                    endOfDay
+            )
+
+            while sqlite3_step(
+                statement
+            ) == SQLITE_ROW {
+
+                guard
+                    let idCString =
+                        sqlite3_column_text(
+                            statement,
+                            0
+                        ),
+                    let mealTypeCString =
+                        sqlite3_column_text(
+                            statement,
+                            1
+                        ),
+                    let sourceCString =
+                        sqlite3_column_text(
+                            statement,
+                            2
+                        ),
+                    let descriptionCString =
+                        sqlite3_column_text(
+                            statement,
+                            3
+                        )
+                else {
+
+                    print(
+                        "⚠️ Skipping invalid daily meal row."
+                    )
+
+                    continue
+                }
+
+                let idString =
+                    String(
+                        cString:
+                            idCString
+                    )
+
+                let mealTypeRawValue =
+                    String(
+                        cString:
+                            mealTypeCString
+                    )
+
+                let sourceRawValue =
+                    String(
+                        cString:
+                            sourceCString
+                    )
+
+                let foodDescription =
+                    String(
+                        cString:
+                            descriptionCString
+                    )
+
+                guard
+                    let id =
+                        UUID(
+                            uuidString:
+                                idString
+                        ),
+                    let mealType =
+                        MealType(
+                            rawValue:
+                                mealTypeRawValue
+                        ),
+                    let source =
+                        MealSource(
+                            rawValue:
+                                sourceRawValue
+                        )
+                else {
+
+                    print(
+                        "⚠️ Failed to reconstruct daily meal."
+                    )
+
+                    continue
+                }
+
+                let createdAt =
+                    Date(
+                        timeIntervalSince1970:
+                            sqlite3_column_double(
+                                statement,
+                                4
+                            )
+                    )
+
+                meals.append(
+                    Meal(
+                        id:
+                            id,
+                        type:
+                            mealType,
+                        source:
+                            source,
+                        foodDescription:
+                            foodDescription,
+                        createdAt:
+                            createdAt
+                    )
+                )
+            }
+
+            return meals
+
+        } ?? []
+    }
+
+    // MARK: - Delete Meal
+
+    static func deleteMeal(
+        _ meal: Meal
+    ) {
+
+        let sql =
+            """
+            DELETE FROM meals
+            WHERE id = ?;
+            """
+
+        database.withDatabase { database in
+
+            var statement:
+                OpaquePointer?
+
+            guard sqlite3_prepare_v2(
+                database,
+                sql,
+                -1,
+                &statement,
+                nil
+            ) == SQLITE_OK
+            else {
+
+                print(
+                    "❌ Failed to prepare meal DELETE."
+                )
+
+                return
+            }
+
+            defer {
+                sqlite3_finalize(
+                    statement
+                )
+            }
+
+            bindText(
+                statement,
+                index: 1,
+                value:
+                    meal.id.uuidString
+            )
+
+            let result =
+                sqlite3_step(
+                    statement
+                )
+
+            if result != SQLITE_DONE {
+
+                print(
+                    "❌ Failed to delete meal:",
+                    result
+                )
+            }
+        }
+    }
+
     // MARK: - User Profile History
 
     static func saveProfileHistory(
@@ -1079,6 +1599,96 @@ struct PersistenceService {
             }
         }
     }
+    
+    
+
+    // MARK: - Meal Helpers
+
+    private static func mealTypeRawValue(
+        _ type: MealType
+    ) -> String {
+
+        switch type {
+
+        case .breakfast:
+            return "breakfast"
+
+        case .lunch:
+            return "lunch"
+
+        case .dinner:
+            return "dinner"
+
+        case .snack:
+            return "snack"
+        }
+    }
+
+    private static func mealType(
+        from rawValue: String
+    ) -> MealType? {
+
+        switch rawValue {
+
+        case "breakfast":
+            return .breakfast
+
+        case "lunch":
+            return .lunch
+
+        case "dinner":
+            return .dinner
+
+        case "snack":
+            return .snack
+
+        default:
+            return nil
+        }
+    }
+
+    private static func mealSourceRawValue(
+        _ source: MealSource
+    ) -> String {
+
+        switch source {
+
+        case .photo:
+            return "photo"
+
+        case .manual:
+            return "manual"
+
+        case .voice:
+            return "voice"
+
+        case .barcode:
+            return "barcode"
+        }
+    }
+
+    private static func mealSource(
+        from rawValue: String
+    ) -> MealSource? {
+
+        switch rawValue {
+
+        case "photo":
+            return .photo
+
+        case "manual":
+            return .manual
+
+        case "voice":
+            return .voice
+
+        case "barcode":
+            return .barcode
+
+        default:
+            return nil
+        }
+    }
 
     // MARK: - Snapshot ID
 
@@ -1161,7 +1771,8 @@ struct PersistenceService {
             "user_profile_history",
             "daily_health_snapshots",
             "daily_health_metrics",
-            "activities"
+            "activities",
+            "meals"
         ]
 
         print("")
@@ -1205,7 +1816,8 @@ struct PersistenceService {
             "user_profile_history",
             "daily_health_snapshots",
             "daily_health_metrics",
-            "activities"
+            "activities",
+            "meals"
         ]
 
         guard

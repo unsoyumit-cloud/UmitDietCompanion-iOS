@@ -5,7 +5,7 @@
 
 import Foundation
 
-struct Meal {
+struct Meal: Identifiable {
 
     let id: UUID
 
@@ -13,24 +13,23 @@ struct Meal {
 
     let source: MealSource
 
-    let createdAt: Date
+    let foodDescription: String
 
+    let createdAt: Date
 }
 
-enum MealType {
+enum MealType: String {
 
     case breakfast
     case lunch
     case dinner
     case snack
-
 }
 
-enum MealSource {
+enum MealSource: String {
 
     case photo
     case manual
     case voice
     case barcode
-
 }
