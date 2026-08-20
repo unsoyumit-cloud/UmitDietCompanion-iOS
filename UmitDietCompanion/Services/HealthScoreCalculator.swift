@@ -561,9 +561,15 @@ struct HealthScoreCalculator {
 
     // MARK: - Daily Health Score
 
-    /// Combines the three current V1 categories into
+    /// Combines the current V1 categories into
     /// the final Daily Health Score.
-
+    ///
+    /// If Sleep has no data, a sleepScore of 0 is treated
+    /// as "No Data" and is excluded from the overall score.
+    ///
+    /// In that case, the remaining category weights are
+    /// normalized so that the available categories still
+    /// produce a score out of 100.
     static func totalScore(
         waterScore: Int,
         activitiesScore: Int,
@@ -587,6 +593,42 @@ struct HealthScoreCalculator {
                 activitiesWeight /
                 100.0
             )
+
+        // Sleep score of 0 currently represents the
+        // "No Data" state.
+        //
+        // Do NOT allow missing sleep data to drag the
+        // overall score down to 0.
+        if sleepScore <= 0 {
+
+            let availableWeight =
+                waterWeight +
+                activitiesWeight
+
+            guard availableWeight > 0 else {
+                return 0
+            }
+
+            let total =
+                (
+                    waterContribution +
+                    activitiesContribution
+                ) /
+                (
+                    availableWeight /
+                    100.0
+                )
+
+            return min(
+                max(
+                    Int(
+                        total.rounded()
+                    ),
+                    0
+                ),
+                100
+            )
+        }
 
         let sleepContribution =
             Double(
