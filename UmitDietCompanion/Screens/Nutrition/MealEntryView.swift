@@ -32,6 +32,7 @@ struct MealEntryView: View {
                 // MARK: Meal Type
 
                 Section {
+
                     Picker(
                         "Meal",
                         selection:
@@ -39,16 +40,24 @@ struct MealEntryView: View {
                     ) {
 
                         Text("Breakfast")
-                            .tag(MealType.breakfast)
+                            .tag(
+                                MealType.breakfast
+                            )
 
                         Text("Lunch")
-                            .tag(MealType.lunch)
+                            .tag(
+                                MealType.lunch
+                            )
 
                         Text("Dinner")
-                            .tag(MealType.dinner)
+                            .tag(
+                                MealType.dinner
+                            )
 
                         Text("Snack")
-                            .tag(MealType.snack)
+                            .tag(
+                                MealType.snack
+                            )
                     }
                 }
 
@@ -77,7 +86,9 @@ struct MealEntryView: View {
                 Section {
 
                     Button {
+
                         saveMeal()
+
                     } label: {
 
                         HStack {
@@ -150,7 +161,6 @@ struct MealEntryView: View {
 
         let meal =
             Meal(
-
                 id:
                     UUID(),
 
@@ -167,9 +177,143 @@ struct MealEntryView: View {
                     Date()
             )
 
+        // MARK: Save
+
         PersistenceService.saveMeal(
             meal
         )
+
+        // MARK: Analyze
+
+        let analysis =
+            MealAnalyzer.analyze(
+                meal:
+                    meal
+            )
+
+        print("")
+        print(
+            "==================================="
+        )
+        print(
+            "🧠 MEAL ANALYSIS"
+        )
+        print(
+            "==================================="
+        )
+
+        print(
+            "Status: \(analysis.status)"
+        )
+
+        // MARK: Detected Foods
+
+        print("")
+        print(
+            "Detected Foods:"
+        )
+
+        if analysis.detectedFoods.isEmpty {
+
+            print(
+                "❌ No detected foods"
+            )
+
+        } else {
+
+            for food
+                in analysis.detectedFoods {
+
+                let quantity =
+                    food.quantity.map {
+                        String($0)
+                    } ?? "unknown"
+
+                let unit =
+                    food.unit ?? "unknown"
+
+                print(
+                    "• \(food.name) | \(quantity) \(unit)"
+                )
+            }
+        }
+
+        // MARK: Nutrition
+
+        if let nutrition =
+            analysis.nutrition {
+
+            print("")
+            print(
+                "Estimated Nutrition:"
+            )
+
+            print(
+                "Calories: \(nutrition.calories.map { String($0) } ?? "unknown") kcal"
+            )
+
+            print(
+                "Protein: \(nutrition.protein.map { String($0) } ?? "unknown") g"
+            )
+
+            print(
+                "Carbohydrates: \(nutrition.carbohydrates.map { String($0) } ?? "unknown") g"
+            )
+
+            print(
+                "Fat: \(nutrition.fat.map { String($0) } ?? "unknown") g"
+            )
+
+            print(
+                "Fiber: \(nutrition.fiber.map { String($0) } ?? "unknown") g"
+            )
+
+            print(
+                "Confidence: \(nutrition.confidence.rawValue)"
+            )
+
+        } else {
+
+            print("")
+            print(
+                "❌ Nutrition analysis unavailable"
+            )
+        }
+        
+        // MARK: Meal Quality
+
+        if let quality =
+            analysis.quality {
+
+            print("")
+            print(
+                "Meal Quality:"
+            )
+
+            print(
+                "Protein Score: \(quality.proteinScore.map { String($0) } ?? "n/a")"
+            )
+
+            print(
+                "Fiber Score: \(quality.fiberScore.map { String($0) } ?? "n/a")"
+            )
+
+            print(
+                "Overall Score: \(quality.overallScore.map { String($0) } ?? "n/a")"
+            )
+
+        } else {
+
+            print("")
+            print(
+                "❌ Meal quality unavailable"
+            )
+        }
+
+        print(
+            "==================================="
+        )
+        print("")
 
         dismiss()
     }

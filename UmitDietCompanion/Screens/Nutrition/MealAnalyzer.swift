@@ -15,31 +15,33 @@ struct MealAnalyzer {
         meal: Meal
     ) -> MealAnalysis {
 
-        // Step 1:
-        // Food detection will be connected here.
-        //
-        // For now we keep the detected food list empty.
-        // The user's original meal description is preserved
-        // inside the Meal model.
+        let nutrition =
+            MockAIService.analyzeMeal(
+                meal
+            )
 
-        let detectedFoods: [DetectedFood] = []
+        let qualityCalculator =
+            MealQualityCalculator()
+
+        let quality =
+            qualityCalculator.calculate(
+                from:
+                    nutrition
+            )
 
         return MealAnalysis(
 
+            status:
+                MealAnalysisStatus.analyzed,
+
+            nutrition:
+                nutrition,
+
             detectedFoods:
-                detectedFoods,
+                nutrition.detectedFoods,
 
-            overallScore:
-                0,
-
-            foodQuality:
-                0,
-
-            portionQuality:
-                0,
-
-            balanceQuality:
-                0,
+            quality:
+                quality,
 
             insights:
                 []
@@ -47,9 +49,19 @@ struct MealAnalyzer {
     }
 }
 
+// MARK: - Meal Analysis Status
+
+enum MealAnalysisStatus {
+
+    case waitingForAnalysis
+    case analyzing
+    case analyzed
+    case unavailable
+}
+
 // MARK: - Detected Food
 
-struct DetectedFood {
+struct DetectedFood: Codable {
 
     let name: String
 
@@ -62,15 +74,18 @@ struct DetectedFood {
 
 struct MealAnalysis {
 
-    let detectedFoods: [DetectedFood]
+    let status:
+        MealAnalysisStatus
 
-    let overallScore: Int
+    let nutrition:
+        MealNutritionAnalysis?
 
-    let foodQuality: Int
+    let detectedFoods:
+        [DetectedFood]
 
-    let portionQuality: Int
+    let quality:
+        MealQualityResult?
 
-    let balanceQuality: Int
-
-    let insights: [String]
+    let insights:
+        [String]
 }
