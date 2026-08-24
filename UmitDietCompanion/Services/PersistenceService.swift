@@ -606,6 +606,489 @@ struct PersistenceService {
             }
         }
     }
+    
+    // MARK: - Meal Analysis
+
+    static func saveMealAnalysis(
+        _ analysis: MealAnalysis,
+        for mealID: UUID
+    ) {
+
+        guard
+            let nutrition =
+                analysis.nutrition
+        else {
+
+            print(
+                "⚠️ Meal analysis has no nutrition data. Nothing saved."
+            )
+
+            return
+        }
+
+        guard
+            let detectedFoodsData =
+                try? JSONEncoder().encode(
+                    nutrition.detectedFoods
+                ),
+            let detectedFoodsJSON =
+                String(
+                    data:
+                        detectedFoodsData,
+                    encoding:
+                        .utf8
+                )
+        else {
+
+            print(
+                "❌ Failed to encode detected foods JSON."
+            )
+
+            return
+        }
+
+        let quality =
+            analysis.quality
+
+        let sql =
+            """
+            INSERT OR REPLACE INTO meal_analysis (
+
+                meal_id,
+
+                calories,
+                protein,
+                carbohydrates,
+                fat,
+                fiber,
+
+                confidence,
+
+                protein_score,
+                fiber_score,
+                overall_score,
+
+                detected_foods_json
+
+            )
+            VALUES (
+                ?, ?, ?, ?, ?, ?,
+                ?, ?, ?, ?, ?
+            );
+            """
+
+        database.withDatabase { database in
+
+            var statement:
+                OpaquePointer?
+
+            guard sqlite3_prepare_v2(
+                database,
+                sql,
+                -1,
+                &statement,
+                nil
+            ) == SQLITE_OK
+            else {
+
+                print(
+                    "❌ Failed to prepare meal analysis INSERT."
+                )
+
+                return
+            }
+
+            defer {
+
+                sqlite3_finalize(
+                    statement
+                )
+            }
+
+            bindText(
+                statement,
+                index: 1,
+                value:
+                    mealID.uuidString
+            )
+
+            bindDouble(
+                statement,
+                index: 2,
+                value:
+                    nutrition.calories
+                    ?? 0
+            )
+
+            bindDouble(
+                statement,
+                index: 3,
+                value:
+                    nutrition.protein
+                    ?? 0
+            )
+
+            bindDouble(
+                statement,
+                index: 4,
+                value:
+                    nutrition.carbohydrates
+                    ?? 0
+            )
+
+            bindDouble(
+                statement,
+                index: 5,
+                value:
+                    nutrition.fat
+                    ?? 0
+            )
+
+            bindDouble(
+                statement,
+                index: 6,
+                value:
+                    nutrition.fiber
+                    ?? 0
+            )
+
+            bindText(
+                statement,
+                index: 7,
+                value:
+                    nutrition.confidence.rawValue
+            )
+
+            bindInt(
+                statement,
+                index: 8,
+                value:
+                    quality?.proteinScore
+                    ?? 0
+            )
+
+            bindInt(
+                statement,
+                index: 9,
+                value:
+                    quality?.fiberScore
+                    ?? 0
+            )
+
+            bindInt(
+                statement,
+                index: 10,
+                value:
+                    quality?.overallScore
+                    ?? 0
+            )
+
+            bindText(
+                statement,
+                index: 11,
+                value:
+                    detectedFoodsJSON
+            )
+
+            let result =
+                sqlite3_step(
+                    statement
+                )
+
+            if result != SQLITE_DONE {
+
+                print(
+                    "❌ Failed to save meal analysis:",
+                    result
+                )
+
+            } else {
+
+                print(
+                    "💾 Meal analysis saved to SQLite"
+                )
+
+                print(
+                    "Meal ID:",
+                    mealID.uuidString
+                )
+            }
+        }
+    }
+    
+    // MARK: - Load Meal Analysis
+
+    static func loadMealAnalysis(
+        for mealID: UUID
+    ) -> MealAnalysis? {
+
+        let sql =
+            """
+            SELECT
+
+                calories,
+                protein,
+                carbohydrates,
+                fat,
+                fiber,
+
+                confidence,
+
+                protein_score,
+                fiber_score,
+                overall_score,
+
+                detected_foods_json
+
+            FROM meal_analysis
+
+            WHERE meal_id = ?
+
+            LIMIT 1;
+            """
+
+        return database.withDatabase {
+            database -> MealAnalysis? in
+
+            var statement:
+                OpaquePointer?
+
+            guard sqlite3_prepare_v2(
+                database,
+                sql,
+                -1,
+                &statement,
+                nil
+            ) == SQLITE_OK
+            else {
+
+                print(
+                    "❌ Failed to prepare meal analysis query."
+                )
+
+                return nil
+            }
+
+            defer {
+
+                sqlite3_finalize(
+                    statement
+                )
+            }
+
+            bindText(
+                statement,
+                index: 1,
+                value:
+                    mealID.uuidString
+            )
+
+            guard sqlite3_step(
+                statement
+            ) == SQLITE_ROW
+            else {
+
+                return nil
+            }
+
+            let calories =
+                sqlite3_column_double(
+                    statement,
+                    0
+                )
+
+            let protein =
+                sqlite3_column_double(
+                    statement,
+                    1
+                )
+
+            let carbohydrates =
+                sqlite3_column_double(
+                    statement,
+                    2
+                )
+
+            let fat =
+                sqlite3_column_double(
+                    statement,
+                    3
+                )
+
+            let fiber =
+                sqlite3_column_double(
+                    statement,
+                    4
+                )
+
+            guard
+                let confidenceCString =
+                    sqlite3_column_text(
+                        statement,
+                        5
+                    ),
+                let detectedFoodsCString =
+                    sqlite3_column_text(
+                        statement,
+                        9
+                    )
+            else {
+
+                print(
+                    "❌ Invalid meal analysis data."
+                )
+
+                return nil
+            }
+
+            let confidenceRawValue =
+                String(
+                    cString:
+                        confidenceCString
+                )
+
+            let detectedFoodsJSON =
+                String(
+                    cString:
+                        detectedFoodsCString
+                )
+
+            guard
+                let confidence =
+                    NutritionConfidence(
+                        rawValue:
+                            confidenceRawValue
+                    )
+            else {
+
+                print(
+                    "❌ Invalid nutrition confidence."
+                )
+
+                return nil
+            }
+
+            guard
+                let detectedFoodsData =
+                    detectedFoodsJSON.data(
+                        using:
+                            .utf8
+                    ),
+                let detectedFoods =
+                    try? JSONDecoder().decode(
+                        [DetectedFood].self,
+                        from:
+                            detectedFoodsData
+                    )
+            else {
+
+                print(
+                    "❌ Failed to decode detected foods JSON."
+                )
+
+                return nil
+            }
+
+            let proteinScoreValue =
+                Int(
+                    sqlite3_column_int(
+                        statement,
+                        6
+                    )
+                )
+
+            let fiberScoreValue =
+                Int(
+                    sqlite3_column_int(
+                        statement,
+                        7
+                    )
+                )
+
+            let overallScoreValue =
+                Int(
+                    sqlite3_column_int(
+                        statement,
+                        8
+                    )
+                )
+
+            let nutrition =
+                MealNutritionAnalysis(
+
+                    detectedFoods:
+                        detectedFoods,
+
+                    calories:
+                        calories,
+
+                    protein:
+                        protein,
+
+                    carbohydrates:
+                        carbohydrates,
+
+                    fat:
+                        fat,
+
+                    fiber:
+                        fiber,
+
+                    confidence:
+                        confidence
+                )
+
+            let quality =
+                MealQualityResult(
+
+                    overallScore:
+                        overallScoreValue == 0
+                        ? nil
+                        : overallScoreValue,
+
+                    proteinScore:
+                        proteinScoreValue == 0
+                        ? nil
+                        : proteinScoreValue,
+
+                    fiberScore:
+                        fiberScoreValue == 0
+                        ? nil
+                        : fiberScoreValue,
+
+                    carbQualityScore:
+                        nil,
+
+                    healthyFatScore:
+                        nil,
+
+                    vegetableScore:
+                        nil,
+
+                    portionScore:
+                        nil
+                )
+
+            return MealAnalysis(
+
+                status:
+                    .analyzed,
+
+                nutrition:
+                    nutrition,
+
+                detectedFoods:
+                    detectedFoods,
+
+                quality:
+                    quality,
+
+                insights:
+                    []
+            )
+
+        } ?? nil
+    }
 
     // MARK: - User Profile History
 
@@ -1772,7 +2255,8 @@ struct PersistenceService {
             "daily_health_snapshots",
             "daily_health_metrics",
             "activities",
-            "meals"
+            "meals",
+            "meal_analysis"
         ]
 
         print("")
@@ -1817,7 +2301,8 @@ struct PersistenceService {
             "daily_health_snapshots",
             "daily_health_metrics",
             "activities",
-            "meals"
+            "meals",
+            "meal_analysis"
         ]
 
         guard

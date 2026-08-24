@@ -190,6 +190,12 @@ struct MealEntryView: View {
                 meal:
                     meal
             )
+        
+        PersistenceService.saveMealAnalysis(
+            analysis,
+            for:
+                meal.id
+        )
 
         print("")
         print(

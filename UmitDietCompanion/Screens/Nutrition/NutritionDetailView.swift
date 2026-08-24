@@ -7,9 +7,16 @@ import SwiftUI
 
 struct NutritionDetailView: View {
 
+    // MARK: - State
+
     @State private var meals: [Meal] = []
 
+    @State private var mealAnalyses:
+        [UUID: MealAnalysis] = [:]
+
     @State private var showMealEntry = false
+
+    // MARK: - Body
 
     var body: some View {
 
@@ -73,10 +80,8 @@ struct NutritionDetailView: View {
                             AppTheme.Layout.cardCornerRadius
                     )
                 )
-
             }
             .padding()
-
         }
         .background(
             AppTheme.Colors.dashboardBackground
@@ -92,6 +97,7 @@ struct NutritionDetailView: View {
 
             MealEntryView()
                 .onDisappear {
+
                     loadMeals()
                 }
         }
@@ -137,7 +143,10 @@ struct NutritionDetailView: View {
             maxWidth:
                 .infinity
         )
-        .padding(.vertical, 20)
+        .padding(
+            .vertical,
+            20
+        )
     }
 
     // MARK: - Meal Row
@@ -146,67 +155,235 @@ struct NutritionDetailView: View {
         _ meal: Meal
     ) -> some View {
 
-        HStack(
+        VStack(
             alignment:
-                .top,
+                .leading,
             spacing:
-                12
+                8
         ) {
 
-            Text(
-                mealIcon(
-                    meal.type
-                )
-            )
-            .font(
-                .system(
-                    size:
-                        26
-                )
-            )
-
-            VStack(
+            HStack(
                 alignment:
-                    .leading,
+                    .top,
                 spacing:
-                    4
+                    12
             ) {
 
                 Text(
-                    mealTitle(
+                    mealIcon(
                         meal.type
                     )
                 )
-                .fontWeight(
-                    .semibold
+                .font(
+                    .system(
+                        size:
+                            26
+                    )
                 )
 
+                VStack(
+                    alignment:
+                        .leading,
+                    spacing:
+                        4
+                ) {
+
+                    Text(
+                        mealTitle(
+                            meal.type
+                        )
+                    )
+                    .fontWeight(
+                        .semibold
+                    )
+
+                    Text(
+                        meal.foodDescription
+                    )
+                    .font(
+                        .subheadline
+                    )
+                    .foregroundStyle(
+                        .secondary
+                    )
+                }
+
+                Spacer()
+
                 Text(
-                    meal.foodDescription
+                    mealTime(
+                        meal.createdAt
+                    )
                 )
                 .font(
-                    .subheadline
+                    .caption
                 )
                 .foregroundStyle(
                     .secondary
                 )
             }
 
-            Spacer()
+            // MARK: - Analysis
 
-            Text(
-                mealTime(
-                    meal.createdAt
+            if let analysis =
+                mealAnalyses[
+                    meal.id
+                ] {
+
+                mealAnalysisSummary(
+                    analysis
                 )
-            )
-            .font(
-                .caption
-            )
-            .foregroundStyle(
-                .secondary
-            )
+
+            } else {
+
+                Text(
+                    "Nutrition analysis unavailable"
+                )
+                .font(
+                    .caption
+                )
+                .foregroundStyle(
+                    .secondary
+                )
+            }
         }
-        .padding(.vertical, 4)
+        .padding(
+            .vertical,
+            8
+        )
+    }
+
+    // MARK: - Meal Analysis Summary
+
+    private func mealAnalysisSummary(
+        _ analysis: MealAnalysis
+    ) -> some View {
+
+        VStack(
+            alignment:
+                .leading,
+            spacing:
+                8
+        ) {
+
+            if let nutrition =
+                analysis.nutrition {
+
+                HStack(
+                    spacing:
+                        12
+                ) {
+
+                    nutritionValue(
+                        value:
+                            nutrition.calories,
+                        suffix:
+                            "kcal"
+                    )
+
+                    nutritionValue(
+                        value:
+                            nutrition.protein,
+                        suffix:
+                            "g protein"
+                    )
+
+                    nutritionValue(
+                        value:
+                            nutrition.carbohydrates,
+                        suffix:
+                            "g carbs"
+                    )
+
+                    nutritionValue(
+                        value:
+                            nutrition.fat,
+                        suffix:
+                            "g fat"
+                    )
+                }
+
+                HStack(
+                    spacing:
+                        12
+                ) {
+
+                    nutritionValue(
+                        value:
+                            nutrition.fiber,
+                        suffix:
+                            "g fiber"
+                    )
+
+                    Spacer()
+                }
+            }
+
+            if let quality =
+                analysis.quality {
+
+                HStack {
+
+                    Text(
+                        "Meal Quality"
+                    )
+                    .font(
+                        .caption
+                    )
+                    .foregroundStyle(
+                        .secondary
+                    )
+
+                    Spacer()
+
+                    Text(
+                        "\(quality.overallScore ?? 0)/10"
+                    )
+                    .font(
+                        .subheadline
+                    )
+                    .fontWeight(
+                        .semibold
+                    )
+                }
+            }
+        }
+        .padding(
+            .leading,
+            38
+        )
+    }
+
+    // MARK: - Nutrition Value
+
+    private func nutritionValue(
+        value:
+            Double?,
+        suffix:
+            String
+    ) -> some View {
+
+        Group {
+
+            if let value {
+
+                Text(
+                    "\(formattedNumber(value)) \(suffix)"
+                )
+
+            } else {
+
+                Text(
+                    "— \(suffix)"
+                )
+            }
+        }
+        .font(
+            .caption
+        )
+        .foregroundStyle(
+            .secondary
+        )
     }
 
     // MARK: - Load Meals
@@ -219,6 +396,38 @@ struct NutritionDetailView: View {
                     for:
                         Date()
                 )
+
+        var loadedAnalyses:
+            [UUID: MealAnalysis] = [:]
+
+        for meal in meals {
+
+            if let analysis =
+                PersistenceService
+                    .loadMealAnalysis(
+                        for:
+                            meal.id
+                    ) {
+
+                loadedAnalyses[
+                    meal.id
+                ] =
+                    analysis
+            }
+        }
+
+        mealAnalyses =
+            loadedAnalyses
+
+        print(
+            "🍎 NutritionDetailView loaded meals:",
+            meals.count
+        )
+
+        print(
+            "🧠 NutritionDetailView loaded analyses:",
+            mealAnalyses.count
+        )
     }
 
     // MARK: - Meal Title
@@ -275,6 +484,26 @@ struct NutritionDetailView: View {
             .dateTime
                 .hour()
                 .minute()
+        )
+    }
+
+    // MARK: - Number Formatting
+
+    private func formattedNumber(
+        _ value: Double
+    ) -> String {
+
+        if value.rounded() == value {
+
+            return String(
+                Int(value)
+            )
+        }
+
+        return String(
+            format:
+                "%.1f",
+            value
         )
     }
 }

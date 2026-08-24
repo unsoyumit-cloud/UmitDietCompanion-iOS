@@ -732,11 +732,13 @@ final class HealthKitService {
           }
 
             // =================================================
-            // MARK: - TEMPORARY SLEEP WINDOW DIAGNOSTIC
+            
+            // MARK: - SLEEP SOURCE DIAGNOSTIC
             // =================================================
             //
             // This diagnostic does NOT change sleep calculations.
-            // It only shows exactly what HealthKit returned.
+            // It shows exactly what HealthKit returned,
+            // including the source/device of each sleep sample.
             //
 
             let diagnosticRange =
@@ -750,7 +752,7 @@ final class HealthKitService {
                 "==================================="
             )
             print(
-                "🧪 SLEEP WINDOW DIAGNOSTIC"
+                "🧪 SLEEP SOURCE DIAGNOSTIC"
             )
             print(
                 "==================================="
@@ -776,17 +778,106 @@ final class HealthKitService {
                 samples.count
             )
 
-            for sample in samples {
+            if samples.isEmpty {
+
+                print("")
+                print(
+                    "❌ HEALTHKIT RETURNED NO SLEEP SAMPLES"
+                )
 
                 print(
-                    "•",
-                    sample.startDate,
-                    "→",
-                    sample.endDate,
-                    "| value:",
-                    sample.value
+                    "This means no sleep samples were available"
                 )
+
+                print(
+                    "inside the current HealthKit query window."
+                )
+
+            } else {
+
+                print("")
+
+                for sample in samples {
+
+                    let source =
+                        sample.sourceRevision.source
+
+                    print(
+                        "-----------------------------------"
+                    )
+
+                    print(
+                        "Start:",
+                        sample.startDate
+                    )
+
+                    print(
+                        "End:",
+                        sample.endDate
+                    )
+
+                    print(
+                        "Value:",
+                        sample.value
+                    )
+
+                    print(
+                        "Source Name:",
+                        source.name
+                    )
+
+                    print(
+                        "Source Bundle:",
+                        source.bundleIdentifier
+                    )
+
+                
+
+                    if let device =
+                        sample.device {
+
+                        print(
+                            "Device Name:",
+                            device.name
+                                ?? "unknown"
+                        )
+
+                        print(
+                            "Device Manufacturer:",
+                            device.manufacturer
+                                ?? "unknown"
+                        )
+
+                        print(
+                            "Device Model:",
+                            device.model
+                                ?? "unknown"
+                        )
+
+                    } else {
+
+                        print(
+                            "Device: nil"
+                        )
+                    }
+                }
             }
+
+            print("")
+            print(
+                "==================================="
+            )
+            print(
+                "🧪 END SLEEP SOURCE DIAGNOSTIC"
+            )
+            print(
+                "==================================="
+            )
+            print("")
+
+            // =================================================
+            // END DIAGNOSTIC
+            // =================================================
             
           let asleepSamples =
             samples.filter {

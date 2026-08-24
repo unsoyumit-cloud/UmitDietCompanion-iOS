@@ -12,7 +12,8 @@ final class DatabaseManager {
 
     // MARK: - Singleton
 
-    static let shared = DatabaseManager()
+    static let shared =
+        DatabaseManager()
 
     // MARK: - Constants
 
@@ -20,7 +21,7 @@ final class DatabaseManager {
         "UmitDietCompanion.sqlite"
 
     private let currentSchemaVersion =
-        2
+        3
 
     // MARK: - Database
 
@@ -200,6 +201,8 @@ final class DatabaseManager {
         createActivitiesTable()
 
         createMealsTable()
+
+        createMealAnalysisTable()
 
         setSchemaVersion()
 
@@ -412,6 +415,55 @@ final class DatabaseManager {
             CREATE INDEX IF NOT EXISTS
             idx_meals_created_at
             ON meals(created_at);
+            """
+        )
+    }
+
+    // MARK: - Meal Analysis
+
+    private func createMealAnalysisTable() {
+
+        execute(
+            """
+            CREATE TABLE IF NOT EXISTS meal_analysis (
+
+                meal_id TEXT PRIMARY KEY,
+
+                calories REAL NOT NULL,
+
+                protein REAL NOT NULL,
+
+                carbohydrates REAL NOT NULL,
+
+                fat REAL NOT NULL,
+
+                fiber REAL NOT NULL,
+
+                confidence TEXT NOT NULL,
+
+                protein_score INTEGER NOT NULL,
+
+                fiber_score INTEGER NOT NULL,
+
+                overall_score INTEGER NOT NULL,
+
+                detected_foods_json TEXT NOT NULL,
+
+                FOREIGN KEY (
+                    meal_id
+                )
+                REFERENCES meals(id)
+                ON DELETE CASCADE
+
+            );
+            """
+        )
+
+        execute(
+            """
+            CREATE INDEX IF NOT EXISTS
+            idx_meal_analysis_meal_id
+            ON meal_analysis(meal_id);
             """
         )
     }
