@@ -4,6 +4,7 @@
 //
 
 import SwiftUI
+import Charts
 
 struct NutritionDetailView: View {
 
@@ -14,7 +15,35 @@ struct NutritionDetailView: View {
     @State private var mealAnalyses:
         [UUID: MealAnalysis] = [:]
 
-    @State private var showMealEntry = false
+    @State private var historyDays:
+        [NutritionHistoryDay] = []
+
+    @State private var selectedChartDate:
+        Date?
+
+    @State private var selectedChartDay:
+        NutritionHistoryDay?
+
+    @State private var selectedDetailDay:
+        NutritionHistoryDay?
+
+    @State private var showMealEntry =
+        false
+
+    @State private var showDatePicker =
+        false
+
+    @State private var exploreDate =
+        Date()
+
+    @State private var mealPendingDeletion:
+        Meal?
+
+    @State private var showCapturePlaceholder =
+        false
+
+    @State private var captureMode =
+        ""
 
     // MARK: - Body
 
@@ -22,44 +51,115 @@ struct NutritionDetailView: View {
 
         ScrollView {
 
-            VStack(spacing: 20) {
+            VStack(
+                alignment: .leading,
+                spacing: 24
+            ) {
 
                 // MARK: - Today's Meals
 
+                todaysMealsSection
+
+                // MARK: - Nutrition History
+
+                nutritionHistorySection
+
+                // MARK: - Top Successful Days
+
+                successfulDaysSection
+
+                // MARK: - Explore Another Day
+
+                exploreAnotherDayButton
+            }
+            .padding()
+        }
+        .background(
+            AppTheme.Colors.dashboardBackground
+        )
+        .navigationTitle("Nutrition")
+        .navigationBarTitleDisplayMode(
+            .inline
+        )
+
+        // MARK: - Meal Entry
+
+        .sheet(
+            isPresented:
+                $showMealEntry
+        ) {
+
+            MealEntryView()
+                .onDisappear {
+
+                    refreshAll()
+                }
+        }
+
+        // MARK: - Historical Day Detail
+
+        .sheet(
+            item:
+                $selectedDetailDay
+        ) { day in
+
+            historicalDayView(
+                day
+            )
+        }
+
+        // MARK: - Explore Date
+
+        .sheet(
+            isPresented:
+                $showDatePicker
+        ) {
+
+            NavigationStack {
+
                 VStack(
-                    alignment: .leading,
-                    spacing: 12
+                    spacing: 24
                 ) {
 
-                    Text("Today's Meals")
-                        .font(.headline)
+                    Text(
+                        "Choose a date"
+                    )
+                    .font(
+                        .title3
+                    )
+                    .fontWeight(
+                        .semibold
+                    )
 
-                    if meals.isEmpty {
-
-                        emptyState
-
-                    } else {
-
-                        ForEach(meals) { meal in
-
-                            mealRow(
-                                meal
-                            )
-
-                        }
-
-                    }
+                    DatePicker(
+                        "Date",
+                        selection:
+                            $exploreDate,
+                        displayedComponents:
+                            .date
+                    )
+                    .datePickerStyle(
+                        .graphical
+                    )
 
                     Button {
 
-                        showMealEntry = true
+                        let day =
+                            buildHistoryDay(
+                                for:
+                                    exploreDate
+                            )
+
+                        selectedDetailDay =
+                            day
+
+                        showDatePicker =
+                            false
 
                     } label: {
 
-                        Label(
-                            "Add Meal",
-                            systemImage:
-                                "plus"
+                        Text(
+                            "Show This Day"
                         )
                         .frame(
                             maxWidth:
@@ -71,95 +171,862 @@ struct NutritionDetailView: View {
                     )
                 }
                 .padding()
-                .background(
-                    AppTheme.Colors.cardBackground
+                .navigationTitle(
+                    "Explore Day"
                 )
-                .clipShape(
-                    RoundedRectangle(
-                        cornerRadius:
-                            AppTheme.Layout.cardCornerRadius
+                .navigationBarTitleDisplayMode(
+                    .inline
                     )
-                )
             }
-            .padding()
         }
-        .background(
-            AppTheme.Colors.dashboardBackground
-        )
-        .navigationTitle("Nutrition")
-        .navigationBarTitleDisplayMode(
-            .inline
-        )
-        .sheet(
+
+        // MARK: - Capture Placeholder
+
+        .alert(
+            captureMode,
             isPresented:
-                $showMealEntry
+                $showCapturePlaceholder
         ) {
 
-            MealEntryView()
-                .onDisappear {
+            Button(
+                "OK",
+                role:
+                    .cancel
+            ) {}
 
-                    loadMeals()
-                }
+        } message: {
+
+            Text(
+                "\(captureMode) meal entry will be connected to the AI meal analysis flow here."
+            )
         }
+
+        // MARK: - Delete Confirmation
+
+        .alert(
+            "Delete Meal?",
+            isPresented:
+                Binding(
+                    get: {
+                        mealPendingDeletion != nil
+                    },
+                    set: { isPresented in
+
+                        if !isPresented {
+                            mealPendingDeletion = nil
+                        }
+                    }
+                )
+        ) {
+
+            Button(
+                "Delete",
+                role:
+                    .destructive
+            ) {
+
+                if let meal =
+                    mealPendingDeletion {
+
+                    PersistenceService
+                        .deleteMeal(
+                            meal
+                        )
+
+                    refreshAll()
+                }
+
+                mealPendingDeletion =
+                    nil
+            }
+
+            Button(
+                "Cancel",
+                role:
+                    .cancel
+            ) {
+
+                mealPendingDeletion =
+                    nil
+            }
+
+        } message: {
+
+            if let meal =
+                mealPendingDeletion {
+
+                Text(
+                    "Are you sure you want to delete \"\(meal.foodDescription)\"? Its nutrition analysis will also be removed."
+                )
+
+            } else {
+
+                Text(
+                    "This meal will be permanently deleted."
+                )
+            }
+        }
+
+        // MARK: - Load
+
         .onAppear {
 
-            loadMeals()
+            refreshAll()
         }
     }
 
-    // MARK: - Empty State
+    // MARK: - Today's Meals
 
-    private var emptyState:
+    private var todaysMealsSection:
         some View {
 
-        VStack(spacing: 10) {
+        VStack(
+            alignment:
+                .leading,
+            spacing:
+                16
+        ) {
 
-            Text("🥗")
-                .font(
-                    .system(
-                        size:
-                            36
+            Text(
+                "Today's Meals"
+            )
+            .font(
+                .headline
+            )
+            .padding(
+                .horizontal,
+                4
+            )
+
+            VStack(
+                spacing:
+                    0
+            ) {
+
+                if meals.isEmpty {
+
+                    emptyState
+                        .padding()
+
+                } else {
+
+                    ForEach(
+                        Array(
+                            meals.enumerated()
+                        ),
+                        id:
+                            \.element.id
+                    ) { index, meal in
+
+                        mealCard(
+                            meal
+                        )
+                        .padding()
+
+                        if index <
+                            meals.count - 1 {
+
+                            Divider()
+                                .padding(
+                                    .horizontal
+                                )
+                        }
+                    }
+                }
+
+                Divider()
+                    .padding(
+                        .horizontal
                     )
+
+                // MARK: - Quick Entry
+
+                HStack(
+                    spacing:
+                        12
+                ) {
+
+                    Button {
+
+                        captureMode =
+                            "Photo Meal Entry"
+
+                        showCapturePlaceholder =
+                            true
+
+                    } label: {
+
+                        Label(
+                            "Photo",
+                            systemImage:
+                                "camera"
+                        )
+                        .frame(
+                            maxWidth:
+                                .infinity
+                        )
+                    }
+                    .buttonStyle(
+                        .bordered
+                    )
+
+                    Button {
+
+                        captureMode =
+                            "Voice Meal Entry"
+
+                        showCapturePlaceholder =
+                            true
+
+                    } label: {
+
+                        Label(
+                            "Voice",
+                            systemImage:
+                                "mic"
+                        )
+                        .frame(
+                            maxWidth:
+                                .infinity
+                        )
+                    }
+                    .buttonStyle(
+                        .bordered
+                    )
+                }
+                .padding(
+                    .horizontal
+                )
+                .padding(
+                    .top,
+                    14
                 )
 
-            Text("No meals logged yet")
-                .font(.subheadline)
+                Button {
+
+                    showMealEntry =
+                        true
+
+                } label: {
+
+                    Label(
+                        "Add Meal",
+                        systemImage:
+                            "plus"
+                    )
+                    .frame(
+                        maxWidth:
+                            .infinity
+                    )
+                }
+                .buttonStyle(
+                    .borderedProminent
+                )
+                .padding()
+            }
+            .background(
+                AppTheme.Colors.cardBackground
+            )
+            .clipShape(
+                RoundedRectangle(
+                    cornerRadius:
+                        AppTheme.Layout.cardCornerRadius
+                )
+            )
+        }
+    }
+
+    // MARK: - Nutrition History
+
+    private var nutritionHistorySection:
+        some View {
+
+        VStack(
+            alignment:
+                .leading,
+            spacing:
+                12
+        ) {
+
+            Text(
+                "Nutrition · Last 7 Days"
+            )
+            .font(
+                .headline
+            )
+            .padding(
+                .horizontal,
+                4
+            )
+
+            VStack(
+                alignment:
+                    .leading,
+                spacing:
+                    14
+            ) {
+
+                if historyDays.contains(
+                    where:
+                        {
+                            $0.mealCount > 0
+                        }
+                ) {
+
+                    nutritionChart
+
+                    if let selectedChartDay {
+
+                        selectedDaySummary(
+                            selectedChartDay
+                        )
+                    }
+                } else {
+
+                    Text(
+                        "Log a few meals to see your nutrition trend."
+                    )
+                    .font(
+                        .subheadline
+                    )
+                    .foregroundStyle(
+                        .secondary
+                    )
+                    .frame(
+                        maxWidth:
+                            .infinity,
+                        alignment:
+                            .center
+                    )
+                    .padding(
+                        .vertical,
+                        24
+                    )
+                }
+            }
+            .padding()
+            .background(
+                AppTheme.Colors.cardBackground
+            )
+            .clipShape(
+                RoundedRectangle(
+                    cornerRadius:
+                        AppTheme.Layout.cardCornerRadius
+                )
+            )
+        }
+    }
+
+    // MARK: - Chart
+
+    // MARK: - Chart
+
+    private var nutritionChart:
+        some View {
+
+        Chart {
+
+            ForEach(
+                historyDays.filter {
+                    $0.score != nil
+                }
+            ) { day in
+
+                BarMark(
+                    x: .value(
+                        "Day",
+                        day.date,
+                        unit: .day
+                    ),
+                    y: .value(
+                        "Score",
+                        day.score ?? 0
+                    ),
+                    width: .fixed(28)
+                )
+                .foregroundStyle(
+                    day.id == selectedChartDay?.id
+                    ? Color.blue
+                    : Color.blue.opacity(0.72)
+                )
+                .cornerRadius(8)
+            }
+        }
+        .frame(height: 170)
+        .chartYScale(domain: 0...10)
+        .chartYAxis(.hidden)
+        .chartXAxis {
+
+            AxisMarks(
+                values: .stride(by: .day)
+            ) {
+
+                AxisValueLabel(
+                    format:
+                        .dateTime
+                        .day()
+                        .month(.abbreviated)
+                )
+            }
+        }
+        .chartXSelection(
+            value: $selectedChartDate
+        )
+        .onChange(
+            of: selectedChartDate
+        ) { _, newValue in
+
+            guard let newValue else {
+                return
+            }
+
+            selectedChartDay =
+                nearestHistoryDay(
+                    to: newValue
+                )
+        }
+    }
+    // MARK: - Selected Day Summary
+
+    private func selectedDaySummary(
+        _ day:
+            NutritionHistoryDay
+    ) -> some View {
+
+        Button {
+
+            selectedDetailDay =
+                day
+
+        } label: {
+
+            HStack(
+                alignment:
+                    .center,
+                spacing:
+                    12
+            ) {
+
+                VStack(
+                    alignment:
+                        .leading,
+                    spacing:
+                        4
+                ) {
+
+                    Text(
+                        day.formattedDate
+                    )
+                    .font(
+                        .subheadline
+                    )
+                    .fontWeight(
+                        .semibold
+                    )
+
+                    Text(
+                        day.summaryText
+                    )
+                    .font(
+                        .caption
+                    )
+                    .foregroundStyle(
+                        .secondary
+                    )
+                }
+
+                Spacer()
+
+                if let score =
+                    day.score {
+
+                    Text(
+                        "\(formattedScore(score))/10"
+                    )
+                    .font(
+                        .headline
+                    )
+                    .fontWeight(
+                        .bold
+                    )
+                }
+
+                Image(
+                    systemName:
+                        "chevron.right"
+                )
+                .font(
+                    .caption
+                )
                 .foregroundStyle(
                     .secondary
                 )
-
-            Text(
-                "Add your first meal to start tracking your nutrition."
-            )
-            .font(.caption)
-            .foregroundStyle(
-                .secondary
-            )
-            .multilineTextAlignment(
-                .center
+            }
+            .contentShape(
+                Rectangle()
             )
         }
-        .frame(
-            maxWidth:
-                .infinity
-        )
-        .padding(
-            .vertical,
-            20
+        .buttonStyle(
+            .plain
         )
     }
 
-    // MARK: - Meal Row
+    // MARK: - Successful Days
 
-    private func mealRow(
-        _ meal: Meal
+    private var successfulDaysSection:
+        some View {
+
+        VStack(
+            alignment:
+                .leading,
+            spacing:
+                12
+        ) {
+
+            Text(
+                "Top 3 Successful Days"
+            )
+            .font(
+                .headline
+            )
+            .padding(
+                .horizontal,
+                4
+            )
+
+            VStack(
+                spacing:
+                    0
+            ) {
+
+                ForEach(
+                    Array(
+                        successfulDays
+                            .enumerated()
+                    ),
+                    id:
+                        \.element.id
+                ) { index, day in
+
+                    Button {
+
+                        selectedDetailDay =
+                            day
+
+                    } label: {
+
+                        HStack(
+                            spacing:
+                                12
+                        ) {
+
+                            Text(
+                                "\(index + 1)"
+                            )
+                            .font(
+                                .headline
+                            )
+                            .fontWeight(
+                                .bold
+                            )
+                            .frame(
+                                width:
+                                    28
+                            )
+
+                            Text(
+                                day.formattedDate
+                            )
+                            .font(
+                                .subheadline
+                            )
+
+                            Spacer()
+
+                            if let score =
+                                day.score {
+
+                                Text(
+                                    "\(formattedScore(score))/10"
+                                )
+                                .font(
+                                    .subheadline
+                                )
+                                .fontWeight(
+                                    .semibold
+                                )
+                            }
+
+                            Image(
+                                systemName:
+                                    "chevron.right"
+                            )
+                            .font(
+                                .caption
+                            )
+                            .foregroundStyle(
+                                .secondary
+                            )
+                        }
+                        .padding(
+                            .vertical,
+                            13
+                        )
+                        .contentShape(
+                            Rectangle()
+                        )
+                    }
+                    .buttonStyle(
+                        .plain
+                    )
+
+                    if index <
+                        successfulDays.count - 1 {
+
+                        Divider()
+                    }
+                }
+            }
+            .padding(
+                .horizontal
+            )
+            .background(
+                AppTheme.Colors.cardBackground
+            )
+            .clipShape(
+                RoundedRectangle(
+                    cornerRadius:
+                        AppTheme.Layout.cardCornerRadius
+                )
+            )
+        }
+    }
+
+    // MARK: - Explore Another Day
+
+    private var exploreAnotherDayButton:
+        some View {
+
+        Button {
+
+            exploreDate =
+                Date()
+
+            showDatePicker =
+                true
+
+        } label: {
+
+            Label(
+                "Explore Another Day",
+                systemImage:
+                    "calendar"
+            )
+            .frame(
+                maxWidth:
+                    .infinity
+            )
+        }
+        .buttonStyle(
+            .bordered
+        )
+    }
+
+    // MARK: - Successful Days Data
+
+    private var successfulDays:
+        [NutritionHistoryDay] {
+
+        historyDays
+            .filter {
+                $0.score != nil
+            }
+            .sorted {
+
+                let lhs =
+                    $0.score ?? 0
+
+                let rhs =
+                    $1.score ?? 0
+
+                if lhs == rhs {
+                    return $0.date > $1.date
+                }
+
+                return lhs > rhs
+            }
+            .prefix(3)
+            .map {
+                $0
+            }
+    }
+
+    // MARK: - Historical Day View
+
+    private func historicalDayView(
+        _ day:
+            NutritionHistoryDay
+    ) -> some View {
+
+        NavigationStack {
+
+            ScrollView {
+
+                VStack(
+                    alignment:
+                        .leading,
+                    spacing:
+                        18
+                ) {
+
+                    // MARK: Summary
+
+                    VStack(
+                        alignment:
+                            .leading,
+                        spacing:
+                            8
+                    ) {
+
+                        Text(
+                            day.fullFormattedDate
+                        )
+                        .font(
+                            .title2
+                        )
+                        .fontWeight(
+                            .bold
+                        )
+
+                        HStack(
+                            spacing:
+                                12
+                        ) {
+
+                            if let score =
+                                day.score {
+
+                                Text(
+                                    "\(formattedScore(score))/10"
+                                )
+                                .font(
+                                    .title3
+                                )
+                                .fontWeight(
+                                    .bold
+                                )
+                            }
+
+                            Text(
+                                "\(day.mealCount) meals"
+                            )
+                            .foregroundStyle(
+                                .secondary
+                            )
+                        }
+
+                        Text(
+                            day.detailSummaryText
+                        )
+                        .font(
+                            .subheadline
+                        )
+                        .foregroundStyle(
+                            .secondary
+                        )
+                    }
+                    .padding()
+                    .frame(
+                        maxWidth:
+                            .infinity,
+                        alignment:
+                            .leading
+                    )
+                    .background(
+                        AppTheme.Colors.cardBackground
+                    )
+                    .clipShape(
+                        RoundedRectangle(
+                            cornerRadius:
+                                AppTheme.Layout.cardCornerRadius
+                        )
+                    )
+
+                    // MARK: Meals
+
+                    ForEach(
+                        day.meals
+                    ) { meal in
+
+                        historicalMealCard(
+                            meal,
+                            analysis:
+                                day.analyses[
+                                    meal.id
+                                ]
+                        )
+                    }
+
+                    if day.meals.isEmpty {
+
+                        VStack(
+                            spacing:
+                                10
+                        ) {
+
+                            Text("🥗")
+                                .font(
+                                    .system(
+                                        size:
+                                            36
+                                    )
+                                )
+
+                            Text(
+                                "No meals logged on this day."
+                            )
+                            .foregroundStyle(
+                                .secondary
+                            )
+                        }
+                        .frame(
+                            maxWidth:
+                                .infinity
+                        )
+                        .padding(
+                            .vertical,
+                            40
+                        )
+                    }
+                }
+                .padding()
+            }
+            .background(
+                AppTheme.Colors.dashboardBackground
+            )
+            .navigationTitle(
+                "Nutrition"
+            )
+            .navigationBarTitleDisplayMode(
+                .inline
+            )
+        }
+    }
+
+    // MARK: - Historical Meal Card
+
+    private func historicalMealCard(
+        _ meal:
+            Meal,
+        analysis:
+            MealAnalysis?
     ) -> some View {
 
         VStack(
             alignment:
                 .leading,
             spacing:
-                8
+                10
         ) {
 
             HStack(
@@ -223,7 +1090,135 @@ struct NutritionDetailView: View {
                 )
             }
 
-            // MARK: - Analysis
+            if let analysis {
+
+                mealAnalysisSummary(
+                    analysis
+                )
+            }
+        }
+        .padding()
+        .background(
+            AppTheme.Colors.cardBackground
+        )
+        .clipShape(
+            RoundedRectangle(
+                cornerRadius:
+                    AppTheme.Layout.cardCornerRadius
+            )
+        )
+    }
+
+    // MARK: - Meal Card
+
+    private func mealCard(
+        _ meal:
+            Meal
+    ) -> some View {
+
+        VStack(
+            alignment:
+                .leading,
+            spacing:
+                10
+        ) {
+
+            HStack(
+                alignment:
+                    .top,
+                spacing:
+                    12
+            ) {
+
+                Text(
+                    mealIcon(
+                        meal.type
+                    )
+                )
+                .font(
+                    .system(
+                        size:
+                            26
+                    )
+                )
+
+                VStack(
+                    alignment:
+                        .leading,
+                    spacing:
+                        4
+                ) {
+
+                    Text(
+                        mealTitle(
+                            meal.type
+                        )
+                    )
+                    .fontWeight(
+                        .semibold
+                    )
+
+                    Text(
+                        meal.foodDescription
+                    )
+                    .font(
+                        .subheadline
+                    )
+                    .foregroundStyle(
+                        .secondary
+                    )
+                }
+
+                Spacer()
+
+                VStack(
+                    alignment:
+                        .trailing,
+                    spacing:
+                        6
+                ) {
+
+                    Text(
+                        mealTime(
+                            meal.createdAt
+                        )
+                    )
+                    .font(
+                        .caption
+                    )
+                    .foregroundStyle(
+                        .secondary
+                    )
+
+                    Button {
+
+                        mealPendingDeletion =
+                            meal
+
+                    } label: {
+
+                        Image(
+                            systemName:
+                                "trash"
+                        )
+                        .font(
+                            .system(
+                                size:
+                                    14
+                            )
+                        )
+                    }
+                    .buttonStyle(
+                        .borderless
+                    )
+                    .foregroundStyle(
+                        .red
+                    )
+                    .accessibilityLabel(
+                        "Delete meal"
+                    )
+                }
+            }
 
             if let analysis =
                 mealAnalyses[
@@ -247,16 +1242,64 @@ struct NutritionDetailView: View {
                 )
             }
         }
+    }
+
+    // MARK: - Empty State
+
+    private var emptyState:
+        some View {
+
+        VStack(
+            spacing:
+                10
+        ) {
+
+            Text("🥗")
+                .font(
+                    .system(
+                        size:
+                            36
+                    )
+                )
+
+            Text(
+                "No meals logged yet"
+            )
+            .font(
+                .subheadline
+            )
+            .foregroundStyle(
+                .secondary
+            )
+
+            Text(
+                "Add your first meal to start tracking your nutrition."
+            )
+            .font(
+                .caption
+            )
+            .foregroundStyle(
+                .secondary
+            )
+            .multilineTextAlignment(
+                .center
+            )
+        }
+        .frame(
+            maxWidth:
+                .infinity
+        )
         .padding(
             .vertical,
-            8
+            20
         )
     }
 
     // MARK: - Meal Analysis Summary
 
     private func mealAnalysisSummary(
-        _ analysis: MealAnalysis
+        _ analysis:
+            MealAnalysis
     ) -> some View {
 
         VStack(
@@ -337,7 +1380,7 @@ struct NutritionDetailView: View {
                     Spacer()
 
                     Text(
-                        "\(quality.overallScore ?? 0)/10"
+                        formattedScore(Double(quality.overallScore ?? 0))
                     )
                     .font(
                         .subheadline
@@ -349,8 +1392,8 @@ struct NutritionDetailView: View {
             }
         }
         .padding(
-            .leading,
-            38
+            .top,
+            2
         )
     }
 
@@ -384,6 +1427,15 @@ struct NutritionDetailView: View {
         .foregroundStyle(
             .secondary
         )
+    }
+
+    // MARK: - Refresh
+
+    private func refreshAll() {
+
+        loadMeals()
+
+        loadHistory()
     }
 
     // MARK: - Load Meals
@@ -430,10 +1482,154 @@ struct NutritionDetailView: View {
         )
     }
 
+    // MARK: - Load History
+
+    private func loadHistory() {
+
+        let calendar =
+            Calendar.current
+
+        let today =
+            calendar.startOfDay(
+                for:
+                    Date()
+            )
+
+        var days:
+            [NutritionHistoryDay] = []
+
+        for offset in
+            stride(
+                from:
+                    6,
+                through:
+                    0,
+                by:
+                    -1
+            ) {
+
+            guard let date =
+                calendar.date(
+                    byAdding:
+                        .day,
+                    value:
+                        -offset,
+                    to:
+                        today
+                )
+            else {
+                continue
+            }
+
+            days.append(
+                buildHistoryDay(
+                    for:
+                        date
+                )
+            )
+        }
+
+        historyDays =
+            days
+
+        if selectedChartDay == nil {
+
+            selectedChartDay =
+                historyDays
+                    .last(
+                        where:
+                            {
+                                $0.mealCount > 0
+                            }
+                    )
+        }
+    }
+
+    // MARK: - Build History Day
+
+    private func buildHistoryDay(
+        for date:
+            Date
+    ) -> NutritionHistoryDay {
+
+        let calendar =
+            Calendar.current
+
+        let normalizedDate =
+            calendar.startOfDay(
+                for:
+                    date
+            )
+
+        let dayMeals =
+            PersistenceService
+                .loadMeals(
+                    for:
+                        normalizedDate
+                )
+
+        var analyses:
+            [UUID: MealAnalysis] = [:]
+
+        for meal in dayMeals {
+
+            if let analysis =
+                PersistenceService
+                    .loadMealAnalysis(
+                        for:
+                            meal.id
+                    ) {
+
+                analyses[
+                    meal.id
+                ] =
+                    analysis
+            }
+        }
+
+        return NutritionHistoryDay(
+            date:
+                normalizedDate,
+            meals:
+                dayMeals,
+            analyses:
+                analyses
+        )
+    }
+
+    // MARK: - Nearest History Day
+
+    private func nearestHistoryDay(
+        to date:
+            Date
+    ) -> NutritionHistoryDay? {
+
+        guard !historyDays.isEmpty
+        else {
+            return nil
+        }
+
+        return historyDays.min {
+
+            abs(
+                $0.date.timeIntervalSince(
+                    date
+                )
+            )
+            <
+            abs(
+                $1.date.timeIntervalSince(
+                    date
+                )
+            )
+        }
+    }
+
     // MARK: - Meal Title
 
     private func mealTitle(
-        _ type: MealType
+        _ type:
+            MealType
     ) -> String {
 
         switch type {
@@ -455,7 +1651,8 @@ struct NutritionDetailView: View {
     // MARK: - Meal Icon
 
     private func mealIcon(
-        _ type: MealType
+        _ type:
+            MealType
     ) -> String {
 
         switch type {
@@ -477,7 +1674,8 @@ struct NutritionDetailView: View {
     // MARK: - Time
 
     private func mealTime(
-        _ date: Date
+        _ date:
+            Date
     ) -> String {
 
         date.formatted(
@@ -490,10 +1688,12 @@ struct NutritionDetailView: View {
     // MARK: - Number Formatting
 
     private func formattedNumber(
-        _ value: Double
+        _ value:
+            Double
     ) -> String {
 
-        if value.rounded() == value {
+        if value.rounded() ==
+            value {
 
             return String(
                 Int(value)
@@ -506,6 +1706,164 @@ struct NutritionDetailView: View {
             value
         )
     }
+
+    private func formattedScore(
+        _ value:
+            Double
+    ) -> String {
+
+        String(
+            format:
+                "%.1f",
+            value
+        )
+    }
+}
+
+// MARK: - Nutrition History Day
+
+private struct NutritionHistoryDay:
+    Identifiable {
+
+    let date:
+        Date
+
+    let meals:
+        [Meal]
+
+    let analyses:
+        [UUID: MealAnalysis]
+
+    var id:
+        Date {
+        date
+    }
+
+    var mealCount:
+        Int {
+        meals.count
+    }
+
+    var score:
+        Double? {
+
+        let scores =
+            meals.compactMap { meal in
+
+                analyses[
+                    meal.id
+                ]?
+                    .quality?
+                    .overallScore
+            }
+
+        guard !scores.isEmpty
+        else {
+            return nil
+        }
+
+            return scores.reduce(0.0) { total, score in
+                total + Double(score)
+            } / Double(scores.count)
+    }
+
+    var calories:
+        Double {
+
+        meals.compactMap { meal in
+
+            analyses[
+                meal.id
+            ]?
+                .nutrition?
+                .calories
+        }
+        .reduce(
+            0,
+            +
+        )
+    }
+
+    var protein:
+        Double {
+
+        meals.compactMap { meal in
+
+            analyses[
+                meal.id
+            ]?
+                .nutrition?
+                .protein
+        }
+        .reduce(
+            0,
+            +
+        )
+    }
+
+    var fiber:
+        Double {
+
+        meals.compactMap { meal in
+
+            analyses[
+                meal.id
+            ]?
+                .nutrition?
+                .fiber
+        }
+        .reduce(
+            0,
+            +
+        )
+    }
+
+    var formattedDate:
+        String {
+
+        date.formatted(
+            .dateTime
+                .day()
+                .month(
+                    .abbreviated
+                )
+        )
+    }
+
+    var fullFormattedDate:
+        String {
+
+        date.formatted(
+            .dateTime
+                .day()
+                .month()
+                .year()
+        )
+    }
+
+    var summaryText:
+        String {
+
+        "\(mealCount) meals · \(formattedInteger(calories)) kcal · \(formattedInteger(protein)) g protein"
+    }
+
+    var detailSummaryText:
+        String {
+
+        "\(formattedInteger(calories)) kcal · \(formattedInteger(protein)) g protein · \(formattedInteger(fiber)) g fiber"
+    }
+
+    private func formattedInteger(
+        _ value:
+            Double
+    ) -> String {
+
+        String(
+            Int(
+                value.rounded()
+            )
+        )
+    }
 }
 
 // MARK: - Preview
@@ -515,6 +1873,5 @@ struct NutritionDetailView: View {
     NavigationStack {
 
         NutritionDetailView()
-
     }
 }

@@ -546,13 +546,287 @@ struct PersistenceService {
         } ?? []
     }
 
+    // MARK: - Nutrition History
+
+    static func loadNutritionHistory(
+        from startDate: Date,
+        to endDate: Date
+    ) -> [NutritionHistoryPoint] {
+
+        let sql =
+            """
+            SELECT
+                DATE(m.created_at, 'unixepoch', 'localtime') AS meal_date,
+
+                COUNT(DISTINCT m.id) AS meal_count,
+
+                COALESCE(SUM(a.calories), 0) AS calories,
+                COALESCE(SUM(a.protein), 0) AS protein,
+                COALESCE(SUM(a.carbohydrates), 0) AS carbohydrates,
+                COALESCE(SUM(a.fat), 0) AS fat,
+                COALESCE(SUM(a.fiber), 0) AS fiber,
+
+                COALESCE(
+                    AVG(a.overall_score),
+                    0
+                ) AS meal_quality
+
+            FROM meals m
+
+            LEFT JOIN meal_analysis a
+                ON a.meal_id = m.id
+
+            WHERE m.created_at >= ?
+              AND m.created_at < ?
+
+            GROUP BY meal_date
+
+            ORDER BY meal_date ASC;
+            """
+
+        return database.withDatabase {
+            database -> [NutritionHistoryPoint] in
+
+            var results:
+                [NutritionHistoryPoint] = []
+
+            var statement:
+                OpaquePointer?
+
+            guard sqlite3_prepare_v2(
+                database,
+                sql,
+                -1,
+                &statement,
+                nil
+            ) == SQLITE_OK
+            else {
+
+                print(
+                    "❌ Failed to prepare nutrition history query."
+                )
+
+                return []
+            }
+
+            defer {
+                sqlite3_finalize(
+                    statement
+                )
+            }
+
+            bindDate(
+                statement,
+                index: 1,
+                date:
+                    startDate
+            )
+
+            bindDate(
+                statement,
+                index: 2,
+                date:
+                    endDate
+            )
+
+            while sqlite3_step(
+                statement
+            ) == SQLITE_ROW {
+
+                guard
+                    let dateCString =
+                        sqlite3_column_text(
+                            statement,
+                            0
+                        )
+                else {
+                    continue
+                }
+
+                let dateString =
+                    String(
+                        cString:
+                            dateCString
+                    )
+
+                let formatter =
+                    DateFormatter()
+
+                formatter.calendar =
+                    Calendar.current
+
+                formatter.locale =
+                    Locale(identifier: "en_US_POSIX")
+
+                formatter.dateFormat =
+                    "yyyy-MM-dd"
+
+                guard
+                    let date =
+                        formatter.date(
+                            from:
+                                dateString
+                        )
+                else {
+                    continue
+                }
+
+                let mealCount =
+                    Int(
+                        sqlite3_column_int(
+                            statement,
+                            1
+                        )
+                    )
+
+                let calories =
+                    sqlite3_column_double(
+                        statement,
+                        2
+                    )
+
+                let protein =
+                    sqlite3_column_double(
+                        statement,
+                        3
+                    )
+
+                let carbohydrates =
+                    sqlite3_column_double(
+                        statement,
+                        4
+                    )
+
+                let fat =
+                    sqlite3_column_double(
+                        statement,
+                        5
+                    )
+
+                let fiber =
+                    sqlite3_column_double(
+                        statement,
+                        6
+                    )
+
+                let mealQuality =
+                    sqlite3_column_double(
+                        statement,
+                        7
+                    )
+
+                let point =
+                    NutritionHistoryPoint(
+
+                        date:
+                            date,
+
+                        mealCount:
+                            mealCount,
+
+                        calories:
+                            calories,
+
+                        protein:
+                            protein,
+
+                        carbohydrates:
+                            carbohydrates,
+
+                        fat:
+                            fat,
+
+                        fiber:
+                            fiber,
+
+                        mealQuality:
+                            mealQuality,
+
+                        nutritionScore:
+                            mealQuality,
+
+                        weight:
+                            nil,
+
+                        weightChange:
+                            nil
+                    )
+
+                results.append(
+                    point
+                )
+            }
+
+            return results
+
+        } ?? []
+    }
+    
     // MARK: - Delete Meal
 
     static func deleteMeal(
         _ meal: Meal
     ) {
 
-        let sql =
+        // First delete the related nutrition analysis.
+        let analysisSQL =
+            """
+            DELETE FROM meal_analysis
+            WHERE meal_id = ?;
+            """
+
+        database.withDatabase { database in
+
+            var statement:
+                OpaquePointer?
+
+            guard sqlite3_prepare_v2(
+                database,
+                analysisSQL,
+                -1,
+                &statement,
+                nil
+            ) == SQLITE_OK
+            else {
+
+                print(
+                    "❌ Failed to prepare meal analysis DELETE."
+                )
+
+                return
+            }
+
+            defer {
+                sqlite3_finalize(
+                    statement
+                )
+            }
+
+            bindText(
+                statement,
+                index: 1,
+                value:
+                    meal.id.uuidString
+            )
+
+            let result =
+                sqlite3_step(
+                    statement
+                )
+
+            if result != SQLITE_DONE {
+
+                print(
+                    "❌ Failed to delete meal analysis:",
+                    result
+                )
+
+                return
+            }
+        }
+
+        // Then delete the meal itself.
+        let mealSQL =
             """
             DELETE FROM meals
             WHERE id = ?;
@@ -565,7 +839,7 @@ struct PersistenceService {
 
             guard sqlite3_prepare_v2(
                 database,
-                sql,
+                mealSQL,
                 -1,
                 &statement,
                 nil
@@ -603,10 +877,16 @@ struct PersistenceService {
                     "❌ Failed to delete meal:",
                     result
                 )
+
+            } else {
+
+                print(
+                    "🗑️ Meal deleted:",
+                    meal.id.uuidString
+                )
             }
         }
     }
-    
     // MARK: - Meal Analysis
 
     static func saveMealAnalysis(
