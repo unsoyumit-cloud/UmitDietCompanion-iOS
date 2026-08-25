@@ -40,9 +40,7 @@ extension DayPhase {
         default:
             return .night
         }
-
     }
-
 }
 
 // MARK: - Helpers
@@ -91,9 +89,29 @@ extension DayPhase {
 
         case .night:
             return "Night"
-
         }
-
     }
 
+    // MARK: - Greeting
+
+    var greeting: String {
+
+        switch self {
+
+        case .morning:
+            return "🌅 Good morning, Ümit"
+
+        case .midday:
+            return "☀️ Good afternoon, Ümit"
+
+        case .afternoon:
+            return "🌤️ Hope your afternoon is going well, Ümit"
+
+        case .evening:
+            return "🌆 Good evening, Ümit"
+
+        case .night:
+            return "🌙 Good night, Ümit"
+        }
+    }
 }

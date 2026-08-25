@@ -42,8 +42,8 @@ struct AICoachService {
         guard let recommendation = recommendations.first else {
 
             return CoachMessage(
-                title: "🎉 Harika Gidiyorsun",
-                message: "Bugünkü verilerin genel olarak hedeflerinle uyumlu. Aynı şekilde devam et!",
+                title: "🎉 You're Doing Great",
+                message: "Your data today is generally aligned with your goals. Keep it up!",
                 priority: .low,
                 category: .lifestyle
             )

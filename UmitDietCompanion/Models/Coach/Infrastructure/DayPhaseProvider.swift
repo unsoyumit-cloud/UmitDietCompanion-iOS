@@ -15,16 +15,13 @@ struct DayPhaseProvider {
 
         switch hour {
 
-        case 5..<10:
+        case 5..<12:
             return .morning
 
-        case 10..<14:
+        case 12..<17:
             return .midday
 
-        case 14..<18:
-            return .afternoon
-
-        case 18..<22:
+        case 17..<23:
             return .evening
 
         default:

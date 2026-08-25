@@ -16,14 +16,14 @@ struct ScoreCard: View {
     let restingHeartRateScore: Int
     
     var encouragement: String {
-        if score >= 90  {
-            return "🏆 Mükemmel bir gün geçiriyorsun!"
+        if score >= 90 {
+            return "🏆 You're having an excellent day!"
         } else if score >= 75 {
-            return "💪 Harika gidiyorsun!"
+            return "💪 You're doing great!"
         } else if score >= 50 {
-            return "🙂 Fena değil, biraz daha gayret!"
+            return "🙂 Not bad, keep going!"
         } else {
-            return "🍀 Bugün yeniden başlayabiliriz."
+            return "🍀 We can start fresh today."
         }
     }
     
@@ -33,8 +33,7 @@ struct ScoreCard: View {
         
         VStack(spacing: 12) {
             
-            Text("⭐ Günlük Skor")
-                .font(.headline)
+            Text("⭐ Daily Score")
             
             HStack(alignment: .firstTextBaseline, spacing: 2) {
 

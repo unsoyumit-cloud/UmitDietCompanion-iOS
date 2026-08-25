@@ -13,6 +13,24 @@ struct DashboardView: View {
 
     @State private var viewModel = DashboardViewModel()
 
+    // MARK: - Header
+
+    private var todayString: String {
+
+        let formatter =
+            DateFormatter()
+
+        formatter.locale =
+            Locale(identifier: "en_US")
+
+        formatter.dateFormat =
+            "d MMMM yyyy EEEE"
+
+        return formatter.string(
+            from: Date()
+        )
+    }
+
     var body: some View {
 
         NavigationStack {
@@ -49,9 +67,9 @@ struct DashboardView: View {
 
                             DashboardHeaderView(
                                 greeting:
-                                    "🌤️ İyi Günler, Ümit",
+                                    DayPhase.current.greeting,
                                 todayString:
-                                    "7 Temmuz 2026 Salı"
+                                    todayString
                             )
 
                             // MARK: - AI Insight
@@ -124,6 +142,7 @@ struct DashboardView: View {
                                         case .nutrition:
 
                                             NutritionDetailView()
+
                                         // MARK: Sleep
 
                                         case .sleep:
