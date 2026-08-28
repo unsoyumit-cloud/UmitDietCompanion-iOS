@@ -863,7 +863,7 @@ final class HealthStore {
                 ),
 
             calorieIntake:
-                0,
+                PersistenceService.loadTodayNutritionCalories(),
 
             activeCaloriesBurned:
                 activeEnergy,

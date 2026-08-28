@@ -21,7 +21,7 @@ final class DatabaseManager {
         "UmitDietCompanion.sqlite"
 
     private let currentSchemaVersion =
-        3
+        4
 
     // MARK: - Database
 
@@ -204,11 +204,20 @@ final class DatabaseManager {
 
         createMealAnalysisTable()
 
-        setSchemaVersion()
+        if migrateSchema() {
 
-        print(
-            "✅ SQLite schema ready"
-        )
+            setSchemaVersion()
+
+            print(
+                "✅ SQLite schema ready"
+            )
+
+        } else {
+
+            print(
+                "❌ SQLite schema migration failed. Schema version was not advanced."
+            )
+        }
     }
 
     // MARK: - User Profile History
@@ -466,6 +475,168 @@ final class DatabaseManager {
             ON meal_analysis(meal_id);
             """
         )
+    }
+
+    // MARK: - Schema Migration
+
+    private func migrateSchema() -> Bool {
+
+        let version =
+            currentDatabaseSchemaVersion()
+
+        if version >= currentSchemaVersion {
+            return true
+        }
+
+        if version < 4 {
+
+            guard migrateToVersion4() else {
+                return false
+            }
+        }
+
+        return true
+    }
+
+    private func migrateToVersion4() -> Bool {
+
+        guard !columnExists(
+            table: "meal_analysis",
+            column: "component_nutrition_json"
+        ) else {
+
+            print(
+                "ℹ️ meal_analysis.component_nutrition_json already exists"
+            )
+
+            return true
+        }
+
+        let success =
+            execute(
+                """
+                ALTER TABLE meal_analysis
+                ADD COLUMN component_nutrition_json TEXT;
+                """
+            )
+
+        if success {
+
+            print(
+                "✅ SQLite schema migrated to version 4"
+            )
+
+        } else {
+
+            print(
+                "❌ Failed to migrate SQLite schema to version 4"
+            )
+        }
+
+        return success
+    }
+
+    private func currentDatabaseSchemaVersion() -> Int {
+
+        guard let database else {
+            return 0
+        }
+
+        var statement:
+            OpaquePointer?
+
+        guard sqlite3_prepare_v2(
+            database,
+            "PRAGMA user_version;",
+            -1,
+            &statement,
+            nil
+        ) == SQLITE_OK
+        else {
+
+            return 0
+        }
+
+        defer {
+            sqlite3_finalize(
+                statement
+            )
+        }
+
+        guard sqlite3_step(
+            statement
+        ) == SQLITE_ROW
+        else {
+
+            return 0
+        }
+
+        return Int(
+            sqlite3_column_int(
+                statement,
+                0
+            )
+        )
+    }
+
+    private func columnExists(
+        table: String,
+        column: String
+    ) -> Bool {
+
+        guard let database else {
+            return false
+        }
+
+        let sql =
+            "PRAGMA table_info(\(table));"
+
+        var statement:
+            OpaquePointer?
+
+        guard sqlite3_prepare_v2(
+            database,
+            sql,
+            -1,
+            &statement,
+            nil
+        ) == SQLITE_OK
+        else {
+
+            return false
+        }
+
+        defer {
+            sqlite3_finalize(
+                statement
+            )
+        }
+
+        while sqlite3_step(
+            statement
+        ) == SQLITE_ROW {
+
+            guard let nameCString =
+                sqlite3_column_text(
+                    statement,
+                    1
+                )
+            else {
+                continue
+            }
+
+            let name =
+                String(
+                    cString:
+                        nameCString
+                )
+
+            if name == column {
+                return true
+            }
+        }
+
+        return false
     }
 
     // MARK: - Schema Version

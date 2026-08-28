@@ -39,12 +39,12 @@ struct NutritionDetailView: View {
     @State private var mealPendingDeletion:
         Meal?
 
-    @State private var showCapturePlaceholder =
-        false
+    @State private var selectedMealDetail:
+        Meal?
 
-    @State private var captureMode =
-        ""
-
+    @State private var pendingMealDetail:
+        Meal?
+    
     // MARK: - Body
 
     var body: some View {
@@ -56,19 +56,19 @@ struct NutritionDetailView: View {
                 spacing: 24
             ) {
 
-                // MARK: - Today's Meals
+                // MARK: Today's Meals
 
                 todaysMealsSection
 
-                // MARK: - Nutrition History
+                // MARK: Nutrition History
 
                 nutritionHistorySection
 
-                // MARK: - Top Successful Days
+                // MARK: Successful Days
 
                 successfulDaysSection
 
-                // MARK: - Explore Another Day
+                // MARK: Explore Another Day
 
                 exploreAnotherDayButton
             }
@@ -77,26 +77,68 @@ struct NutritionDetailView: View {
         .background(
             AppTheme.Colors.dashboardBackground
         )
-        .navigationTitle("Nutrition")
+        .navigationTitle(
+            "Nutrition"
+        )
         .navigationBarTitleDisplayMode(
             .inline
         )
 
-        // MARK: - Meal Entry
+        // MARK: - Add Meal
 
         .sheet(
             isPresented:
                 $showMealEntry
         ) {
 
-            MealEntryView()
-                .onDisappear {
+            MealEntryView { meal in
 
-                    refreshAll()
+                pendingMealDetail =
+                    meal
+            }
+            .onDisappear {
+
+                refreshAll()
+
+                if let meal =
+                    pendingMealDetail {
+
+                    pendingMealDetail =
+                        nil
+
+                    DispatchQueue.main.async {
+
+                        selectedMealDetail =
+                            meal
+                    }
+                    
+                    waitForPendingAnalyses(
+                                meal
+                            )
+                    
                 }
+            }
         }
 
-        // MARK: - Historical Day Detail
+       
+        
+        // MARK: - Meal Detail
+
+        .sheet(
+            item:
+                $selectedMealDetail
+        ) { meal in
+
+            NavigationStack {
+
+                MealDetailView(
+                    meal:
+                        meal
+                )
+            }
+        }
+        
+        // MARK: - Historical Day
 
         .sheet(
             item:
@@ -176,29 +218,8 @@ struct NutritionDetailView: View {
                 )
                 .navigationBarTitleDisplayMode(
                     .inline
-                    )
+                )
             }
-        }
-
-        // MARK: - Capture Placeholder
-
-        .alert(
-            captureMode,
-            isPresented:
-                $showCapturePlaceholder
-        ) {
-
-            Button(
-                "OK",
-                role:
-                    .cancel
-            ) {}
-
-        } message: {
-
-            Text(
-                "\(captureMode) meal entry will be connected to the AI meal analysis flow here."
-            )
         }
 
         // MARK: - Delete Confirmation
@@ -213,7 +234,9 @@ struct NutritionDetailView: View {
                     set: { isPresented in
 
                         if !isPresented {
-                            mealPendingDeletion = nil
+
+                            mealPendingDeletion =
+                                nil
                         }
                     }
                 )
@@ -339,68 +362,7 @@ struct NutritionDetailView: View {
                         .horizontal
                     )
 
-                // MARK: - Quick Entry
-
-                HStack(
-                    spacing:
-                        12
-                ) {
-
-                    Button {
-
-                        captureMode =
-                            "Photo Meal Entry"
-
-                        showCapturePlaceholder =
-                            true
-
-                    } label: {
-
-                        Label(
-                            "Photo",
-                            systemImage:
-                                "camera"
-                        )
-                        .frame(
-                            maxWidth:
-                                .infinity
-                        )
-                    }
-                    .buttonStyle(
-                        .bordered
-                    )
-
-                    Button {
-
-                        captureMode =
-                            "Voice Meal Entry"
-
-                        showCapturePlaceholder =
-                            true
-
-                    } label: {
-
-                        Label(
-                            "Voice",
-                            systemImage:
-                                "mic"
-                        )
-                        .frame(
-                            maxWidth:
-                                .infinity
-                        )
-                    }
-                    .buttonStyle(
-                        .bordered
-                    )
-                }
-                .padding(
-                    .horizontal
-                )
-                .padding(
-                    .top,
-                    14
-                )
+                // MARK: Add Meal
 
                 Button {
 
@@ -481,6 +443,7 @@ struct NutritionDetailView: View {
                             selectedChartDay
                         )
                     }
+
                 } else {
 
                     Text(
@@ -519,8 +482,6 @@ struct NutritionDetailView: View {
 
     // MARK: - Chart
 
-    // MARK: - Chart
-
     private var nutritionChart:
         some View {
 
@@ -542,38 +503,60 @@ struct NutritionDetailView: View {
                         "Score",
                         day.score ?? 0
                     ),
-                    width: .fixed(28)
+                    width:
+                        .fixed(28)
                 )
                 .foregroundStyle(
-                    day.id == selectedChartDay?.id
+                    day.id ==
+                        selectedChartDay?.id
                     ? Color.blue
-                    : Color.blue.opacity(0.72)
+                    : Color.blue.opacity(
+                        0.72
+                    )
                 )
-                .cornerRadius(8)
+                .cornerRadius(
+                    8
+                )
             }
         }
-        .frame(height: 170)
-        .chartYScale(domain: 0...10)
-        .chartYAxis(.hidden)
+        .frame(
+            height:
+                170
+        )
+        .chartYScale(
+            domain:
+                0...10
+        )
+        .chartYAxis(
+            .hidden
+        )
         .chartXAxis {
 
             AxisMarks(
-                values: .stride(by: .day)
+                values:
+                    .stride(
+                        by:
+                            .day
+                    )
             ) {
 
                 AxisValueLabel(
                     format:
                         .dateTime
-                        .day()
-                        .month(.abbreviated)
+                            .day()
+                            .month(
+                                .abbreviated
+                            )
                 )
             }
         }
         .chartXSelection(
-            value: $selectedChartDate
+            value:
+                $selectedChartDate
         )
         .onChange(
-            of: selectedChartDate
+            of:
+                selectedChartDate
         ) { _, newValue in
 
             guard let newValue else {
@@ -582,11 +565,13 @@ struct NutritionDetailView: View {
 
             selectedChartDay =
                 nearestHistoryDay(
-                    to: newValue
+                    to:
+                        newValue
                 )
         }
     }
-    // MARK: - Selected Day Summary
+
+    // MARK: - Selected Day
 
     private func selectedDaySummary(
         _ day:
@@ -850,7 +835,9 @@ struct NutritionDetailView: View {
                     $1.score ?? 0
 
                 if lhs == rhs {
-                    return $0.date > $1.date
+
+                    return $0.date >
+                        $1.date
                 }
 
                 return lhs > rhs
@@ -878,8 +865,6 @@ struct NutritionDetailView: View {
                     spacing:
                         18
                 ) {
-
-                    // MARK: Summary
 
                     VStack(
                         alignment:
@@ -952,8 +937,6 @@ struct NutritionDetailView: View {
                         )
                     )
 
-                    // MARK: Meals
-
                     ForEach(
                         day.meals
                     ) { meal in
@@ -974,13 +957,15 @@ struct NutritionDetailView: View {
                                 10
                         ) {
 
-                            Text("🥗")
-                                .font(
-                                    .system(
-                                        size:
-                                            36
-                                    )
+                            Text(
+                                "🥗"
+                            )
+                            .font(
+                                .system(
+                                    size:
+                                        36
                                 )
+                            )
 
                             Text(
                                 "No meals logged on this day."
@@ -1012,7 +997,7 @@ struct NutritionDetailView: View {
             )
         }
     }
-
+    
     // MARK: - Historical Meal Card
 
     private func historicalMealCard(
@@ -1036,16 +1021,10 @@ struct NutritionDetailView: View {
                     12
             ) {
 
-                Text(
-                    mealIcon(
-                        meal.type
-                    )
-                )
-                .font(
-                    .system(
-                        size:
-                            26
-                    )
+                mealIconView(
+                    meal,
+                    analysis:
+                        analysis
                 )
 
                 VStack(
@@ -1123,6 +1102,8 @@ struct NutritionDetailView: View {
                 10
         ) {
 
+            // Meal information is tappable and opens Meal Detail.
+            // The delete button remains a separate action.
             HStack(
                 alignment:
                     .top,
@@ -1130,46 +1111,64 @@ struct NutritionDetailView: View {
                     12
             ) {
 
-                Text(
-                    mealIcon(
-                        meal.type
-                    )
-                )
-                .font(
-                    .system(
-                        size:
-                            26
-                    )
-                )
+                Button {
 
-                VStack(
-                    alignment:
-                        .leading,
-                    spacing:
-                        4
-                ) {
+                    selectedMealDetail =
+                        meal
 
-                    Text(
-                        mealTitle(
-                            meal.type
+                } label: {
+
+                    HStack(
+                        alignment:
+                            .top,
+                        spacing:
+                            12
+                    ) {
+
+                        mealIconView(
+                            meal,
+                            analysis:
+                                mealAnalyses[
+                                    meal.id
+                                ]
                         )
-                    )
-                    .fontWeight(
-                        .semibold
-                    )
 
-                    Text(
-                        meal.foodDescription
-                    )
-                    .font(
-                        .subheadline
-                    )
-                    .foregroundStyle(
-                        .secondary
+                        VStack(
+                            alignment:
+                                .leading,
+                            spacing:
+                                4
+                        ) {
+
+                            Text(
+                                mealTitle(
+                                    meal.type
+                                )
+                            )
+                            .fontWeight(
+                                .semibold
+                            )
+
+                            Text(
+                                meal.foodDescription
+                            )
+                            .font(
+                                .subheadline
+                            )
+                            .foregroundStyle(
+                                .secondary
+                            )
+                        }
+
+                        Spacer()
+                    }
+                    .contentShape(
+                        Rectangle()
                     )
                 }
-
-                Spacer()
+                .buttonStyle(
+                    .plain
+                )
 
                 VStack(
                     alignment:
@@ -1220,30 +1219,100 @@ struct NutritionDetailView: View {
                 }
             }
 
-            if let analysis =
-                mealAnalyses[
-                    meal.id
-                ] {
+            // The nutrition/quality summary is also tappable.
+            Button {
 
-                mealAnalysisSummary(
-                    analysis
-                )
+                selectedMealDetail =
+                    meal
 
-            } else {
+            } label: {
 
-                Text(
-                    "Nutrition analysis unavailable"
+                VStack(
+                    alignment:
+                        .leading,
+                    spacing:
+                        10
+                ) {
+
+                    if let analysis =
+                        mealAnalyses[
+                            meal.id
+                        ] {
+
+                        mealAnalysisSummary(
+                            analysis
+                        )
+
+                    } else {
+
+                        Text(
+                            "Nutrition analysis unavailable"
+                        )
+                        .font(
+                            .caption
+                        )
+                        .foregroundStyle(
+                            .secondary
+                        )
+                    }
+                }
+                .frame(
+                    maxWidth:
+                        .infinity,
+                    alignment:
+                        .leading
                 )
-                .font(
-                    .caption
-                )
-                .foregroundStyle(
-                    .secondary
+                .contentShape(
+                    Rectangle()
                 )
             }
+            .buttonStyle(
+                .plain
+            )
         }
     }
 
+    // MARK: - Meal Icon View
+
+    @ViewBuilder
+    private func mealIconView(
+        _ meal:
+            Meal,
+        analysis:
+            MealAnalysis?
+    ) -> some View {
+
+        if meal.type == .breakfast {
+
+            Image(
+                "breakfast_icon"
+            )
+            .resizable()
+            .scaledToFit()
+            .frame(
+                width:
+                    34,
+                height:
+                    34
+            )
+
+        } else {
+
+            Text(
+                mealIcon(
+                    meal,
+                    analysis:
+                        analysis
+                )
+            )
+            .font(
+                .system(
+                    size:
+                        26
+                )
+            )
+        }
+    }
     // MARK: - Empty State
 
     private var emptyState:
@@ -1254,13 +1323,15 @@ struct NutritionDetailView: View {
                 10
         ) {
 
-            Text("🥗")
-                .font(
-                    .system(
-                        size:
-                            36
-                    )
+            Text(
+                "🥗"
+            )
+            .font(
+                .system(
+                    size:
+                        36
                 )
+            )
 
             Text(
                 "No meals logged yet"
@@ -1380,7 +1451,12 @@ struct NutritionDetailView: View {
                     Spacer()
 
                     Text(
-                        formattedScore(Double(quality.overallScore ?? 0))
+                        formattedScore(
+                            Double(
+                                quality.overallScore
+                                ?? 0
+                            )
+                        )
                     )
                     .font(
                         .subheadline
@@ -1437,7 +1513,53 @@ struct NutritionDetailView: View {
 
         loadHistory()
     }
+    
+    // MARK: - Wait For Pending Analyses
 
+    private func waitForPendingAnalyses(
+        _ pendingMeal: Meal
+    ) {
+        Task {
+
+            for _ in 0..<60 {
+
+                if Task.isCancelled {
+                    return
+                }
+
+                if PersistenceService.loadMealAnalysis(
+                    for: pendingMeal.id
+                ) != nil {
+
+                    await MainActor.run {
+                        refreshAll()
+                    }
+
+                    print(
+                        "✅ NutritionDetailView analysis became available:",
+                        pendingMeal.id.uuidString
+                    )
+
+                    return
+                }
+
+                try? await Task.sleep(
+                    nanoseconds:
+                        500_000_000
+                )
+            }
+
+            await MainActor.run {
+                refreshAll()
+            }
+
+            print(
+                "⚠️ NutritionDetailView analysis polling timed out:",
+                pendingMeal.id.uuidString
+            )
+        }
+    }
+    
     // MARK: - Load Meals
 
     private func loadMeals() {
@@ -1648,9 +1770,352 @@ struct NutritionDetailView: View {
         }
     }
 
-    // MARK: - Meal Icon
+    // MARK: - Dynamic Meal Icon
 
     private func mealIcon(
+        _ meal:
+            Meal,
+        analysis:
+            MealAnalysis?
+    ) -> String {
+
+        if let components =
+            analysis?
+                .nutrition?
+                .componentNutrition,
+           let dominant =
+                components.max(
+                    by: {
+                        $0.calories <
+                        $1.calories
+                    }
+                ) {
+
+            return iconEmoji(
+                dominant.iconCategory
+            )
+        }
+
+        return fallbackMealIcon(
+            meal.foodDescription
+        )
+    }
+
+    // MARK: - Icon Emoji
+
+    private func iconEmoji(
+        _ category:
+            MealIconCategory
+    ) -> String {
+
+        switch category {
+
+        case .burger:
+            return "🍔"
+
+        case .sandwich:
+            return "🥪"
+
+        case .pizza:
+            return "🍕"
+
+        case .pasta:
+            return "🍝"
+
+        case .meat:
+            return "🥩"
+
+        case .chicken:
+            return "🍗"
+
+        case .fish:
+            return "🐟"
+
+        case .rice:
+            return "🍚"
+
+        case .bulgur:
+            return "🌾"
+
+        case .quinoa:
+            return "🌾"
+
+        case .bread:
+            return "🍞"
+
+        case .toast:
+            return "🍞"
+
+        case .salad:
+            return "🥗"
+
+        case .vegetables:
+            return "🥬"
+
+        case .beans:
+            return "🫘"
+
+        case .legumes:
+            return "🫘"
+
+        case .breakfast:
+            return "🍳"
+
+        case .eggs:
+            return "🥚"
+
+        case .cheese:
+            return "🧀"
+
+        case .yogurt:
+            return "🥛"
+
+        case .honey:
+            return "🍯"
+
+        case .butter:
+            return "🧈"
+
+        case .coffee:
+            return "☕"
+
+        case .tea:
+            return "🍵"
+
+        case .soup:
+            return "🍲"
+
+        case .fruit:
+            return "🍎"
+
+        case .dessert:
+            return "🍰"
+
+        case .drink:
+            return "🥤"
+
+        case .mixed:
+            return "🍽️"
+
+        case .other:
+            return "🍽️"
+        }
+    }
+
+    // MARK: - Fallback Meal Icon
+
+    private func fallbackMealIcon(
+        _ value:
+            String
+    ) -> String {
+
+        let text =
+            normalizedFoodText(
+                value
+            )
+
+        if containsAny(
+            text,
+            [
+                "burger",
+                "hamburger"
+            ]
+        ) {
+            return "🍔"
+        }
+
+        if containsAny(
+            text,
+            [
+                "coffee",
+                "kahve"
+            ]
+        ) {
+            return "☕"
+        }
+
+        if containsAny(
+            text,
+            [
+                "tea",
+                "cay"
+            ]
+        ) {
+            return "🍵"
+        }
+
+        if containsAny(
+            text,
+            [
+                "egg",
+                "eggs",
+                "yumurta"
+            ]
+        ) {
+            return "🥚"
+        }
+
+        if containsAny(
+            text,
+            [
+                "cheese",
+                "peynir"
+            ]
+        ) {
+            return "🧀"
+        }
+
+        if containsAny(
+            text,
+            [
+                "bread",
+                "ekmek",
+                "toast",
+                "tost"
+            ]
+        ) {
+            return "🍞"
+        }
+
+        if containsAny(
+            text,
+            [
+                "grape",
+                "grapes",
+                "üzüm",
+                "uzum",
+                "fruit",
+                "meyve"
+            ]
+        ) {
+            return "🍎"
+        }
+
+        if containsAny(
+            text,
+            [
+                "meat",
+                "steak",
+                "beef",
+                "et"
+            ]
+        ) {
+            return "🥩"
+        }
+
+        if containsAny(
+            text,
+            [
+                "chicken",
+                "tavuk"
+            ]
+        ) {
+            return "🍗"
+        }
+
+        if containsAny(
+            text,
+            [
+                "fish",
+                "balik",
+                "balık"
+            ]
+        ) {
+            return "🐟"
+        }
+
+        if containsAny(
+            text,
+            [
+                "rice",
+                "pilav",
+                "pirinc",
+                "pirinç"
+            ]
+        ) {
+            return "🍚"
+        }
+
+        if containsAny(
+            text,
+            [
+                "bean",
+                "beans",
+                "fasulye",
+                "kuru fasulye",
+                "kurufasulye"
+            ]
+        ) {
+            return "🫘"
+        }
+
+        if containsAny(
+            text,
+            [
+                "salad",
+                "salata"
+            ]
+        ) {
+            return "🥗"
+        }
+
+        if containsAny(
+            text,
+            [
+                "soup",
+                "corba",
+                "çorba"
+            ]
+        ) {
+            return "🍲"
+        }
+
+        return "🍽️"
+    }
+
+    // MARK: - Normalize Food Text
+
+    private func normalizedFoodText(
+        _ value:
+            String
+    ) -> String {
+
+        value
+            .trimmingCharacters(
+                in:
+                    .whitespacesAndNewlines
+            )
+            .lowercased()
+            .folding(
+                options:
+                    .diacriticInsensitive,
+                locale:
+                    Locale(
+                        identifier:
+                            "tr_TR"
+                    )
+            )
+    }
+
+    // MARK: - Keyword Helper
+
+    private func containsAny(
+        _ text:
+            String,
+        _ keywords:
+            [String]
+    ) -> Bool {
+
+        keywords.contains {
+            text.contains(
+                $0
+            )
+        }
+    }
+
+    // MARK: - Fallback Icon
+
+    private func fallbackMealIcon(
         _ type:
             MealType
     ) -> String {
@@ -1685,7 +2150,7 @@ struct NutritionDetailView: View {
         )
     }
 
-    // MARK: - Number Formatting
+    // MARK: - Number
 
     private func formattedNumber(
         _ value:
@@ -1762,9 +2227,21 @@ private struct NutritionHistoryDay:
             return nil
         }
 
-            return scores.reduce(0.0) { total, score in
-                total + Double(score)
-            } / Double(scores.count)
+        return scores.reduce(
+            0.0
+        ) {
+            total,
+            score in
+
+            total +
+                Double(
+                    score
+                )
+
+        }
+        / Double(
+            scores.count
+        )
     }
 
     var calories:
@@ -1777,6 +2254,7 @@ private struct NutritionHistoryDay:
             ]?
                 .nutrition?
                 .calories
+
         }
         .reduce(
             0,
@@ -1794,6 +2272,7 @@ private struct NutritionHistoryDay:
             ]?
                 .nutrition?
                 .protein
+
         }
         .reduce(
             0,
@@ -1811,6 +2290,7 @@ private struct NutritionHistoryDay:
             ]?
                 .nutrition?
                 .fiber
+
         }
         .reduce(
             0,

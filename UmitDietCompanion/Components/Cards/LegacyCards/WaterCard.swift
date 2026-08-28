@@ -2,7 +2,7 @@
 //  WaterCard.swift
 //  UmitDietCompanion
 //
-//  Updated UI
+//  Updated Water Detail UI
 //
 
 import SwiftUI
@@ -10,7 +10,10 @@ import Charts
 
 struct WaterCard: View {
 
+    // MARK: - Data
+
     let dailyWaterIntakeGoal: Int
+
     @Binding var waterConsumed: Int
 
     // Last 7 days water data in liters.
@@ -19,52 +22,102 @@ struct WaterCard: View {
     // MARK: - Calculations
 
     private var progress: Double {
-        guard dailyWaterIntakeGoal > 0 else { return 0 }
+
+        guard dailyWaterIntakeGoal > 0 else {
+            return 0
+        }
 
         return min(
-            Double(waterConsumed) / Double(dailyWaterIntakeGoal),
+            Double(waterConsumed)
+            / Double(dailyWaterIntakeGoal),
             1.0
         )
     }
 
     private var remainingWater: Int {
-        max(dailyWaterIntakeGoal - waterConsumed, 0)
-    }
 
-    private var progressPercentage: Int {
-        Int(progress * 100)
+        max(
+            dailyWaterIntakeGoal
+            - waterConsumed,
+            0
+        )
     }
 
     private var currentLiters: Double {
+
         Double(waterConsumed) / 1000.0
     }
 
     private var goalLiters: Double {
+
         Double(dailyWaterIntakeGoal) / 1000.0
     }
 
     private var averageWater: Double? {
-        guard !weeklyWaterData.isEmpty else { return nil }
 
-        return weeklyWaterData.reduce(0, +)
-        / Double(weeklyWaterData.count)
+        guard !weeklyWaterData.isEmpty else {
+            return nil
+        }
+
+        return weeklyWaterData.reduce(
+            0,
+            +
+        )
+        / Double(
+            weeklyWaterData.count
+        )
     }
+
+    // MARK: - Today's AI Coach
 
     private var coachMessage: String {
 
-        if remainingWater <= 0 {
-            return "Nice work! You've reached your water goal for today. 💧"
+        if waterConsumed <= 0 {
+
+            return "💧 No water yet today. Let's get the first glass in."
         }
 
-        if remainingWater <= 500 {
-            return "You're \(remainingWater) ml away from your goal. Keep it up! 💧"
+        if progress < 0.25 {
+
+            return "💧 You're off to a start. Keep sipping!"
         }
 
-        if progress >= 0.75 {
-            return "You're getting close. A little more water and you'll reach today's goal."
+        if progress < 0.50 {
+
+            return "💧 Nice start. Keep going — you've got plenty of room today."
         }
 
-        return "Keep your water nearby and take a few sips throughout the day."
+        if progress < 0.80 {
+
+            return "💧 You're more than halfway there. Keep it going!"
+        }
+
+        if remainingWater > 0 {
+
+            return String(
+                format:
+                    "💧 You're getting close. Just %d ml to go.",
+                remainingWater
+            )
+        }
+
+        return "💧 Nice work! You've reached today's water goal."
+    }
+
+    // MARK: - 7-Day Information
+
+    private var weeklyInsight: String {
+
+        guard let averageWater else {
+
+            return "7-day average: No data yet."
+        }
+
+        return String(
+            format:
+                "💧 7-day average: %.1f L/day",
+            averageWater
+        )
     }
 
     // MARK: - Body
@@ -73,28 +126,34 @@ struct WaterCard: View {
 
         ScrollView {
 
-            VStack(spacing: 20) {
+            VStack(
+                spacing: 20
+            ) {
 
-                // MARK: - Water Summary
+                // MARK: Water Summary
 
                 waterSummaryCard
 
-                // MARK: - AI Coach
+                // MARK: AI Coach
 
                 aiCoachCard
 
-                // MARK: - Last 7 Days
+                // MARK: Last 7 Days
 
                 weeklyChartCard
 
-                // MARK: - Quick Actions
+                // MARK: Quick Actions
 
                 quickActionsCard
             }
             .padding(.horizontal, 16)
             .padding(.vertical, 20)
         }
-        .background(Color(.systemGroupedBackground))
+        .background(
+            Color(
+                .systemGroupedBackground
+            )
+        )
     }
 
     // MARK: - Water Summary Card
@@ -106,7 +165,6 @@ struct WaterCard: View {
             spacing: 22
         ) {
 
-            // Glossy water drop
             GlossyWaterDrop(
                 color: .blue,
                 size: 68
@@ -132,7 +190,8 @@ struct WaterCard: View {
 
                     Text(
                         String(
-                            format: "%.2f L",
+                            format:
+                                "%.2f L",
                             currentLiters
                         )
                     )
@@ -142,28 +201,37 @@ struct WaterCard: View {
                             weight: .bold
                         )
                     )
-                    .foregroundStyle(.secondary)
+                    .foregroundStyle(
+                        .secondary
+                    )
 
                     Text(
                         String(
-                            format: "/ %.1f L",
+                            format:
+                                "/ %.1f L",
                             goalLiters
                         )
                     )
                     .font(
-                        .system(size: 22)
+                        .system(
+                            size: 22
+                        )
                     )
-                    .foregroundStyle(.secondary)
+                    .foregroundStyle(
+                        .secondary
+                    )
                 }
             }
 
             Spacer()
         }
         .padding(24)
-        .background(cardBackground)
+        .background(
+            cardBackground
+        )
     }
 
-    // MARK: - AI Coach
+    // MARK: - AI Coach Card
 
     private var aiCoachCard: some View {
 
@@ -172,15 +240,22 @@ struct WaterCard: View {
             spacing: 16
         ) {
 
-            HStack(spacing: 12) {
+            HStack(
+                spacing: 12
+            ) {
 
-                Image(systemName: "brain.head.profile")
-                    .font(
-                        .system(
-                            size: 26
-                        )
+                Image(
+                    systemName:
+                        "brain.head.profile"
+                )
+                .font(
+                    .system(
+                        size: 26
                     )
-                    .foregroundStyle(.blue)
+                )
+                .foregroundStyle(
+                    .blue
+                )
 
                 Text("AI Coach")
                     .font(
@@ -191,21 +266,29 @@ struct WaterCard: View {
                     )
             }
 
-            Text(coachMessage)
-                .font(
-                    .system(size: 18)
+            Text(
+                coachMessage
+            )
+            .font(
+                .system(
+                    size: 18
                 )
-                .foregroundStyle(.secondary)
-                .fixedSize(
-                    horizontal: false,
-                    vertical: true
-                )
+            )
+            .foregroundStyle(
+                .secondary
+            )
+            .fixedSize(
+                horizontal: false,
+                vertical: true
+            )
         }
         .padding(24)
-        .background(cardBackground)
+        .background(
+            cardBackground
+        )
     }
 
-    // MARK: - Weekly Chart
+    // MARK: - Weekly Chart Card
 
     private var weeklyChartCard: some View {
 
@@ -216,16 +299,22 @@ struct WaterCard: View {
 
             HStack {
 
-                HStack(spacing: 10) {
+                HStack(
+                    spacing: 10
+                ) {
 
                     Image(
                         systemName:
                             "chart.bar.xaxis"
                     )
                     .font(
-                        .system(size: 24)
+                        .system(
+                            size: 24
+                        )
                     )
-                    .foregroundStyle(.blue)
+                    .foregroundStyle(
+                        .blue
+                    )
 
                     Text("Last 7 Days")
                         .font(
@@ -253,7 +342,9 @@ struct WaterCard: View {
                             weight: .semibold
                         )
                     )
-                    .foregroundStyle(.blue)
+                    .foregroundStyle(
+                        .blue
+                    )
                 }
             }
 
@@ -263,7 +354,8 @@ struct WaterCard: View {
 
                     ForEach(
                         Array(
-                            weeklyWaterData.enumerated()
+                            weeklyWaterData
+                                .enumerated()
                         ),
                         id: \.offset
                     ) { index, value in
@@ -285,6 +377,7 @@ struct WaterCard: View {
                                 colors: [
                                     Color.blue
                                         .opacity(0.30),
+
                                     Color.blue
                                         .opacity(0.03)
                                 ],
@@ -305,7 +398,9 @@ struct WaterCard: View {
                                 value
                             )
                         )
-                        .foregroundStyle(.blue)
+                        .foregroundStyle(
+                            .blue
+                        )
                         .lineStyle(
                             StrokeStyle(
                                 lineWidth: 3,
@@ -326,9 +421,15 @@ struct WaterCard: View {
                                 value
                             )
                         )
-                        .foregroundStyle(.blue)
-                        .symbolSize(55)
+                        .foregroundStyle(
+                            .blue
+                        )
+                        .symbolSize(
+                            55
+                        )
                     }
+
+                    // Daily goal line
 
                     RuleMark(
                         y: .value(
@@ -351,7 +452,8 @@ struct WaterCard: View {
                         0...max(
                             3.0,
                             goalLiters + 0.5,
-                            weeklyWaterData.max() ?? 0
+                            weeklyWaterData.max()
+                            ?? 0
                         )
                 )
                 .chartYAxis {
@@ -361,29 +463,43 @@ struct WaterCard: View {
                     ) { _ in
 
                         AxisGridLine()
+
                         AxisValueLabel()
                     }
                 }
                 .chartXAxis {
 
                     AxisMarks { _ in
+
                         AxisValueLabel()
                     }
                 }
-                .frame(height: 280)
+                .frame(
+                    height: 280
+                )
 
-                HStack(spacing: 8) {
+                // MARK: 7-Day Average
+
+                HStack(
+                    spacing: 8
+                ) {
 
                     GlossyWaterDrop(
                         color: .blue,
                         size: 28
                     )
 
-                    Text(weeklyInsight)
-                        .font(
-                            .system(size: 16)
+                    Text(
+                        weeklyInsight
+                    )
+                    .font(
+                        .system(
+                            size: 16
                         )
-                        .foregroundStyle(.secondary)
+                    )
+                    .foregroundStyle(
+                        .secondary
+                    )
 
                     Spacer()
                 }
@@ -399,24 +515,34 @@ struct WaterCard: View {
 
             } else {
 
-                VStack(spacing: 14) {
+                VStack(
+                    spacing: 14
+                ) {
 
                     Image(
                         systemName:
                             "chart.xyaxis.line"
                     )
                     .font(
-                        .system(size: 36)
+                        .system(
+                            size: 36
+                        )
                     )
-                    .foregroundStyle(.secondary)
+                    .foregroundStyle(
+                        .secondary
+                    )
 
                     Text(
                         "Not enough water data for the last 7 days."
                     )
                     .font(
-                        .system(size: 17)
+                        .system(
+                            size: 17
+                        )
                     )
-                    .foregroundStyle(.secondary)
+                    .foregroundStyle(
+                        .secondary
+                    )
                     .multilineTextAlignment(
                         .center
                     )
@@ -428,7 +554,9 @@ struct WaterCard: View {
             }
         }
         .padding(24)
-        .background(cardBackground)
+        .background(
+            cardBackground
+        )
     }
 
     // MARK: - Quick Actions
@@ -440,11 +568,15 @@ struct WaterCard: View {
             spacing: 18
         ) {
 
-            HStack(spacing: 10) {
+            HStack(
+                spacing: 10
+            ) {
 
                 Text("⚡")
                     .font(
-                        .system(size: 26)
+                        .system(
+                            size: 26
+                        )
                     )
 
                 Text("Quick Actions")
@@ -460,31 +592,41 @@ struct WaterCard: View {
 
                 Spacer()
 
+                // -250 ml
+
                 WaterActionButton(
                     amount: -250,
                     color: .red
                 ) {
-                    waterConsumed = max(
-                        0,
-                        waterConsumed - 250
-                    )
+
+                    waterConsumed =
+                        max(
+                            0,
+                            waterConsumed - 250
+                        )
                 }
 
                 Spacer()
+
+                // +250 ml
 
                 WaterActionButton(
                     amount: 250,
                     color: .blue
                 ) {
+
                     waterConsumed += 250
                 }
 
                 Spacer()
 
+                // +500 ml
+
                 WaterActionButton(
                     amount: 500,
                     color: .blue
                 ) {
+
                     waterConsumed += 500
                 }
 
@@ -492,7 +634,9 @@ struct WaterCard: View {
             }
         }
         .padding(24)
-        .background(cardBackground)
+        .background(
+            cardBackground
+        )
     }
 
     // MARK: - Helpers
@@ -509,33 +653,15 @@ struct WaterCard: View {
         )
     }
 
-    private var weeklyInsight: String {
-
-        guard let averageWater else {
-            return "Keep building your water habit."
-        }
-
-        if averageWater >= goalLiters {
-            return "Great consistency! You're meeting your goal on average."
-        }
-
-        let difference =
-            goalLiters - averageWater
-
-        return String(
-            format:
-                "You're averaging %.1f L — %.1f L below your daily goal.",
-            averageWater,
-            difference
-        )
-    }
-
     private func dayLabel(
         for index: Int
     ) -> String {
 
-        let calendar = Calendar.current
-        let today = Date()
+        let calendar =
+            Calendar.current
+
+        let today =
+            Date()
 
         let startDate =
             calendar.date(
@@ -547,7 +673,8 @@ struct WaterCard: View {
                         - index
                     ),
                 to: today
-            ) ?? today
+            )
+            ?? today
 
         let formatter =
             DateFormatter()
@@ -555,7 +682,8 @@ struct WaterCard: View {
         formatter.locale =
             Locale.current
 
-        formatter.dateFormat = "EEE"
+        formatter.dateFormat =
+            "EEE"
 
         return formatter.string(
             from: startDate
@@ -568,6 +696,7 @@ struct WaterCard: View {
 private struct GlossyWaterDrop: View {
 
     let color: Color
+
     let size: CGFloat
 
     var body: some View {
@@ -590,8 +719,12 @@ private struct GlossyWaterDrop: View {
                     .fill(
                         LinearGradient(
                             colors: [
-                                Color.white.opacity(0.72),
-                                Color.white.opacity(0.18),
+                                Color.white
+                                    .opacity(0.72),
+
+                                Color.white
+                                    .opacity(0.18),
+
                                 Color.clear
                             ],
                             startPoint: .topLeading,
@@ -620,102 +753,129 @@ private struct GlossyWaterDrop: View {
                     )
             }
             .shadow(
-                color: color.opacity(0.28),
-                radius: size * 0.12,
+                color:
+                    color.opacity(0.28),
+                radius:
+                    size * 0.12,
                 x: 0,
-                y: size * 0.07
+                y:
+                    size * 0.07
             )
             .frame(
-                width: size * 0.72,
-                height: size
+                width:
+                    size * 0.72,
+                height:
+                    size
             )
     }
 }
 
 // MARK: - Glossy Drop Shape
 
-private struct GlossyDropShape: Shape {
+private struct GlossyDropShape:
+    Shape {
 
     func path(
         in rect: CGRect
     ) -> Path {
 
-        let w = rect.width
-        let h = rect.height
+        let w =
+            rect.width
 
-        var path = Path()
+        let h =
+            rect.height
 
-        // Narrower, elegant top.
-        let topX = w * 0.50
-        let topY = h * 0.015
+        var path =
+            Path()
+
+        let topX =
+            w * 0.50
+
+        let topY =
+            h * 0.015
 
         path.move(
-            to: CGPoint(
-                x: topX,
-                y: topY
-            )
+            to:
+                CGPoint(
+                    x: topX,
+                    y: topY
+                )
         )
 
-        // Left side.
-        path.addCurve(
-            to: CGPoint(
-                x: w * 0.06,
-                y: h * 0.57
-            ),
-            control1: CGPoint(
-                x: w * 0.32,
-                y: h * 0.16
-            ),
-            control2: CGPoint(
-                x: w * 0.05,
-                y: h * 0.39
-            )
-        )
+        // Left side
 
         path.addCurve(
-            to: CGPoint(
-                x: w * 0.50,
-                y: h * 0.99
-            ),
-            control1: CGPoint(
-                x: w * 0.08,
-                y: h * 0.82
-            ),
-            control2: CGPoint(
-                x: w * 0.30,
-                y: h * 0.98
-            )
-        )
-
-        // Right side.
-        path.addCurve(
-            to: CGPoint(
-                x: w * 0.94,
-                y: h * 0.57
-            ),
-            control1: CGPoint(
-                x: w * 0.70,
-                y: h * 0.98
-            ),
-            control2: CGPoint(
-                x: w * 0.92,
-                y: h * 0.82
-            )
+            to:
+                CGPoint(
+                    x: w * 0.06,
+                    y: h * 0.57
+                ),
+            control1:
+                CGPoint(
+                    x: w * 0.32,
+                    y: h * 0.16
+                ),
+            control2:
+                CGPoint(
+                    x: w * 0.05,
+                    y: h * 0.39
+                )
         )
 
         path.addCurve(
-            to: CGPoint(
-                x: topX,
-                y: topY
-            ),
-            control1: CGPoint(
-                x: w * 0.95,
-                y: h * 0.39
-            ),
-            control2: CGPoint(
-                x: w * 0.68,
-                y: h * 0.16
-            )
+            to:
+                CGPoint(
+                    x: w * 0.50,
+                    y: h * 0.99
+                ),
+            control1:
+                CGPoint(
+                    x: w * 0.08,
+                    y: h * 0.82
+                ),
+            control2:
+                CGPoint(
+                    x: w * 0.30,
+                    y: h * 0.98
+                )
+        )
+
+        // Right side
+
+        path.addCurve(
+            to:
+                CGPoint(
+                    x: w * 0.94,
+                    y: h * 0.57
+                ),
+            control1:
+                CGPoint(
+                    x: w * 0.70,
+                    y: h * 0.98
+                ),
+            control2:
+                CGPoint(
+                    x: w * 0.92,
+                    y: h * 0.82
+                )
+        )
+
+        path.addCurve(
+            to:
+                CGPoint(
+                    x: topX,
+                    y: topY
+                ),
+            control1:
+                CGPoint(
+                    x: w * 0.95,
+                    y: h * 0.39
+                ),
+            control2:
+                CGPoint(
+                    x: w * 0.68,
+                    y: h * 0.16
+                )
         )
 
         path.closeSubpath()
@@ -726,19 +886,27 @@ private struct GlossyDropShape: Shape {
 
 // MARK: - Water Action Button
 
-private struct WaterActionButton: View {
+private struct WaterActionButton:
+    View {
 
     let amount: Int
+
     let color: Color
+
     let action: () -> Void
 
     private var symbol: String {
-        amount < 0 ? "minus" : "plus"
+
+        amount < 0
+        ? "minus"
+        : "plus"
     }
 
     var body: some View {
 
-        Button(action: action) {
+        Button(
+            action: action
+        ) {
 
             VStack(
                 spacing: 8
@@ -751,18 +919,22 @@ private struct WaterActionButton: View {
                         size: 74
                     )
 
-                    // Lower-positioned +/- symbol.
-                    Image(systemName: symbol)
-                        .font(
-                            .system(
-                                size: 21,
-                                weight: .bold
-                            )
+                    Image(
+                        systemName:
+                            symbol
+                    )
+                    .font(
+                        .system(
+                            size: 21,
+                            weight: .bold
                         )
-                        .foregroundStyle(.white)
-                        .offset(
-                            y: 12
-                        )
+                    )
+                    .foregroundStyle(
+                        .white
+                    )
+                    .offset(
+                        y: 12
+                    )
                 }
 
                 Text(
@@ -776,10 +948,14 @@ private struct WaterActionButton: View {
                         weight: .bold
                     )
                 )
-                .foregroundStyle(color)
+                .foregroundStyle(
+                    color
+                )
             }
         }
-        .buttonStyle(.plain)
+        .buttonStyle(
+            .plain
+        )
     }
 }
 
@@ -789,7 +965,8 @@ private struct WaterActionButton: View {
 
     WaterCard(
         dailyWaterIntakeGoal: 2500,
-        waterConsumed: .constant(2100),
+        waterConsumed:
+            .constant(2100),
         weeklyWaterData: [
             1.8,
             2.1,

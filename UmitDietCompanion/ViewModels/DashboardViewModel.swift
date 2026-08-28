@@ -59,7 +59,27 @@ final class DashboardViewModel {
 
     var nutritionCurrentValue: String {
 
-        "0%"
+        let currentCalories =
+            healthStore.dailyMetrics.calorieIntake
+
+        let targetCalories =
+            healthStore.energyTarget
+
+        guard
+            targetCalories > 0
+        else {
+            return "0%"
+        }
+
+        let percentage =
+            Int(
+                (
+                    Double(currentCalories) /
+                    Double(targetCalories)
+                ) * 100
+            )
+
+        return "\(percentage)%"
     }
 
     var sleepCurrentValue: String {
@@ -100,6 +120,32 @@ final class DashboardViewModel {
             format:
                 "%.1f L",
             targetWater
+        )
+    }
+
+    // MARK: - Nutrition Progress
+
+    var nutritionProgress: Double {
+
+        let currentCalories =
+            healthStore.dailyMetrics.calorieIntake
+
+        let targetCalories =
+            healthStore.energyTarget
+
+        guard
+            targetCalories > 0
+        else {
+            return 0
+        }
+
+        return min(
+            max(
+                Double(currentCalories) /
+                Double(targetCalories),
+                0.0
+            ),
+            1.0
         )
     }
 
@@ -289,13 +335,13 @@ final class DashboardViewModel {
                     .nutrition,
 
                 progress:
-                    0,
+                    nutritionProgress,
 
                 currentValue:
                     nutritionCurrentValue,
 
                 targetValue:
-                    nil
+                    "\(healthStore.energyTarget) kcal"
             ),
 
             // MARK: Sleep

@@ -6,24 +6,24 @@
 import Foundation
 
 enum Gender: String, CaseIterable {
-    case male = "Erkek"
-    case female = "Kadın"
+    case male = "Male"
+    case female = "Female"
 }
 
 enum ActivityLevel: String, CaseIterable {
-    case sedentary = "Hareketsiz"
-    case light = "Hafif Aktif"
-    case moderate = "Orta Aktif"
-    case active = "Aktif"
-    case athlete = "Sporcu"
+    case sedentary = "Sedentary"
+    case light = "Lightly Active"
+    case moderate = "Moderately Active"
+    case active = "Active"
+    case athlete = "Athlete"
 }
 
 enum EatingStyle: String, CaseIterable {
-    case standard = "Standart"
+    case standard = "Standard"
     case intermittentFasting = "Intermittent Fasting"
-    case vegetarian = "Vejetaryen"
+    case vegetarian = "Vegetarian"
     case vegan = "Vegan"
-    case other = "Diğer"
+    case other = "Other"
 }
 
 struct UserProfile {

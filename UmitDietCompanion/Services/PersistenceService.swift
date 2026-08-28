@@ -546,6 +546,108 @@ struct PersistenceService {
         } ?? []
     }
 
+    // MARK: - Today's Nutrition Calories
+
+    static func loadTodayNutritionCalories() -> Int {
+
+        let sql =
+            """
+            SELECT
+                COALESCE(
+                    SUM(a.calories),
+                    0
+                )
+            FROM meals m
+            LEFT JOIN meal_analysis a
+                ON a.meal_id = m.id
+            WHERE m.created_at >= ?
+              AND m.created_at < ?;
+            """
+
+        let calendar =
+            Calendar.current
+
+        let startOfDay =
+            calendar.startOfDay(
+                for:
+                    Date()
+            )
+
+        guard
+            let endOfDay =
+                calendar.date(
+                    byAdding:
+                        .day,
+                    value:
+                        1,
+                    to:
+                        startOfDay
+                )
+        else {
+
+            return 0
+        }
+
+        return database.withDatabase {
+            database -> Int in
+
+            var statement:
+                OpaquePointer?
+
+            guard sqlite3_prepare_v2(
+                database,
+                sql,
+                -1,
+                &statement,
+                nil
+            ) == SQLITE_OK
+            else {
+
+                print(
+                    "❌ Failed to prepare today's nutrition calorie query."
+                )
+
+                return 0
+            }
+
+            defer {
+                sqlite3_finalize(
+                    statement
+                )
+            }
+
+            bindDate(
+                statement,
+                index: 1,
+                date:
+                    startOfDay
+            )
+
+            bindDate(
+                statement,
+                index: 2,
+                date:
+                    endOfDay
+            )
+
+            guard sqlite3_step(
+                statement
+            ) == SQLITE_ROW
+            else {
+
+                return 0
+            }
+
+            return Int(
+                sqlite3_column_double(
+                    statement,
+                    0
+                )
+            )
+
+        } ?? 0
+    }
+
     // MARK: - Nutrition History
 
     static func loadNutritionHistory(
@@ -887,6 +989,7 @@ struct PersistenceService {
             }
         }
     }
+
     // MARK: - Meal Analysis
 
     static func saveMealAnalysis(
@@ -927,6 +1030,29 @@ struct PersistenceService {
             return
         }
 
+        let componentNutritionJSON: String?
+
+        if let componentNutrition =
+            nutrition.componentNutrition,
+           let componentNutritionData =
+                try? JSONEncoder().encode(
+                    componentNutrition
+                ) {
+
+            componentNutritionJSON =
+                String(
+                    data:
+                        componentNutritionData,
+                    encoding:
+                        .utf8
+                )
+
+        } else {
+
+            componentNutritionJSON =
+                nil
+        }
+
         let quality =
             analysis.quality
 
@@ -948,12 +1074,13 @@ struct PersistenceService {
                 fiber_score,
                 overall_score,
 
-                detected_foods_json
+                detected_foods_json,
+                component_nutrition_json
 
             )
             VALUES (
                 ?, ?, ?, ?, ?, ?,
-                ?, ?, ?, ?, ?
+                ?, ?, ?, ?, ?, ?
             );
             """
 
@@ -1070,6 +1197,23 @@ struct PersistenceService {
                     detectedFoodsJSON
             )
 
+            if let componentNutritionJSON {
+
+                bindText(
+                    statement,
+                    index: 12,
+                    value:
+                        componentNutritionJSON
+                )
+
+            } else {
+
+                sqlite3_bind_null(
+                    statement,
+                    12
+                )
+            }
+
             let result =
                 sqlite3_step(
                     statement
@@ -1118,7 +1262,8 @@ struct PersistenceService {
                 fiber_score,
                 overall_score,
 
-                detected_foods_json
+                detected_foods_json,
+                component_nutrition_json
 
             FROM meal_analysis
 
@@ -1233,6 +1378,34 @@ struct PersistenceService {
                         detectedFoodsCString
                 )
 
+            let componentNutritionJSON: String?
+
+            if sqlite3_column_type(
+                statement,
+                10
+            ) == SQLITE_NULL {
+
+                componentNutritionJSON =
+                    nil
+
+            } else if let componentCString =
+                        sqlite3_column_text(
+                            statement,
+                            10
+                        ) {
+
+                componentNutritionJSON =
+                    String(
+                        cString:
+                            componentCString
+                    )
+
+            } else {
+
+                componentNutritionJSON =
+                    nil
+            }
+
             guard
                 let confidence =
                     NutritionConfidence(
@@ -1293,11 +1466,38 @@ struct PersistenceService {
                     )
                 )
 
+            let componentNutrition:
+                [MealFoodNutritionBreakdown]?
+
+            if let componentNutritionJSON,
+               let componentNutritionData =
+                    componentNutritionJSON.data(
+                        using:
+                            .utf8
+                    ) {
+
+                componentNutrition =
+                    try? JSONDecoder().decode(
+                        [MealFoodNutritionBreakdown].self,
+                        from:
+                            componentNutritionData
+                    )
+
+            } else {
+
+                componentNutrition =
+                    nil
+            }
+
+
             let nutrition =
                 MealNutritionAnalysis(
 
                     detectedFoods:
                         detectedFoods,
+
+                    componentNutrition:
+                        componentNutrition,
 
                     calories:
                         calories,
