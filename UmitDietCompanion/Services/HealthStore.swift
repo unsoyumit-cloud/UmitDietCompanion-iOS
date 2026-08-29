@@ -133,9 +133,7 @@ final class HealthStore {
                         energyTarget,
 
                     waterGoal:
-                        Int(
-                            waterTarget
-                        ),
+                        2500,
 
                     stepGoal:
                         stepsTarget,
@@ -327,8 +325,12 @@ final class HealthStore {
 
     // MARK: - Targets
 
-    let waterTarget:
-        Double = 2.5
+    var waterTarget: Double {
+
+        Double(
+            profile.waterGoal
+        ) / 1000.0
+    }
 
     let stepsTarget:
         Int = 10_000
@@ -949,7 +951,7 @@ final class HealthStore {
 
             waterIntake:
                 Int(
-                    waterAmount
+                    waterAmount * 1000
                 ),
 
             calorieIntake:

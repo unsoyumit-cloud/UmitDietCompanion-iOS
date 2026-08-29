@@ -21,7 +21,7 @@ final class DatabaseManager {
         "UmitDietCompanion.sqlite"
 
     private let currentSchemaVersion =
-        5
+        6
 
     // MARK: - Database
 
@@ -508,6 +508,13 @@ final class DatabaseManager {
             }
         }
         
+        if version < 6 {
+
+            guard migrateToVersion6() else {
+                return false
+            }
+        }
+        
         return true
     }
 
@@ -701,6 +708,36 @@ final class DatabaseManager {
         }
 
         return false
+    }
+    
+    private func migrateToVersion6() -> Bool {
+
+        let success =
+            execute(
+                """
+                UPDATE user_profile_history
+                SET water_goal = water_goal * 1000;
+                """
+            )
+
+        guard success else {
+
+            print(
+                "❌ Failed to migrate water_goal to milliliters."
+            )
+
+            return false
+        }
+
+        print(
+            "💧 SQLite water_goal migrated from liters to milliliters"
+        )
+
+        print(
+            "✅ SQLite schema migrated to version 6"
+        )
+
+        return true
     }
 
     // MARK: - Schema Version

@@ -19,7 +19,9 @@ struct WaterDetailView: View {
 
     @State private var lastSavedWater: Int = 0
 
-    private let dailyWaterIntakeGoal = 2500
+    private var dailyWaterIntakeGoal: Int {
+        HealthStore.shared.profile.waterGoal
+    }
 
     var body: some View {
 

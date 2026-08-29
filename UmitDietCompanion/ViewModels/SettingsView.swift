@@ -261,20 +261,37 @@ struct SettingsView: View {
                     TextField(
                         "Water",
                         value:
-                            $viewModel.waterGoal,
+                            Binding<Double>(
+                                get: {
+                                    Double(
+                                        viewModel.waterGoal
+                                    ) / 1000.0
+                                },
+                                set: { newValue in
+
+                                    viewModel.waterGoal =
+                                        Int(
+                                            newValue * 1000
+                                        )
+                                }
+                            ),
                         format:
-                            .number
+                            .number.precision(
+                                .fractionLength(
+                                    2
+                                )
+                            )
                     )
                     .multilineTextAlignment(
                         .trailing
                     )
                     .keyboardType(
-                        .numberPad
+                        .decimalPad
                     )
 
-                    Text("ml")
+                    Text("L")
                 }
-
+                
                 HStack {
 
                     Text("Steps")
