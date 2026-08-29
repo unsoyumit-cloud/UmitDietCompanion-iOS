@@ -342,6 +342,96 @@ final class HealthStore {
     let weightTarget:
         Double = 75.0
 
+    // MARK: - Profile Update
+
+    func updateProfile(
+        _ newProfile: UserProfile
+    ) {
+
+        let now =
+            Date()
+
+        // Close the current profile version.
+        let closedProfileHistory =
+            UserProfileHistory(
+
+                id:
+                    currentProfileVersionID,
+
+                validFrom:
+                    profileHistory
+                        .last?
+                        .validFrom
+                        ?? now,
+
+                validTo:
+                    now,
+
+                profile:
+                    profile
+            )
+
+        PersistenceService
+            .saveProfileHistory(
+                closedProfileHistory
+            )
+
+        // Create a new profile version.
+        let newProfileVersionID =
+            UUID()
+
+        let newProfileHistory =
+            UserProfileHistory(
+
+                id:
+                    newProfileVersionID,
+
+                validFrom:
+                    now,
+
+                validTo:
+                    nil,
+
+                profile:
+                    newProfile
+            )
+
+        // Update in-memory state.
+        profile =
+            newProfile
+
+        currentProfileVersionID =
+            newProfileVersionID
+
+        profileHistory.append(
+            closedProfileHistory
+        )
+
+        profileHistory.append(
+            newProfileHistory
+        )
+
+        // Persist the new current version.
+        PersistenceService
+            .saveProfileHistory(
+                newProfileHistory
+            )
+
+        print(
+            "👤 Profile updated"
+        )
+
+        print(
+            "Previous profile version:",
+            closedProfileHistory.id
+        )
+
+        print(
+            "New profile version:",
+            newProfileVersionID
+        )
+    }
+    
     // MARK: - Water
 
     func updateWater(

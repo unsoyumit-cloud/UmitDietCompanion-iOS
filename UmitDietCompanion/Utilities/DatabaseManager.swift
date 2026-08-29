@@ -21,7 +21,7 @@ final class DatabaseManager {
         "UmitDietCompanion.sqlite"
 
     private let currentSchemaVersion =
-        4
+        5
 
     // MARK: - Database
 
@@ -256,7 +256,13 @@ final class DatabaseManager {
 
                 step_goal INTEGER NOT NULL,
 
-                sleep_goal REAL NOT NULL
+                sleep_goal REAL NOT NULL,
+            
+            coach_personality TEXT NOT NULL,
+
+            opportunity_coaching_enabled INTEGER NOT NULL,
+
+            allow_habit_learning INTEGER NOT NULL
 
             );
             """
@@ -495,6 +501,13 @@ final class DatabaseManager {
             }
         }
 
+        if version < 5 {
+
+            guard migrateToVersion5() else {
+                return false
+            }
+        }
+        
         return true
     }
 
@@ -534,6 +547,57 @@ final class DatabaseManager {
         }
 
         return success
+    }
+    
+    private func migrateToVersion5() -> Bool {
+
+        let personalitySuccess =
+            execute(
+                """
+                ALTER TABLE user_profile_history
+                ADD COLUMN coach_personality TEXT
+                NOT NULL
+                DEFAULT 'balanced';
+                """
+            )
+
+        guard personalitySuccess else {
+            return false
+        }
+
+        let opportunitySuccess =
+            execute(
+                """
+                ALTER TABLE user_profile_history
+                ADD COLUMN opportunity_coaching_enabled INTEGER
+                NOT NULL
+                DEFAULT 1;
+                """
+            )
+
+        guard opportunitySuccess else {
+            return false
+        }
+
+        let habitLearningSuccess =
+            execute(
+                """
+                ALTER TABLE user_profile_history
+                ADD COLUMN allow_habit_learning INTEGER
+                NOT NULL
+                DEFAULT 1;
+                """
+            )
+
+        guard habitLearningSuccess else {
+            return false
+        }
+
+        print(
+            "✅ SQLite schema migrated to version 5"
+        )
+
+        return true
     }
 
     private func currentDatabaseSchemaVersion() -> Int {

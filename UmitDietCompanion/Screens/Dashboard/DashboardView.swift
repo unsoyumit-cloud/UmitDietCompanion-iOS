@@ -205,6 +205,29 @@ struct DashboardView: View {
 
                 ToolbarItem(
                     placement:
+                        .topBarLeading
+                ) {
+
+                    NavigationLink {
+
+                        SettingsView(
+                            profile:
+                                viewModel
+                                    .healthStore
+                                    .profile
+                        )
+
+                    } label: {
+
+                        Image(
+                            systemName:
+                                "gearshape"
+                        )
+                    }
+                }
+
+                ToolbarItem(
+                    placement:
                         .topBarTrailing
                 ) {
 

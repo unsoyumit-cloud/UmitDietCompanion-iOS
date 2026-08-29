@@ -1594,12 +1594,15 @@ struct PersistenceService {
                 calorie_goal,
                 water_goal,
                 step_goal,
-                sleep_goal
+                sleep_goal,
+                coach_personality,
+                opportunity_coaching_enabled,
+                allow_habit_learning
 
             )
             VALUES (
                 ?, ?, ?, ?, ?, ?, ?, ?, ?,
-                ?, ?, ?, ?, ?, ?
+                ?, ?, ?, ?, ?, ?, ?, ?, ?
             );
             """
 
@@ -1749,6 +1752,31 @@ struct PersistenceService {
                     profile.sleepGoal
             )
 
+            bindText(
+                statement,
+                index: 16,
+                value:
+                    profile.coaching
+                        .coachPersonality
+                        .rawValue
+            )
+
+            bindBool(
+                statement,
+                index: 17,
+                value:
+                    profile.coaching
+                        .opportunityCoachingEnabled
+            )
+
+            bindBool(
+                statement,
+                index: 18,
+                value:
+                    profile.coaching
+                        .allowHabitLearning
+            )
+
             let result =
                 sqlite3_step(
                     statement
@@ -1760,10 +1788,16 @@ struct PersistenceService {
                     "❌ Failed to save profile history:",
                     result
                 )
+
+            } else {
+
+                print(
+                    "💾 Profile history saved:",
+                    history.id.uuidString
+                )
             }
         }
     }
-
     // MARK: - Load Current Profile History
 
     static func loadCurrentProfileHistory()
@@ -1786,10 +1820,17 @@ struct PersistenceService {
                 calorie_goal,
                 water_goal,
                 step_goal,
-                sleep_goal
+                sleep_goal,
+                coach_personality,
+                opportunity_coaching_enabled,
+                allow_habit_learning
+
             FROM user_profile_history
+
             WHERE valid_to IS NULL
+
             ORDER BY valid_from DESC
+
             LIMIT 1;
             """
 
@@ -1835,26 +1876,37 @@ struct PersistenceService {
                         statement,
                         0
                     ),
+
                 let nameCString =
                     sqlite3_column_text(
                         statement,
                         3
                     ),
+
                 let genderCString =
                     sqlite3_column_text(
                         statement,
                         5
                     ),
+
                 let activityLevelCString =
                     sqlite3_column_text(
                         statement,
                         9
                     ),
+
                 let eatingStyleCString =
                     sqlite3_column_text(
                         statement,
                         10
+                    ),
+
+                let coachPersonalityCString =
+                    sqlite3_column_text(
+                        statement,
+                        15
                     )
+
             else {
 
                 print(
@@ -1894,27 +1946,43 @@ struct PersistenceService {
                         eatingStyleCString
                 )
 
+            let coachPersonalityRawValue =
+                String(
+                    cString:
+                        coachPersonalityCString
+                )
+
             guard
                 let id =
                     UUID(
                         uuidString:
                             idString
                     ),
+
                 let gender =
                     Gender(
                         rawValue:
                             genderRawValue
                     ),
+
                 let activityLevel =
                     ActivityLevel(
                         rawValue:
                             activityLevelRawValue
                     ),
+
                 let eatingStyle =
                     EatingStyle(
                         rawValue:
                             eatingStyleRawValue
+                    ),
+
+                let coachPersonality =
+                    CoachPersonality(
+                        rawValue:
+                            coachPersonalityRawValue
                     )
+
             else {
 
                 print(
@@ -1924,16 +1992,13 @@ struct PersistenceService {
                 return nil
             }
 
-            let validFromTimestamp =
-                sqlite3_column_double(
-                    statement,
-                    1
-                )
-
             let validFrom =
                 Date(
                     timeIntervalSince1970:
-                        validFromTimestamp
+                        sqlite3_column_double(
+                            statement,
+                            1
+                        )
                 )
 
             let validTo:
@@ -2015,7 +2080,31 @@ struct PersistenceService {
                     14
                 )
 
-            let profile =
+            let opportunityCoachingEnabled =
+                sqlite3_column_int(
+                    statement,
+                    16
+                ) != 0
+
+            let allowHabitLearning =
+                sqlite3_column_int(
+                    statement,
+                    17
+                ) != 0
+
+            var coaching =
+                CoachingProfile()
+
+            coaching.coachPersonality =
+                coachPersonality
+
+            coaching.opportunityCoachingEnabled =
+                opportunityCoachingEnabled
+
+            coaching.allowHabitLearning =
+                allowHabitLearning
+
+            var profile =
                 UserProfile(
 
                     name:
@@ -2055,6 +2144,9 @@ struct PersistenceService {
                         sleepGoal
                 )
 
+            profile.coaching =
+                coaching
+
             return UserProfileHistory(
 
                 id:
@@ -2069,9 +2161,9 @@ struct PersistenceService {
                 profile:
                     profile
             )
+
         } ?? nil
     }
-
     // MARK: - Daily Snapshot
 
     static func saveDailySnapshot(
