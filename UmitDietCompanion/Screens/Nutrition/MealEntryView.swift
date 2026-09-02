@@ -18,6 +18,8 @@ struct MealEntryView: View {
 
     var onMealSaved:
         (Meal) -> Void = { _ in }
+    
+    var mealDate: Date = Date()
 
     // MARK: - Meal State
 
@@ -1950,6 +1952,36 @@ struct MealEntryView: View {
             return
         }
 
+        let calendar =
+            Calendar.current
+
+        let now =
+            Date()
+
+        let finalMealDate =
+            calendar.date(
+                bySettingHour:
+                    calendar.component(
+                        .hour,
+                        from:
+                            now
+                    ),
+                minute:
+                    calendar.component(
+                        .minute,
+                        from:
+                            now
+                    ),
+                second:
+                    calendar.component(
+                        .second,
+                        from:
+                            now
+                    ),
+                of:
+                    mealDate
+            ) ?? mealDate
+        
         let meal =
             Meal(
 
@@ -1968,7 +2000,7 @@ struct MealEntryView: View {
                     : recognizedMealName,
 
                 createdAt:
-                    Date()
+                    finalMealDate
             )
 
         PersistenceService.saveMeal(

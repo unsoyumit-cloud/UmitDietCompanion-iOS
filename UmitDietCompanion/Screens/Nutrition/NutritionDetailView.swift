@@ -35,6 +35,12 @@ struct NutritionDetailView: View {
 
     @State private var exploreDate =
         Date()
+    
+    @State private var showMealDatePicker =
+        false
+
+    @State private var mealEntryDate =
+        Date()
 
     @State private var mealPendingDeletion:
         Meal?
@@ -91,7 +97,10 @@ struct NutritionDetailView: View {
                 $showMealEntry
         ) {
 
-            MealEntryView { meal in
+            MealEntryView(
+                mealDate:
+                    mealEntryDate
+            ) { meal in
 
                 pendingMealDetail =
                     meal
@@ -221,6 +230,74 @@ struct NutritionDetailView: View {
                 )
             }
         }
+        
+        .sheet(
+            isPresented:
+                $showMealDatePicker
+        ) {
+
+            NavigationStack {
+
+                VStack(
+                    spacing:
+                        24
+                ) {
+
+                    Text(
+                        "Choose a date for your meal"
+                    )
+                    .font(
+                        .title3
+                    )
+                    .fontWeight(
+                        .semibold
+                    )
+
+                    DatePicker(
+                        "Date",
+                        selection:
+                            $mealEntryDate,
+                        displayedComponents:
+                            .date
+                    )
+                    .datePickerStyle(
+                        .graphical
+                    )
+
+                    Button {
+
+                        showMealDatePicker =
+                            false
+
+                        DispatchQueue.main.async {
+
+                            showMealEntry =
+                                true
+                        }
+
+                    } label: {
+
+                        Text(
+                            "Continue"
+                        )
+                        .frame(
+                            maxWidth:
+                                .infinity
+                        )
+                    }
+                    .buttonStyle(
+                        .borderedProminent
+                    )
+                }
+                .padding()
+                .navigationTitle(
+                    "Meal Date"
+                )
+                .navigationBarTitleDisplayMode(
+                    .inline
+                )
+            }
+        }
 
         // MARK: - Delete Confirmation
 
@@ -293,7 +370,7 @@ struct NutritionDetailView: View {
         // MARK: - Load
 
         .onAppear {
-
+            
             refreshAll()
         }
     }
@@ -320,7 +397,6 @@ struct NutritionDetailView: View {
                 .horizontal,
                 4
             )
-
             VStack(
                 spacing:
                     0
@@ -364,26 +440,59 @@ struct NutritionDetailView: View {
 
                 // MARK: Add Meal
 
-                Button {
+                VStack(
+                    spacing:
+                        10
+                ) {
 
-                    showMealEntry =
-                        true
+                    Button {
 
-                } label: {
+                        mealEntryDate =
+                            Date()
 
-                    Label(
-                        "Add Meal",
-                        systemImage:
-                            "plus"
+                        showMealEntry =
+                            true
+
+                    } label: {
+
+                        Label(
+                            "Add Today's Meal",
+                            systemImage:
+                                "plus"
+                        )
+                        .frame(
+                            maxWidth:
+                                .infinity
+                        )
+                    }
+                    .buttonStyle(
+                        .borderedProminent
                     )
-                    .frame(
-                        maxWidth:
-                            .infinity
+
+                    Button {
+
+                        mealEntryDate =
+                            Date()
+
+                        showMealDatePicker =
+                            true
+
+                    } label: {
+
+                        Label(
+                            "Add Meal for Another Day",
+                            systemImage:
+                                "calendar"
+                        )
+                        .frame(
+                            maxWidth:
+                                .infinity
+                        )
+                    }
+                    .buttonStyle(
+                        .bordered
                     )
                 }
-                .buttonStyle(
-                    .borderedProminent
-                )
                 .padding()
             }
             .background(
@@ -488,35 +597,33 @@ struct NutritionDetailView: View {
         Chart {
 
             ForEach(
-                historyDays.filter {
-                    $0.score != nil
-                }
+                historyDays
             ) { day in
 
-                BarMark(
-                    x: .value(
-                        "Day",
-                        day.date,
-                        unit: .day
-                    ),
-                    y: .value(
-                        "Score",
-                        day.score ?? 0
-                    ),
-                    width:
-                        .fixed(28)
-                )
-                .foregroundStyle(
-                    day.id ==
-                        selectedChartDay?.id
-                    ? Color.blue
-                    : Color.blue.opacity(
-                        0.72
+                if let score =
+                    day.score {
+
+                    BarMark(
+                        x: .value(
+                            "Day",
+                            day.date,
+                            unit: .day
+                        ),
+                        y: .value(
+                            "Score",
+                            score
+                        ),
+                        width:
+                            .fixed(28)
                     )
-                )
-                .cornerRadius(
-                    8
-                )
+                    .foregroundStyle(
+                        day.id ==
+                            selectedChartDay?.id
+                        ? Color.blue
+                        : Color.blue.opacity(0.72)
+                    )
+                    .cornerRadius(8)
+                }
             }
         }
         .frame(
@@ -550,27 +657,71 @@ struct NutritionDetailView: View {
                 )
             }
         }
-        .chartXSelection(
-            value:
-                $selectedChartDate
-        )
-        .onChange(
-            of:
-                selectedChartDate
-        ) { _, newValue in
+        .chartOverlay { proxy in
 
-            guard let newValue else {
-                return
+            GeometryReader { geometry in
+
+                Rectangle()
+                    .fill(
+                        Color.clear
+                    )
+                    .contentShape(
+                        Rectangle()
+                    )
+                    .gesture(
+                        DragGesture(
+                            minimumDistance:
+                                0
+                        )
+                        .onEnded { value in
+
+                            let plotFrame =
+                                geometry[
+                                    proxy.plotAreaFrame
+                                ]
+
+                            let x =
+                                value.location.x
+                                - plotFrame.origin.x
+
+                            guard x >= 0,
+                                  x <= plotFrame.width
+                            else {
+                                return
+                            }
+
+                            let dayWidth =
+                                plotFrame.width
+                                / CGFloat(
+                                    historyDays.count
+                                )
+
+                            let index =
+                                min(
+                                    max(
+                                        Int(
+                                            x /
+                                            dayWidth
+                                        ),
+                                        0
+                                    ),
+                                    historyDays.count - 1
+                                )
+
+                            selectedChartDay =
+                                historyDays[
+                                    index
+                                ]
+
+                            selectedChartDate =
+                                historyDays[
+                                    index
+                                ].date
+                        }
+                    )
             }
-
-            selectedChartDay =
-                nearestHistoryDay(
-                    to:
-                        newValue
-                )
         }
     }
-
     // MARK: - Selected Day
 
     private func selectedDaySummary(
@@ -983,6 +1134,36 @@ struct NutritionDetailView: View {
                             40
                         )
                     }
+                    
+                    Button {
+
+                        mealEntryDate =
+                            day.date
+
+                        selectedDetailDay =
+                            nil
+
+                        DispatchQueue.main.async {
+
+                            showMealEntry =
+                                true
+                        }
+
+                    } label: {
+
+                        Label(
+                            "Add Meal for This Day",
+                            systemImage:
+                                "plus"
+                        )
+                        .frame(
+                            maxWidth:
+                                .infinity
+                        )
+                    }
+                    .buttonStyle(
+                        .borderedProminent
+                    )
                 }
                 .padding()
             }

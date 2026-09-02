@@ -296,10 +296,12 @@ struct NutritionHistorySection: View {
                 cornerRadius: 20
             )
         )
-        .task {
 
-            loadHistory()
-        }
+            .task {
+                loadHistory()
+                PersistenceService.printMealDatabaseStatus()
+            }
+        
     }
 
     // MARK: - Load History

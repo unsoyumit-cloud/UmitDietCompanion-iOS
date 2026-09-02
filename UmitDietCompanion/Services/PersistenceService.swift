@@ -990,6 +990,65 @@ struct PersistenceService {
         }
     }
 
+    // MARK: - Delete All Meals
+
+    static func deleteAllMeals() {
+
+        database.withDatabase { database in
+
+            let analysisSQL =
+                """
+                DELETE FROM meal_analysis;
+                """
+
+            var analysisStatement:
+                OpaquePointer?
+
+            if sqlite3_prepare_v2(
+                database,
+                analysisSQL,
+                -1,
+                &analysisStatement,
+                nil
+            ) == SQLITE_OK {
+
+                sqlite3_step(
+                    analysisStatement
+                )
+
+                sqlite3_finalize(
+                    analysisStatement
+                )
+            }
+
+            let mealSQL =
+                """
+                DELETE FROM meals;
+                """
+
+            var mealStatement:
+                OpaquePointer?
+
+            if sqlite3_prepare_v2(
+                database,
+                mealSQL,
+                -1,
+                &mealStatement,
+                nil
+            ) == SQLITE_OK {
+
+                sqlite3_step(
+                    mealStatement
+                )
+
+                sqlite3_finalize(
+                    mealStatement
+                )
+            }
+
+            print("🗑️ All meal data cleared.")
+        }
+    }
     // MARK: - Meal Analysis
 
     static func saveMealAnalysis(
@@ -2822,6 +2881,8 @@ struct PersistenceService {
 
     static func printDatabaseStatus() {
 
+        
+        
         let tables = [
             "user_profile_history",
             "daily_health_snapshots",
@@ -2862,6 +2923,160 @@ struct PersistenceService {
         print("")
     }
 
+    // MARK: - Debug Meal Database
+
+    static func printMealDatabaseStatus() {
+
+        let sql =
+            """
+            SELECT
+                m.created_at,
+                m.meal_type,
+                m.source,
+                m.food_description,
+                a.calories,
+                a.protein,
+                a.overall_score
+            FROM meals m
+            LEFT JOIN meal_analysis a
+                ON a.meal_id = m.id
+            ORDER BY m.created_at ASC;
+            """
+
+        print("")
+        print("===================================")
+        print("🍽️ MEAL DATABASE CONTENT")
+        print("===================================")
+
+        database.withDatabase { database in
+
+            var statement:
+                OpaquePointer?
+
+            guard sqlite3_prepare_v2(
+                database,
+                sql,
+                -1,
+                &statement,
+                nil
+            ) == SQLITE_OK
+            else {
+
+                print("❌ Failed to prepare meal debug query.")
+                return
+            }
+
+            defer {
+                sqlite3_finalize(statement)
+            }
+
+            var count = 0
+
+            while sqlite3_step(statement) == SQLITE_ROW {
+
+                count += 1
+
+                let timestamp =
+                    sqlite3_column_double(
+                        statement,
+                        0
+                    )
+
+                let mealTypeCString =
+                    sqlite3_column_text(
+                        statement,
+                        1
+                    )
+
+                let sourceCString =
+                    sqlite3_column_text(
+                        statement,
+                        2
+                    )
+
+                let descriptionCString =
+                    sqlite3_column_text(
+                        statement,
+                        3
+                    )
+
+                let calories =
+                    sqlite3_column_double(
+                        statement,
+                        4
+                    )
+
+                let protein =
+                    sqlite3_column_double(
+                        statement,
+                        5
+                    )
+
+                let overallScore =
+                    sqlite3_column_int(
+                        statement,
+                        6
+                    )
+
+                let mealType =
+                    mealTypeCString.map {
+                        String(cString: $0)
+                    } ?? "-"
+
+                let source =
+                    sourceCString.map {
+                        String(cString: $0)
+                    } ?? "-"
+
+                let description =
+                    descriptionCString.map {
+                        String(cString: $0)
+                    } ?? "-"
+
+                let date =
+                    Date(
+                        timeIntervalSince1970:
+                            timestamp
+                    )
+
+                let formatter =
+                    DateFormatter()
+
+                formatter.calendar =
+                    Calendar.current
+
+                formatter.locale =
+                    Locale(identifier: "en_US")
+
+                formatter.timeZone =
+                    Calendar.current.timeZone
+
+                formatter.dateFormat =
+                    "yyyy-MM-dd HH:mm"
+
+                let dateString =
+                    formatter.string(
+                        from: date
+                    )
+
+                print("-----------------------------------")
+                print("Date:", dateString)
+                print("Type:", mealType)
+                print("Source:", source)
+                print("Food:", description)
+                print("Calories:", Int(calories))
+                print("Protein:", Int(protein), "g")
+                print("Score:", overallScore)
+            }
+
+            print("-----------------------------------")
+            print("Total meal rows:", count)
+        }
+
+        print("===================================")
+        print("")
+    }
+    
     // MARK: - Row Count
 
     private static func rowCount(

@@ -19,8 +19,7 @@ final class HealthStore {
     private let appleHealthProvider =
         AppleHealthProvider()
 
-    private let developmentProvider =
-        DevelopmentHealthProvider.shared
+    
 
     // MARK: - Profile
 
@@ -45,28 +44,6 @@ final class HealthStore {
             waterAmount =
                 savedWater
         }
-
-        // Development fallback values.
-        // These remain in place until each metric
-        // is fully migrated to Apple Health.
-
-        steps =
-            developmentProvider.steps
-
-        activeEnergy =
-            developmentProvider.activeEnergy
-
-        restingEnergy =
-            0
-
-        sleepHours =
-            developmentProvider.sleepHours
-
-        weight =
-            developmentProvider.weight
-
-        restingHeartRate =
-            developmentProvider.restingHeartRate
 
         // MARK: - Profile
 
@@ -203,18 +180,13 @@ final class HealthStore {
     // MARK: - Current Values
 
     var waterAmount:
-        Double = 2.1
+        Double = 0
 
     // MARK: - Activity
 
-    var steps:
-        Int
-
-    var activeEnergy:
-        Int
-
-    var restingEnergy:
-        Int
+    var steps: Int = 0
+    var activeEnergy: Int = 0
+    var restingEnergy: Int = 0
 
     private(set) var activitiesData:
         ActivitiesData = .empty
@@ -260,8 +232,7 @@ final class HealthStore {
 
     // MARK: - Sleep
 
-    var sleepHours:
-        Double
+    var sleepHours: Double = 0
 
     var primeSleepHours:
         Double = 0
@@ -295,8 +266,7 @@ final class HealthStore {
 
     // MARK: - Heart
 
-    var restingHeartRate:
-        Int
+    var restingHeartRate: Int = 0
 
     // MARK: - Night Metrics
 
@@ -320,8 +290,7 @@ final class HealthStore {
 
     // MARK: - Body
 
-    var weight:
-        Double
+    var weight: Double = 0
 
     // MARK: - Targets
 
