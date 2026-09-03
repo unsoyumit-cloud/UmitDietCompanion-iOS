@@ -464,6 +464,15 @@ final class HealthStore {
                 sevenDayHistory,
                 sevenDayWorkouts
             )
+            
+            let activityRawSamples =
+                try await
+                appleHealthProvider
+                    .fetchTodayActivityRawSamples()
+            
+            PersistenceService.saveActivityRawSamples(
+                activityRawSamples
+            )
 
             workoutHistoryData =
                 allWorkouts

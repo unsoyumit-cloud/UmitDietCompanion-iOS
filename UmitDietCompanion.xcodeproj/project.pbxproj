@@ -28,6 +28,7 @@
 		7B3060DE302DABED00DF04A0 /* AI Recommendation Library.md in Resources */ = {isa = PBXBuildFile; fileRef = 7B3060DD302DABED00DF04A0 /* AI Recommendation Library.md */; };
 		7B3060FF302EE31700DF04A0 /* CONTRIBUTING.md in Resources */ = {isa = PBXBuildFile; fileRef = 7B3060FE302EE31700DF04A0 /* CONTRIBUTING.md */; };
 		7B306101302EE3A400DF04A0 /* LICENSE.md in Resources */ = {isa = PBXBuildFile; fileRef = 7B306100302EE3A400DF04A0 /* LICENSE.md */; };
+		7B30618A304863B800DF04A0 /* Intelligence Coverage Matrix - v1.md in Resources */ = {isa = PBXBuildFile; fileRef = 7B306189304863B800DF04A0 /* Intelligence Coverage Matrix - v1.md */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXContainerItemProxy section */
@@ -72,6 +73,7 @@
 		7B3060DD302DABED00DF04A0 /* AI Recommendation Library.md */ = {isa = PBXFileReference; lastKnownFileType = net.daringfireball.markdown; path = "AI Recommendation Library.md"; sourceTree = "<group>"; };
 		7B3060FE302EE31700DF04A0 /* CONTRIBUTING.md */ = {isa = PBXFileReference; lastKnownFileType = net.daringfireball.markdown; path = CONTRIBUTING.md; sourceTree = "<group>"; };
 		7B306100302EE3A400DF04A0 /* LICENSE.md */ = {isa = PBXFileReference; lastKnownFileType = net.daringfireball.markdown; path = LICENSE.md; sourceTree = "<group>"; };
+		7B306189304863B800DF04A0 /* Intelligence Coverage Matrix - v1.md */ = {isa = PBXFileReference; lastKnownFileType = net.daringfireball.markdown; path = "Intelligence Coverage Matrix - v1.md"; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
 /* Begin PBXFileSystemSynchronizedBuildFileExceptionSet section */
@@ -219,6 +221,7 @@
 				7B3060D9302DAB5000DF04A0 /* AI Priority Matrix.md */,
 				7B3060DB302DABA800DF04A0 /* AI Insight Library.md */,
 				7B3060DD302DABED00DF04A0 /* AI Recommendation Library.md */,
+				7B306189304863B800DF04A0 /* Intelligence Coverage Matrix - v1.md */,
 			);
 			path = AI;
 			sourceTree = "<group>";
@@ -351,6 +354,7 @@
 			files = (
 				7B3060A6302CAAB500DF04A0 /* AI_PRINCIPLES.md in Resources */,
 				7B3060DA302DAB5000DF04A0 /* AI Priority Matrix.md in Resources */,
+				7B30618A304863B800DF04A0 /* Intelligence Coverage Matrix - v1.md in Resources */,
 				7B3060FF302EE31700DF04A0 /* CONTRIBUTING.md in Resources */,
 				7B306101302EE3A400DF04A0 /* LICENSE.md in Resources */,
 				7B30603D3029EAA300DF04A0 /* AI_CONTEXT_ARCHITECTURE.md in Resources */,

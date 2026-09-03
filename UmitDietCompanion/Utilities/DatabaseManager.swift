@@ -21,7 +21,7 @@ final class DatabaseManager {
         "UmitDietCompanion.sqlite"
 
     private let currentSchemaVersion =
-        6
+        7
 
     // MARK: - Database
 
@@ -200,6 +200,12 @@ final class DatabaseManager {
 
         createActivitiesTable()
 
+        createActivityRawSamplesTable()
+
+        createActivityRawWorkoutsTable()
+
+        createActivityRawRoutePointsTable()
+
         createMealsTable()
 
         createMealAnalysisTable()
@@ -257,12 +263,12 @@ final class DatabaseManager {
                 step_goal INTEGER NOT NULL,
 
                 sleep_goal REAL NOT NULL,
-            
-            coach_personality TEXT NOT NULL,
 
-            opportunity_coaching_enabled INTEGER NOT NULL,
+                coach_personality TEXT NOT NULL,
 
-            allow_habit_learning INTEGER NOT NULL
+                opportunity_coaching_enabled INTEGER NOT NULL,
+
+                allow_habit_learning INTEGER NOT NULL
 
             );
             """
@@ -403,6 +409,147 @@ final class DatabaseManager {
         )
     }
 
+    // MARK: - Raw Activity Samples
+
+    private func createActivityRawSamplesTable() {
+
+        execute(
+            """
+            CREATE TABLE IF NOT EXISTS activity_raw_samples (
+
+                id TEXT PRIMARY KEY,
+
+                metric_type TEXT NOT NULL,
+
+                value REAL,
+
+                unit TEXT,
+
+                start_date REAL NOT NULL,
+
+                end_date REAL NOT NULL,
+
+                source_name TEXT,
+
+                source_bundle_identifier TEXT,
+
+                metadata_json TEXT
+
+            );
+            """
+        )
+
+        execute(
+            """
+            CREATE INDEX IF NOT EXISTS
+            idx_activity_raw_samples_metric_type
+            ON activity_raw_samples(metric_type);
+            """
+        )
+
+        execute(
+            """
+            CREATE INDEX IF NOT EXISTS
+            idx_activity_raw_samples_start_date
+            ON activity_raw_samples(start_date);
+            """
+        )
+    }
+
+    // MARK: - Raw Activity Workouts
+
+    private func createActivityRawWorkoutsTable() {
+
+        execute(
+            """
+            CREATE TABLE IF NOT EXISTS activity_raw_workouts (
+
+                id TEXT PRIMARY KEY,
+
+                activity_type TEXT NOT NULL,
+
+                start_date REAL NOT NULL,
+
+                end_date REAL NOT NULL,
+
+                duration REAL NOT NULL,
+
+                total_energy_burned REAL,
+
+                total_distance REAL,
+
+                source_name TEXT,
+
+                source_bundle_identifier TEXT
+
+            );
+            """
+        )
+
+        execute(
+            """
+            CREATE INDEX IF NOT EXISTS
+            idx_activity_raw_workouts_start_date
+            ON activity_raw_workouts(start_date);
+            """
+        )
+    }
+
+    // MARK: - Raw Workout Route Points
+
+    private func createActivityRawRoutePointsTable() {
+
+        execute(
+            """
+            CREATE TABLE IF NOT EXISTS activity_raw_route_points (
+
+                id INTEGER PRIMARY KEY AUTOINCREMENT,
+
+                workout_id TEXT NOT NULL,
+
+                timestamp REAL NOT NULL,
+
+                latitude REAL NOT NULL,
+
+                longitude REAL NOT NULL,
+
+                altitude REAL NOT NULL,
+
+                speed REAL,
+
+                course REAL,
+
+                horizontal_accuracy REAL,
+
+                vertical_accuracy REAL,
+
+                FOREIGN KEY (
+                    workout_id
+                )
+                REFERENCES activity_raw_workouts(id)
+                ON DELETE CASCADE
+
+            );
+            """
+        )
+
+        execute(
+            """
+            CREATE INDEX IF NOT EXISTS
+            idx_activity_raw_route_points_workout_id
+            ON activity_raw_route_points(workout_id);
+            """
+        )
+
+        execute(
+            """
+            CREATE INDEX IF NOT EXISTS
+            idx_activity_raw_route_points_timestamp
+            ON activity_raw_route_points(timestamp);
+            """
+        )
+    }
+
     // MARK: - Meals
 
     private func createMealsTable() {
@@ -507,16 +654,25 @@ final class DatabaseManager {
                 return false
             }
         }
-        
+
         if version < 6 {
 
             guard migrateToVersion6() else {
                 return false
             }
         }
-        
+
+        if version < 7 {
+
+            guard migrateToVersion7() else {
+                return false
+            }
+        }
+
         return true
     }
+
+    // MARK: - Migration 4
 
     private func migrateToVersion4() -> Bool {
 
@@ -555,7 +711,9 @@ final class DatabaseManager {
 
         return success
     }
-    
+
+    // MARK: - Migration 5
+
     private func migrateToVersion5() -> Bool {
 
         let personalitySuccess =
@@ -607,6 +765,61 @@ final class DatabaseManager {
         return true
     }
 
+    // MARK: - Migration 6
+
+    private func migrateToVersion6() -> Bool {
+
+        let success =
+            execute(
+                """
+                UPDATE user_profile_history
+                SET water_goal = water_goal * 1000;
+                """
+            )
+
+        guard success else {
+
+            print(
+                "❌ Failed to migrate water_goal to milliliters."
+            )
+
+            return false
+        }
+
+        print(
+            "💧 SQLite water_goal migrated from liters to milliliters"
+        )
+
+        print(
+            "✅ SQLite schema migrated to version 6"
+        )
+
+        return true
+    }
+
+    // MARK: - Migration 7
+
+    private func migrateToVersion7() -> Bool {
+
+        print(
+            "🏃 Creating raw Activity storage..."
+        )
+
+        createActivityRawSamplesTable()
+
+        createActivityRawWorkoutsTable()
+
+        createActivityRawRoutePointsTable()
+
+        print(
+            "✅ SQLite schema migrated to version 7"
+        )
+
+        return true
+    }
+
+    // MARK: - Current Schema Version
+
     private func currentDatabaseSchemaVersion() -> Int {
 
         guard let database else {
@@ -649,6 +862,8 @@ final class DatabaseManager {
             )
         )
     }
+
+    // MARK: - Column Exists
 
     private func columnExists(
         table: String,
@@ -708,36 +923,6 @@ final class DatabaseManager {
         }
 
         return false
-    }
-    
-    private func migrateToVersion6() -> Bool {
-
-        let success =
-            execute(
-                """
-                UPDATE user_profile_history
-                SET water_goal = water_goal * 1000;
-                """
-            )
-
-        guard success else {
-
-            print(
-                "❌ Failed to migrate water_goal to milliliters."
-            )
-
-            return false
-        }
-
-        print(
-            "💧 SQLite water_goal migrated from liters to milliliters"
-        )
-
-        print(
-            "✅ SQLite schema migrated to version 6"
-        )
-
-        return true
     }
 
     // MARK: - Schema Version

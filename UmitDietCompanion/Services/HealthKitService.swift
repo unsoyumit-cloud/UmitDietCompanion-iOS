@@ -78,95 +78,255 @@ final class HealthKitService {
     HKHealthStore.isHealthDataAvailable()
   }
 
-  func requestAuthorization() async throws {
+    func requestAuthorization()
+        async throws {
 
-    guard isAvailable else {
-      return
-    }
+        guard isAvailable else {
+            return
+        }
 
-    var readTypes: Set<HKObjectType> = [
-      HKQuantityType.quantityType(
-        forIdentifier: .stepCount
-      )!,
+        var readTypes:
+            Set<HKObjectType> = [
 
-      HKQuantityType.quantityType(
-        forIdentifier: .distanceWalkingRunning
-      )!,
+                // MARK: Activity
 
-      HKObjectType.categoryType(
-        forIdentifier: .sleepAnalysis
-      )!,
+                HKQuantityType.quantityType(
+                    forIdentifier:
+                        .stepCount
+                )!,
 
-      HKQuantityType.quantityType(
-        forIdentifier: .activeEnergyBurned
-      )!,
+                HKQuantityType.quantityType(
+                    forIdentifier:
+                        .distanceWalkingRunning
+                )!,
 
-      HKQuantityType.quantityType(
-        forIdentifier: .basalEnergyBurned
-      )!,
+                HKQuantityType.quantityType(
+                    forIdentifier:
+                        .runningSpeed
+                )!,
 
-      HKQuantityType.quantityType(
-        forIdentifier: .restingHeartRate
-      )!,
+                HKQuantityType.quantityType(
+                    forIdentifier:
+                        .runningStrideLength
+                )!,
 
-      HKQuantityType.quantityType(
-        forIdentifier: .heartRate
-      )!,
+                HKQuantityType.quantityType(
+                    forIdentifier:
+                        .runningPower
+                )!,
 
-      HKQuantityType.quantityType(
-        forIdentifier: .heartRateVariabilitySDNN
-      )!,
+                HKQuantityType.quantityType(
+                    forIdentifier:
+                        .runningGroundContactTime
+                )!,
 
-      HKQuantityType.quantityType(
-        forIdentifier: .oxygenSaturation
-      )!,
+                HKQuantityType.quantityType(
+                    forIdentifier:
+                        .runningVerticalOscillation
+                )!,
 
-      HKQuantityType.quantityType(
-        forIdentifier: .respiratoryRate
-      )!,
+                HKQuantityType.quantityType(
+                    forIdentifier:
+                        .distanceCycling
+                )!,
 
-      HKQuantityType.quantityType(
-        forIdentifier: .bodyMass
-      )!,
+                HKQuantityType.quantityType(
+                    forIdentifier:
+                        .cyclingCadence
+                )!,
 
-      HKObjectType.workoutType(),
-    ]
+                HKQuantityType.quantityType(
+                    forIdentifier:
+                        .cyclingPower
+                )!,
 
-    if #available(iOS 16.0, *) {
-      if let wristTemperatureType =
-        HKQuantityType.quantityType(
-          forIdentifier:
-            .appleSleepingWristTemperature
+                HKQuantityType.quantityType(
+                    forIdentifier:
+                        .cyclingFunctionalThresholdPower
+                )!,
+
+                HKQuantityType.quantityType(
+                    forIdentifier:
+                        .flightsClimbed
+                )!,
+
+                HKQuantityType.quantityType(
+                    forIdentifier:
+                        .appleExerciseTime
+                )!,
+
+                HKQuantityType.quantityType(
+                    forIdentifier:
+                        .appleMoveTime
+                )!,
+
+                HKQuantityType.quantityType(
+                    forIdentifier:
+                        .appleStandTime
+                )!,
+
+                HKQuantityType.quantityType(
+                    forIdentifier:
+                        .vo2Max
+                )!,
+
+                // MARK: Mobility
+
+                HKQuantityType.quantityType(
+                    forIdentifier:
+                        .appleWalkingSteadiness
+                )!,
+
+                HKQuantityType.quantityType(
+                    forIdentifier:
+                        .sixMinuteWalkTestDistance
+                )!,
+
+                HKQuantityType.quantityType(
+                    forIdentifier:
+                        .walkingSpeed
+                )!,
+
+                HKQuantityType.quantityType(
+                    forIdentifier:
+                        .walkingStepLength
+                )!,
+
+                HKQuantityType.quantityType(
+                    forIdentifier:
+                        .walkingAsymmetryPercentage
+                )!,
+
+                HKQuantityType.quantityType(
+                    forIdentifier:
+                        .walkingDoubleSupportPercentage
+                )!,
+
+                HKQuantityType.quantityType(
+                    forIdentifier:
+                        .stairAscentSpeed
+                )!,
+
+                HKQuantityType.quantityType(
+                    forIdentifier:
+                        .stairDescentSpeed
+                )!,
+
+                // MARK: Existing Activity Energy
+
+                HKQuantityType.quantityType(
+                    forIdentifier:
+                        .activeEnergyBurned
+                )!,
+
+                HKQuantityType.quantityType(
+                    forIdentifier:
+                        .basalEnergyBurned
+                )!,
+
+                // MARK: Existing Health Data
+
+                HKObjectType.categoryType(
+                    forIdentifier:
+                        .sleepAnalysis
+                )!,
+
+                HKQuantityType.quantityType(
+                    forIdentifier:
+                        .restingHeartRate
+                )!,
+
+                HKQuantityType.quantityType(
+                    forIdentifier:
+                        .heartRate
+                )!,
+
+                HKQuantityType.quantityType(
+                    forIdentifier:
+                        .heartRateVariabilitySDNN
+                )!,
+
+                HKQuantityType.quantityType(
+                    forIdentifier:
+                        .oxygenSaturation
+                )!,
+
+                HKQuantityType.quantityType(
+                    forIdentifier:
+                        .respiratoryRate
+                )!,
+
+                HKQuantityType.quantityType(
+                    forIdentifier:
+                        .bodyMass
+                )!,
+
+                HKQuantityType.quantityType(
+                    forIdentifier:
+                        .bodyFatPercentage
+                )!,
+
+                HKQuantityType.quantityType(
+                    forIdentifier:
+                        .leanBodyMass
+                )!,
+
+                HKQuantityType.quantityType(
+                    forIdentifier:
+                        .waistCircumference
+                )!,
+
+                // MARK: Workout
+
+                HKObjectType.workoutType(),
+
+                // MARK: Workout Route
+
+                HKSeriesType.workoutRoute()
+            ]
+
+        // MARK: Optional iOS 16+ Health Data
+
+        if #available(iOS 16.0, *) {
+
+            if let wristTemperatureType =
+                HKQuantityType.quantityType(
+                    forIdentifier:
+                        .appleSleepingWristTemperature
+                ) {
+
+                readTypes.insert(
+                    wristTemperatureType
+                )
+            }
+        }
+
+        print(
+            "➡️ Requesting HealthKit authorization..."
         )
-      {
-        readTypes.insert(
-          wristTemperatureType
-        )
-      }
+
+        do {
+
+            try await healthStore.requestAuthorization(
+                toShare: [],
+                read: readTypes
+            )
+
+            print(
+                "✅ Authorization finished"
+            )
+
+        } catch {
+
+            print(
+                "❌ HealthKit Error:"
+            )
+
+            print(
+                error
+            )
+        }
     }
-
-    print(
-      "➡️ Requesting HealthKit authorization..."
-    )
-
-    do {
-      try await healthStore.requestAuthorization(
-        toShare: [],
-        read: readTypes
-      )
-
-      print(
-        "✅ Authorization finished"
-      )
-
-    } catch {
-      print(
-        "❌ HealthKit Error:"
-      )
-
-      print(error)
-    }
-  }
 
   private func dayRange(
     for date: Date
@@ -1315,83 +1475,396 @@ final class HealthKitService {
     }
 
     private func getRawQuantitySamples(
-      type:
-        HKQuantityType,
-
-      predicate:
-        NSPredicate
+        type: HKQuantityType,
+        predicate: NSPredicate
     ) async throws -> [HKQuantitySample] {
 
-      try await withCheckedThrowingContinuation {
-        continuation
-        in
+        try await withCheckedThrowingContinuation { continuation in
 
-        let query =
-          HKSampleQuery(
-            sampleType:
-              type,
+            let query =
+                HKSampleQuery(
+                    sampleType: type,
+                    predicate: predicate,
+                    limit: HKObjectQueryNoLimit,
+                    sortDescriptors: [
+                        NSSortDescriptor(
+                            key: HKSampleSortIdentifierStartDate,
+                            ascending: true
+                        )
+                    ]
+                ) {
 
-            predicate:
-              predicate,
+                    _,
+                    samples,
+                    error
+                    in
 
-            limit:
-              HKObjectQueryNoLimit,
+                    if let error {
 
-            sortDescriptors: [
-              NSSortDescriptor(
-                key:
-                  HKSampleSortIdentifierStartDate,
+                        let nsError =
+                            error as NSError
 
-                ascending:
-                  true
-              )
-            ]
-          ) {
+                        if nsError.domain == HKError.errorDomain
+                            && nsError.code == HKError.Code.errorNoData.rawValue {
 
-            _,
-            samples,
-            error
-            in
+                            continuation.resume(
+                                returning: []
+                            )
 
-            if let error {
+                            return
+                        }
 
-              let nsError = error as NSError
+                        continuation.resume(
+                            throwing: error
+                        )
 
-              if nsError.domain == HKError.errorDomain
-                && nsError.code == HKError.Code.errorNoData.rawValue
-              {
+                        return
+                    }
 
-                continuation.resume(
-                  returning: []
+                    let quantitySamples =
+                        samples
+                        as? [HKQuantitySample]
+                        ?? []
+
+                    continuation.resume(
+                        returning: quantitySamples
+                    )
+                }
+
+            self.healthStore.execute(
+                query
+            )
+        }
+    }
+    
+    func getActivityRawSamples(
+        type: HKQuantityType,
+        unit: HKUnit,
+        predicate: NSPredicate
+    ) async throws -> [ActivityRawSample] {
+
+        let samples =
+            try await getRawQuantitySamples(
+                type: type,
+                predicate: predicate
+            )
+
+        return samples.map { sample in
+
+            let value =
+                sample.quantity.doubleValue(
+                    for: unit
                 )
 
-                return
-              }
+            var metadataJSON: String?
 
-              continuation.resume(
-                throwing: error
-              )
+            if let metadata =
+                sample.metadata,
+                JSONSerialization.isValidJSONObject(
+                    metadata
+                ) {
 
-              return
+                if let data =
+                    try? JSONSerialization.data(
+                        withJSONObject: metadata,
+                        options: []
+                    ) {
+
+                    metadataJSON =
+                        String(
+                            data: data,
+                            encoding: .utf8
+                        )
+                }
             }
 
-            let quantitySamples =
-              samples
-              as? [HKQuantitySample]
-              ?? []
+            return ActivityRawSample(
+                id:
+                    sample.uuid,
 
-            continuation.resume(
-              returning:
-                quantitySamples
+                metricType:
+                    sample.quantityType.identifier,
+
+                value:
+                    value,
+
+                unit:
+                    unit.unitString,
+
+                startDate:
+                    sample.startDate,
+
+                endDate:
+                    sample.endDate,
+
+                sourceName:
+                    sample.sourceRevision.source.name,
+
+                sourceBundleIdentifier:
+                    sample.sourceRevision.source.bundleIdentifier,
+
+                metadataJSON:
+                    metadataJSON
             )
-          }
-
-        healthStore.execute(
-          query
-        )
-      }
+        }
     }
+    
+    func diagnoseTodayActivityRawCoverage() async {
 
+        let range =
+            dayRange(
+                for: Date()
+            )
+
+        let predicate =
+            HKQuery.predicateForSamples(
+                withStart:
+                    range.start,
+                end:
+                    range.end,
+                options:
+                    .strictStartDate
+            )
+
+        let metrics:
+            [(String, HKQuantityTypeIdentifier)] = [
+
+                // MARK: Activity
+
+                (
+                    "Steps",
+                    .stepCount
+                ),
+
+                (
+                    "Walking / Running Distance",
+                    .distanceWalkingRunning
+                ),
+
+                (
+                    "Running Speed",
+                    .runningSpeed
+                ),
+
+                (
+                    "Running Stride Length",
+                    .runningStrideLength
+                ),
+
+                (
+                    "Running Power",
+                    .runningPower
+                ),
+
+                (
+                    "Running Ground Contact Time",
+                    .runningGroundContactTime
+                ),
+
+                (
+                    "Running Vertical Oscillation",
+                    .runningVerticalOscillation
+                ),
+
+                (
+                    "Cycling Distance",
+                    .distanceCycling
+                ),
+
+                (
+                    "Cycling Cadence",
+                    .cyclingCadence
+                ),
+
+                (
+                    "Cycling Power",
+                    .cyclingPower
+                ),
+
+                (
+                    "Cycling Functional Threshold Power",
+                    .cyclingFunctionalThresholdPower
+                ),
+
+                (
+                    "Flights Climbed",
+                    .flightsClimbed
+                ),
+
+                (
+                    "Exercise Time",
+                    .appleExerciseTime
+                ),
+
+                (
+                    "Move Time",
+                    .appleMoveTime
+                ),
+
+                (
+                    "Stand Time",
+                    .appleStandTime
+                ),
+
+                (
+                    "VO2 Max",
+                    .vo2Max
+                ),
+
+                // MARK: Mobility
+
+                (
+                    "Walking Steadiness",
+                    .appleWalkingSteadiness
+                ),
+
+                (
+                    "Six Minute Walk Distance",
+                    .sixMinuteWalkTestDistance
+                ),
+
+                (
+                    "Walking Speed",
+                    .walkingSpeed
+                ),
+
+                (
+                    "Walking Step Length",
+                    .walkingStepLength
+                ),
+
+                (
+                    "Walking Asymmetry",
+                    .walkingAsymmetryPercentage
+                ),
+
+                (
+                    "Walking Double Support",
+                    .walkingDoubleSupportPercentage
+                ),
+
+                (
+                    "Stair Ascent Speed",
+                    .stairAscentSpeed
+                ),
+
+                (
+                    "Stair Descent Speed",
+                    .stairDescentSpeed
+                ),
+
+                // MARK: Energy
+
+                (
+                    "Active Energy",
+                    .activeEnergyBurned
+                ),
+
+                (
+                    "Basal Energy",
+                    .basalEnergyBurned
+                )
+            ]
+
+        print("")
+        print("===================================")
+        print("🏃 ACTIVITY RAW COVERAGE")
+        print("===================================")
+        print("Date:", Date())
+        print("")
+
+        for (
+            name,
+            identifier
+        ) in metrics {
+
+            guard
+                let type =
+                    HKQuantityType.quantityType(
+                        forIdentifier:
+                            identifier
+                    )
+            else {
+                print(
+                    "❌",
+                    name,
+                    "→ Type unavailable"
+                )
+
+                continue
+            }
+
+            do {
+
+                let samples =
+                    try await getRawQuantitySamples(
+                        type:
+                            type,
+                        predicate:
+                            predicate
+                    )
+
+                print(
+                    String(
+                        format:
+                            "%-38@ %5d",
+                        name,
+                        samples.count
+                    )
+                )
+
+            } catch {
+
+                print(
+                    "❌",
+                    name,
+                    "→",
+                    error
+                )
+            }
+        }
+
+        print("")
+        print("===================================")
+        print("🏃 END ACTIVITY RAW COVERAGE")
+        print("===================================")
+        print("")
+    }
+    
+    func getTodayActivityRawSamples()
+        async throws -> [ActivityRawSample] {
+
+        let range =
+            dayRange(
+                for: Date()
+            )
+
+        let predicate =
+            HKQuery.predicateForSamples(
+                withStart:
+                    range.start,
+                end:
+                    range.end,
+                options:
+                    .strictStartDate
+            )
+
+        let stepType =
+            HKQuantityType.quantityType(
+                forIdentifier:
+                    .stepCount
+            )!
+
+        return try await getActivityRawSamples(
+            type:
+                stepType,
+            unit:
+                HKUnit.count(),
+            predicate:
+                predicate
+        )
+    }
+    
     private func getAverageQuantity(
       type:
         HKQuantityType,
@@ -2562,7 +3035,8 @@ final class HealthKitService {
 
       let dayStart =
         calendar.startOfDay(
-          for: date
+          for:
+            date
         )
 
       guard
@@ -2876,5 +3350,265 @@ final class HealthKitService {
         "==================================="
       )
       print("")
+
     }
-  }
+
+
+    // MARK: - Body Composition
+
+    func getBodyFatSamples(
+      from startDate: Date? = nil,
+      to endDate: Date = Date()
+    ) async throws -> [HKQuantitySample] {
+
+      let type =
+        HKQuantityType.quantityType(
+          forIdentifier:
+            .bodyFatPercentage
+        )!
+
+      return try await getRawQuantitySamples(
+        type:
+          type,
+
+        predicate:
+          samplePredicate(
+            from:
+              startDate,
+
+            to:
+              endDate
+          )
+      )
+    }
+
+    func getLeanBodyMassSamples(
+      from startDate: Date? = nil,
+      to endDate: Date = Date()
+    ) async throws -> [HKQuantitySample] {
+
+      let type =
+        HKQuantityType.quantityType(
+          forIdentifier:
+            .leanBodyMass
+        )!
+
+      return try await getRawQuantitySamples(
+        type:
+          type,
+
+        predicate:
+          samplePredicate(
+            from:
+              startDate,
+
+            to:
+              endDate
+          )
+      )
+    }
+
+    func getWaistCircumferenceSamples(
+      from startDate: Date? = nil,
+      to endDate: Date = Date()
+    ) async throws -> [HKQuantitySample] {
+
+      let type =
+        HKQuantityType.quantityType(
+          forIdentifier:
+            .waistCircumference
+        )!
+
+      return try await getRawQuantitySamples(
+        type:
+          type,
+
+        predicate:
+          samplePredicate(
+            from:
+              startDate,
+
+            to:
+              endDate
+          )
+      )
+    }
+
+    private func samplePredicate(
+      from startDate: Date?,
+      to endDate: Date
+    ) -> NSPredicate {
+
+      if let startDate {
+
+        return HKQuery.predicateForSamples(
+          withStart:
+            startDate,
+
+          end:
+            endDate,
+
+          options:
+            .strictStartDate
+        )
+      }
+
+      return HKQuery.predicateForSamples(
+        withStart:
+          Date.distantPast,
+
+        end:
+          endDate,
+
+        options:
+          .strictEndDate
+      )
+    }
+
+    func diagnoseBodyComposition() async {
+
+      print("")
+      print("===================================")
+      print("🧍 BODY COMPOSITION DIAGNOSTIC")
+      print("===================================")
+
+      do {
+
+        let bodyFatSamples =
+          try await getBodyFatSamples()
+
+        print("")
+        print("📊 BODY FAT")
+
+        print(
+          "Sample count:",
+          bodyFatSamples.count
+        )
+
+        for sample in bodyFatSamples {
+
+          let value =
+            sample.quantity
+              .doubleValue(
+                for:
+                  .percent()
+              ) * 100
+
+          print(
+            "•",
+            sample.startDate,
+            "→",
+            sample.endDate,
+            "|",
+            value,
+            "%",
+            "|",
+            sample.sourceRevision.source.name
+          )
+        }
+
+      } catch {
+
+        print(
+          "❌ Body Fat query error:",
+          error
+        )
+      }
+
+      do {
+
+        let leanBodyMassSamples =
+          try await getLeanBodyMassSamples()
+
+        print("")
+        print("💪 LEAN BODY MASS")
+
+        print(
+          "Sample count:",
+          leanBodyMassSamples.count
+        )
+
+        for sample in leanBodyMassSamples {
+
+          let value =
+            sample.quantity
+              .doubleValue(
+                for:
+                  .gramUnit(
+                    with:
+                      .kilo
+                  )
+              )
+
+          print(
+            "•",
+            sample.startDate,
+            "→",
+            sample.endDate,
+            "|",
+            value,
+            "kg",
+            "|",
+            sample.sourceRevision.source.name
+          )
+        }
+
+      } catch {
+
+        print(
+          "❌ Lean Body Mass query error:",
+          error
+        )
+      }
+
+      do {
+
+        let waistSamples =
+          try await getWaistCircumferenceSamples()
+
+        print("")
+        print("📏 WAIST CIRCUMFERENCE")
+
+        print(
+          "Sample count:",
+          waistSamples.count
+        )
+
+        for sample in waistSamples {
+
+          let value =
+            sample.quantity
+              .doubleValue(
+                for:
+                  .meter()
+              )
+
+          print(
+            "•",
+            sample.startDate,
+            "→",
+            sample.endDate,
+            "|",
+            value,
+            "m",
+            "|",
+            sample.sourceRevision.source.name
+          )
+        }
+
+      } catch {
+
+        print(
+          "❌ Waist Circumference query error:",
+          error
+        )
+      }
+
+      print("")
+      print("===================================")
+      print("🧍 END BODY COMPOSITION DIAGNOSTIC")
+      print("===================================")
+      print("")
+    }
+    
+}

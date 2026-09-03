@@ -356,6 +356,19 @@ final class AppleHealthProvider: HealthDataProvider {
         )
     }
 
+    // MARK: - Today's Raw Activity Samples
+
+    func fetchTodayActivityRawSamples()
+        async throws -> [ActivityRawSample] {
+
+        try await
+            healthKit.requestAuthorization()
+
+        return try await
+            healthKit.getTodayActivityRawSamples()
+    }
+
+    
     // MARK: - Today's Activities
 
     func fetchTodayActivities()
@@ -363,7 +376,45 @@ final class AppleHealthProvider: HealthDataProvider {
 
         try await
             healthKit.requestAuthorization()
+            
+            await healthKit.diagnoseTodayActivityRawCoverage()
 
+            let activityRawSamples =
+                try await
+                healthKit.getTodayActivityRawSamples()
+
+            print("")
+            print("===================================")
+            print("🏃 ACTIVITY RAW SAMPLE TEST")
+            print("===================================")
+            print(
+                "Total Activity Raw Samples:",
+                activityRawSamples.count
+            )
+
+            for sample in activityRawSamples.prefix(20) {
+
+                print(
+                    "•",
+                    sample.metricType,
+                    "|",
+                    sample.value as Any,
+                    "|",
+                    sample.unit as Any,
+                    "|",
+                    sample.startDate,
+                    "→",
+                    sample.endDate,
+                    "|",
+                    sample.sourceName as Any
+                )
+            }
+
+            print("===================================")
+            print("🏃 END ACTIVITY RAW SAMPLE TEST")
+            print("===================================")
+            print("")
+            
         async let steps =
             healthKit.getTodayStepCount()
 

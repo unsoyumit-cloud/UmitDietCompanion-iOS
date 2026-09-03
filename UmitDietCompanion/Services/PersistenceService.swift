@@ -2598,6 +2598,214 @@ struct PersistenceService {
         }
     }
 
+    // MARK: - Raw Activity Samples
+
+    static func saveActivityRawSamples(
+        _ samples: [ActivityRawSample]
+    ) {
+
+        guard !samples.isEmpty else {
+            return
+        }
+
+        let sql =
+            """
+            INSERT OR REPLACE INTO activity_raw_samples (
+
+                id,
+                metric_type,
+                value,
+                unit,
+                start_date,
+                end_date,
+                source_name,
+                source_bundle_identifier,
+                metadata_json
+
+            )
+            VALUES (
+                ?, ?, ?, ?, ?, ?, ?, ?, ?
+            );
+            """
+
+        database.withDatabase { database in
+
+            var statement:
+                OpaquePointer?
+
+            guard sqlite3_prepare_v2(
+                database,
+                sql,
+                -1,
+                &statement,
+                nil
+            ) == SQLITE_OK
+            else {
+
+                print(
+                    "❌ Failed to prepare raw Activity sample INSERT."
+                )
+
+                return
+            }
+
+            defer {
+                sqlite3_finalize(
+                    statement
+                )
+            }
+
+            for sample in samples {
+
+                sqlite3_reset(
+                    statement
+                )
+
+                sqlite3_clear_bindings(
+                    statement
+                )
+
+                bindText(
+                    statement,
+                    index: 1,
+                    value:
+                        sample.id.uuidString
+                )
+
+                bindText(
+                    statement,
+                    index: 2,
+                    value:
+                        sample.metricType
+                )
+
+                if let value =
+                    sample.value {
+
+                    bindDouble(
+                        statement,
+                        index: 3,
+                        value:
+                            value
+                    )
+
+                } else {
+
+                    sqlite3_bind_null(
+                        statement,
+                        3
+                    )
+                }
+
+                if let unit =
+                    sample.unit {
+
+                    bindText(
+                        statement,
+                        index: 4,
+                        value:
+                            unit
+                    )
+
+                } else {
+
+                    sqlite3_bind_null(
+                        statement,
+                        4
+                    )
+                }
+
+                bindDate(
+                    statement,
+                    index: 5,
+                    date:
+                        sample.startDate
+                )
+
+                bindDate(
+                    statement,
+                    index: 6,
+                    date:
+                        sample.endDate
+                )
+
+                if let sourceName =
+                    sample.sourceName {
+
+                    bindText(
+                        statement,
+                        index: 7,
+                        value:
+                            sourceName
+                    )
+
+                } else {
+
+                    sqlite3_bind_null(
+                        statement,
+                        7
+                    )
+                }
+
+                if let sourceBundleIdentifier =
+                    sample.sourceBundleIdentifier {
+
+                    bindText(
+                        statement,
+                        index: 8,
+                        value:
+                            sourceBundleIdentifier
+                    )
+
+                } else {
+
+                    sqlite3_bind_null(
+                        statement,
+                        8
+                    )
+                }
+
+                if let metadataJSON =
+                    sample.metadataJSON {
+
+                    bindText(
+                        statement,
+                        index: 9,
+                        value:
+                            metadataJSON
+                    )
+
+                } else {
+
+                    sqlite3_bind_null(
+                        statement,
+                        9
+                    )
+                }
+
+                let result =
+                    sqlite3_step(
+                        statement
+                    )
+
+                if result != SQLITE_DONE {
+
+                    print(
+                        "❌ Failed to save raw Activity sample:",
+                        sample.id.uuidString,
+                        result
+                    )
+                }
+            }
+
+            print(
+                "💾 Raw Activity samples saved:",
+                samples.count
+            )
+        }
+    }
+
+    
     // MARK: - Activity
 
     static func saveActivity(
