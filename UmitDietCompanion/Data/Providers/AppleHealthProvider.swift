@@ -367,7 +367,42 @@ final class AppleHealthProvider: HealthDataProvider {
         return try await
             healthKit.getTodayActivityRawSamples()
     }
+    
+    // MARK: - Today's Raw Heart Samples
 
+    func fetchTodayHeartRawSamples()
+        async throws -> [ActivityRawSample] {
+
+        try await
+            healthKit.requestAuthorization()
+
+        return try await
+            healthKit.getTodayHeartRawSamples()
+    }
+
+    // MARK: - Today's Raw Workouts
+
+    func fetchTodayRawWorkouts()
+        async throws -> [ActivityRawWorkout] {
+
+        try await
+            healthKit.requestAuthorization()
+
+        return try await
+            healthKit.getTodayRawWorkouts()
+    }
+
+    // MARK: - Today's Raw Workout Route Points
+
+    func fetchTodayRawWorkoutRoutePoints()
+        async throws -> [ActivityRawRoutePoint] {
+
+        try await
+            healthKit.requestAuthorization()
+
+        return try await
+            healthKit.getTodayRawWorkoutRoutePoints()
+    }
     
     // MARK: - Today's Activities
 
@@ -378,6 +413,8 @@ final class AppleHealthProvider: HealthDataProvider {
             healthKit.requestAuthorization()
             
             await healthKit.diagnoseTodayActivityRawCoverage()
+            await healthKit.diagnoseTodayHeartRawCoverage()
+
 
             let activityRawSamples =
                 try await

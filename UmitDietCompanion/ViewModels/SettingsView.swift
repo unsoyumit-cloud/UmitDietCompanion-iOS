@@ -429,6 +429,91 @@ struct SettingsView: View {
                 )
             }
             
+            // MARK: Connected Health Sources
+
+            Section("Connected Health Sources") {
+
+                Button {
+                    // Apple Health connection details
+                } label: {
+                    HStack(spacing: 12) {
+
+                        Image(systemName: "heart.fill")
+                            .font(.title3)
+                            .frame(width: 28)
+
+                        VStack(
+                            alignment: .leading,
+                            spacing: 2
+                        ) {
+                            Text("Apple Health")
+
+                            Text("Connected")
+                                .font(.caption)
+                                .foregroundStyle(.secondary)
+                        }
+
+                        Spacer()
+
+                        Image(systemName: "checkmark.circle.fill")
+                            .foregroundStyle(.green)
+                    }
+                }
+                .buttonStyle(.plain)
+
+                NavigationLink {
+                    GarminConnectView()
+                } label: {
+                    HStack(spacing: 12) {
+
+                        Image(systemName: "figure.run")
+                            .font(.title3)
+                            .frame(width: 28)
+
+                        VStack(
+                            alignment: .leading,
+                            spacing: 2
+                        ) {
+                            Text("Garmin Connect")
+
+                            Text("Not Connected")
+                                .font(.caption)
+                                .foregroundStyle(.secondary)
+                        }
+
+                        Spacer()
+                    }
+                }
+
+                Button {
+                    // Zepp Life connection will be added later
+                } label: {
+                    HStack(spacing: 12) {
+
+                        Image(systemName: "waveform.path.ecg")
+                            .font(.title3)
+                            .frame(width: 28)
+
+                        VStack(
+                            alignment: .leading,
+                            spacing: 2
+                        ) {
+                            Text("Zepp Life")
+
+                            Text("Not Connected")
+                                .font(.caption)
+                                .foregroundStyle(.secondary)
+                        }
+
+                        Spacer()
+
+                        Image(systemName: "chevron.right")
+                            .foregroundStyle(.secondary)
+                    }
+                }
+                .buttonStyle(.plain)
+            }
+            
             // MARK: Preferences
 
             Section("Preferences") {

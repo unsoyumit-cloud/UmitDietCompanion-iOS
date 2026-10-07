@@ -470,8 +470,40 @@ final class HealthStore {
                 appleHealthProvider
                     .fetchTodayActivityRawSamples()
             
-            PersistenceService.saveActivityRawSamples(
+            PersistenceService.saveRawSamples(
                 activityRawSamples
+            )
+            
+            let heartRawSamples =
+                try await
+                appleHealthProvider
+                    .fetchTodayHeartRawSamples()
+
+            PersistenceService.saveRawSamples(
+                heartRawSamples
+            )
+            
+            let rawWorkouts =
+                try await
+                appleHealthProvider
+                    .fetchTodayRawWorkouts()
+
+            PersistenceService.saveActivityRawWorkouts(
+                rawWorkouts
+            )
+            
+            let rawRoutePoints =
+                try await
+                appleHealthProvider
+                    .fetchTodayRawWorkoutRoutePoints()
+
+            print(
+                "🗺️ Raw Workout Route Points:",
+                rawRoutePoints.count
+            )
+
+            PersistenceService.saveActivityRawRoutePoints(
+                rawRoutePoints
             )
 
             workoutHistoryData =

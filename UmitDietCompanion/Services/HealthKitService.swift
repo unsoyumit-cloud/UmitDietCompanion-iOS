@@ -5,6 +5,7 @@
 
 import Foundation
 import HealthKit
+import CoreLocation
 
 struct SleepHeartRateSample: Identifiable {
   let id: UUID
@@ -244,6 +245,21 @@ final class HealthKitService {
                 HKQuantityType.quantityType(
                     forIdentifier:
                         .heartRateVariabilitySDNN
+                )!,
+                
+                HKQuantityType.quantityType(
+                    forIdentifier:
+                        .heartRateRecoveryOneMinute
+                )!,
+
+                HKQuantityType.quantityType(
+                    forIdentifier:
+                        .walkingHeartRateAverage
+                )!,
+
+                HKQuantityType.quantityType(
+                    forIdentifier:
+                        .atrialFibrillationBurden
                 )!,
 
                 HKQuantityType.quantityType(
@@ -1773,6 +1789,26 @@ final class HealthKitService {
         print("Date:", Date())
         print("")
 
+        print(
+            String(
+                format:
+                    "%-38@ %10@ %10@ %10@",
+                "Metric",
+                "Garmin",
+                "iPhone",
+                "Total"
+            )
+        )
+
+        print(
+            String(
+                repeating:
+                    "-",
+                count:
+                    75
+            )
+        )
+
         for (
             name,
             identifier
@@ -1804,12 +1840,36 @@ final class HealthKitService {
                             predicate
                     )
 
+                let garminCount =
+                    samples.filter {
+                        $0.sourceRevision
+                            .source
+                            .bundleIdentifier
+                            == "com.garmin.connect.mobile"
+                    }
+                    .count
+
+                let iPhoneCount =
+                    samples.filter {
+                        $0.sourceRevision
+                            .source
+                            .name
+                            .localizedCaseInsensitiveContains(
+                                "iPhone"
+                            )
+                    }
+                    .count
+                let totalCount =
+                    samples.count
+
                 print(
                     String(
                         format:
-                            "%-38@ %5d",
+                            "%-38@ %10d %10d %10d",
                         name,
-                        samples.count
+                        garminCount,
+                        iPhoneCount,
+                        totalCount
                     )
                 )
 
@@ -1831,6 +1891,245 @@ final class HealthKitService {
         print("")
     }
     
+    
+    
+    // MARK: - Heart RAW Coverage Diagnostic
+
+    func diagnoseTodayHeartRawCoverage() async {
+        let calendar = Calendar.current
+        let start = calendar.startOfDay(for: Date())
+        let end = Date()
+
+        let metrics: [(name: String, type: HKQuantityTypeIdentifier, unit: HKUnit)] = [
+            (
+                "Heart Rate",
+                .heartRate,
+                HKUnit.count().unitDivided(by: HKUnit.minute())
+            ),
+            (
+                "Resting Heart Rate",
+                .restingHeartRate,
+                HKUnit.count().unitDivided(by: HKUnit.minute())
+            ),
+            (
+                "HRV SDNN",
+                .heartRateVariabilitySDNN,
+                HKUnit.secondUnit(with: .milli)
+            ),
+            (
+                "Heart Rate Recovery 1-min",
+                .heartRateRecoveryOneMinute,
+                HKUnit.count().unitDivided(by: HKUnit.minute())
+            ),
+            (
+                "Walking Heart Rate Average",
+                .walkingHeartRateAverage,
+                HKUnit.count().unitDivided(by: HKUnit.minute())
+            ),
+            (
+                "AFib Burden",
+                .atrialFibrillationBurden,
+                HKUnit.percent()
+            )
+        ]
+
+        print("===================================")
+        print("❤️ HEART RAW COVERAGE")
+        print("===================================")
+        print("Date: \(Date())")
+        print("")
+        print(
+            "Metric | Garmin | iPhone | Total"
+        )
+        print("---------------------------------------------------------------")
+
+        for metric in metrics {
+
+            do {
+
+                let samples =
+                    try await getRawQuantitySamples(
+                        type:
+                            HKQuantityType.quantityType(
+                                forIdentifier:
+                                    metric.type
+                            )!,
+                        predicate:
+                            HKQuery.predicateForSamples(
+                                withStart:
+                                    start,
+                                end:
+                                    end,
+                                options:
+                                    []
+                            )
+                    )
+
+                var garmin = 0
+                var iPhone = 0
+
+                for sample in samples {
+
+                    let bundle =
+                        sample.sourceRevision
+                            .source
+                            .bundleIdentifier
+
+                    let sourceName =
+                        sample.sourceRevision
+                            .source
+                            .name
+
+                    if bundle ==
+                        "com.garmin.connect.mobile"
+                    {
+                        garmin += 1
+
+                    } else if
+                        sourceName
+                            .localizedCaseInsensitiveContains(
+                                "iPhone"
+                            )
+                    {
+                        iPhone += 1
+                    }
+                }
+
+                print(
+                    metric.name,
+                    "| Garmin:",
+                    garmin,
+                    "| iPhone:",
+                    iPhone,
+                    "| Total:",
+                    samples.count
+                )
+
+            } catch {
+
+                print(
+                    "⚠️ Failed to read \(metric.name):",
+                    error
+                )
+            }
+        }
+
+        print("===================================")
+        print("❤️ END HEART RAW COVERAGE")
+        print("===================================")
+    }
+    
+    // MARK: - Today's Raw Heart Samples
+
+    func getTodayHeartRawSamples()
+        async throws -> [ActivityRawSample] {
+
+        let range =
+            dayRange(
+                for:
+                    Date()
+            )
+
+        let predicate =
+            HKQuery.predicateForSamples(
+                withStart:
+                    range.start,
+                end:
+                    range.end,
+                options:
+                    .strictStartDate
+            )
+
+        let metrics:
+            [(HKQuantityTypeIdentifier, HKUnit)] = [
+
+            // MARK: Heart
+
+            (
+                .heartRate,
+                HKUnit.count()
+                    .unitDivided(
+                        by:
+                            .minute()
+                    )
+            ),
+
+            
+                (
+                    .restingHeartRate,
+                    HKUnit.count()
+                        .unitDivided(
+                            by:
+                                .minute()
+                        )
+                ),
+
+                (
+                    .heartRateVariabilitySDNN,
+                    HKUnit.secondUnit(with: .milli)
+                ),
+
+                (
+                    .heartRateRecoveryOneMinute,
+                HKUnit.count()
+                    .unitDivided(
+                        by:
+                            .minute()
+                    )
+            ),
+
+            (
+                .walkingHeartRateAverage,
+                HKUnit.count()
+                    .unitDivided(
+                        by:
+                            .minute()
+                    )
+            ),
+
+            (
+                .atrialFibrillationBurden,
+                HKUnit.percent()
+            )
+        ]
+
+        var allSamples:
+            [ActivityRawSample] = []
+
+        for (
+            identifier,
+            unit
+        ) in metrics {
+
+            guard
+                let type =
+                    HKQuantityType.quantityType(
+                        forIdentifier:
+                            identifier
+                    )
+            else {
+                continue
+            }
+
+            let samples =
+                try await getActivityRawSamples(
+                    type:
+                        type,
+                    unit:
+                        unit,
+                    predicate:
+                        predicate
+                )
+
+            allSamples.append(
+                contentsOf:
+                    samples
+            )
+        }
+
+        return allSamples
+    }
+    
     func getTodayActivityRawSamples()
         async throws -> [ActivityRawSample] {
 
@@ -1849,22 +2148,201 @@ final class HealthKitService {
                     .strictStartDate
             )
 
-        let stepType =
-            HKQuantityType.quantityType(
-                forIdentifier:
-                    .stepCount
-            )!
+        let metrics:
+            [(HKQuantityTypeIdentifier, HKUnit)] = [
 
-        return try await getActivityRawSamples(
-            type:
-                stepType,
-            unit:
-                HKUnit.count(),
-            predicate:
-                predicate
-        )
+                // MARK: Activity
+
+                (
+                    .stepCount,
+                    HKUnit.count()
+                ),
+
+                (
+                    .distanceWalkingRunning,
+                    HKUnit.meter()
+                ),
+
+                (
+                    .runningSpeed,
+                    HKUnit.meter()
+                        .unitDivided(
+                            by: .second()
+                        )
+                ),
+
+                (
+                    .runningStrideLength,
+                    HKUnit.meter()
+                ),
+
+                (
+                    .runningPower,
+                    HKUnit.watt()
+                ),
+
+                (
+                    .runningGroundContactTime,
+                    HKUnit.second()
+                ),
+
+                (
+                    .runningVerticalOscillation,
+                    HKUnit.meter()
+                ),
+
+                (
+                    .distanceCycling,
+                    HKUnit.meter()
+                ),
+
+                (
+                    .cyclingCadence,
+                    HKUnit.count()
+                        .unitDivided(
+                            by: .minute()
+                        )
+                ),
+
+                (
+                    .cyclingPower,
+                    HKUnit.watt()
+                ),
+
+                (
+                    .cyclingFunctionalThresholdPower,
+                    HKUnit.watt()
+                ),
+
+                (
+                    .flightsClimbed,
+                    HKUnit.count()
+                ),
+
+                (
+                    .appleExerciseTime,
+                    HKUnit.minute()
+                ),
+
+                (
+                    .appleMoveTime,
+                    HKUnit.minute()
+                ),
+
+                (
+                    .appleStandTime,
+                    HKUnit.minute()
+                ),
+
+                (
+                    .vo2Max,
+                    HKUnit(
+                        from: "ml/kg*min"
+                    )
+                ),
+
+                // MARK: Mobility
+
+                (
+                    .appleWalkingSteadiness,
+                    HKUnit.percent()
+                ),
+
+                (
+                    .sixMinuteWalkTestDistance,
+                    HKUnit.meter()
+                ),
+
+                (
+                    .walkingSpeed,
+                    HKUnit.meter()
+                        .unitDivided(
+                            by: .second()
+                        )
+                ),
+
+                (
+                    .walkingStepLength,
+                    HKUnit.meter()
+                ),
+
+                (
+                    .walkingAsymmetryPercentage,
+                    HKUnit.percent()
+                ),
+
+                (
+                    .walkingDoubleSupportPercentage,
+                    HKUnit.percent()
+                ),
+
+                (
+                    .stairAscentSpeed,
+                    HKUnit.meter()
+                        .unitDivided(
+                            by: .second()
+                        )
+                ),
+
+                (
+                    .stairDescentSpeed,
+                    HKUnit.meter()
+                        .unitDivided(
+                            by: .second()
+                        )
+                ),
+
+                // MARK: Energy
+
+                (
+                    .activeEnergyBurned,
+                    HKUnit.kilocalorie()
+                ),
+
+                (
+                    .basalEnergyBurned,
+                    HKUnit.kilocalorie()
+                )
+            ]
+
+        var allSamples:
+            [ActivityRawSample] = []
+
+        for (
+            identifier,
+            unit
+        ) in metrics {
+
+            guard
+                let type =
+                    HKQuantityType.quantityType(
+                        forIdentifier:
+                            identifier
+                    )
+            else {
+                continue
+            }
+
+            let samples =
+                try await getActivityRawSamples(
+                    type:
+                        type,
+                    unit:
+                        unit,
+                    predicate:
+                        predicate
+                )
+
+            allSamples.append(
+                contentsOf:
+                    samples
+            )
+        }
+
+        return allSamples.sorted {
+            $0.startDate < $1.startDate
+        }
     }
-    
     private func getAverageQuantity(
       type:
         HKQuantityType,
@@ -2253,6 +2731,383 @@ final class HealthKitService {
           query
         )
       }
+    }
+    
+    // MARK: - Raw Workouts
+
+    func getTodayRawWorkouts()
+        async throws -> [ActivityRawWorkout] {
+
+        let workoutType =
+            HKObjectType.workoutType()
+
+        let range =
+            dayRange(
+                for: Date()
+            )
+
+        let predicate =
+            HKQuery.predicateForSamples(
+                withStart:
+                    range.start,
+                end:
+                    range.end,
+                options:
+                    .strictStartDate
+            )
+
+        return try await withCheckedThrowingContinuation {
+            continuation in
+
+            let query =
+                HKSampleQuery(
+                    sampleType:
+                        workoutType,
+
+                    predicate:
+                        predicate,
+
+                    limit:
+                        HKObjectQueryNoLimit,
+
+                    sortDescriptors: [
+                        NSSortDescriptor(
+                            key:
+                                HKSampleSortIdentifierStartDate,
+                            ascending:
+                                true
+                        )
+                    ]
+                ) {
+
+                    _,
+                    samples,
+                    error
+                    in
+
+                    if let error {
+
+                        continuation.resume(
+                            throwing:
+                                error
+                        )
+
+                        return
+                    }
+
+                    let workouts =
+                        (samples
+                        as? [HKWorkout]
+                        ?? [])
+                        .map { workout in
+
+                            ActivityRawWorkout(
+                                id:
+                                    workout.uuid,
+
+                                activityType:
+                                    String(
+                                        workout
+                                            .workoutActivityType
+                                            .rawValue
+                                    ),
+
+                                startDate:
+                                    workout.startDate,
+
+                                endDate:
+                                    workout.endDate,
+
+                                duration:
+                                    workout.duration,
+
+                                totalEnergyBurned:
+                                    workout
+                                        .totalEnergyBurned?
+                                        .doubleValue(
+                                            for:
+                                                .kilocalorie()
+                                        ),
+
+                                totalDistance:
+                                    workout
+                                        .totalDistance?
+                                        .doubleValue(
+                                            for:
+                                                .meter()
+                                        ),
+
+                                sourceName:
+                                    workout
+                                        .sourceRevision
+                                        .source
+                                        .name,
+
+                                sourceBundleIdentifier:
+                                    workout
+                                        .sourceRevision
+                                        .source
+                                        .bundleIdentifier
+                            )
+                        }
+
+                    continuation.resume(
+                        returning:
+                            workouts
+                    )
+                }
+
+            self.healthStore.execute(
+                query
+            )
+        }
+    }
+
+    // MARK: - Raw Workout Routes
+
+    func getTodayRawWorkoutRoutePoints()
+        async throws -> [ActivityRawRoutePoint] {
+
+        let workoutType =
+            HKObjectType.workoutType()
+
+        let range =
+            dayRange(
+                for: Date()
+            )
+
+        let predicate =
+            HKQuery.predicateForSamples(
+                withStart:
+                    range.start,
+                end:
+                    range.end,
+                options:
+                    .strictStartDate
+            )
+
+            let workouts =
+                try await withCheckedThrowingContinuation {
+                    (continuation: CheckedContinuation<[HKWorkout], Error>) in
+
+                let query =
+                    HKSampleQuery(
+                        sampleType:
+                            workoutType,
+
+                        predicate:
+                            predicate,
+
+                        limit:
+                            HKObjectQueryNoLimit,
+
+                        sortDescriptors: [
+                            NSSortDescriptor(
+                                key:
+                                    HKSampleSortIdentifierStartDate,
+                                ascending:
+                                    true
+                            )
+                        ]
+                    ) {
+
+                        _,
+                        samples,
+                        error
+                        in
+
+                        if let error {
+
+                            continuation.resume(
+                                throwing:
+                                    error
+                            )
+
+                            return
+                        }
+
+                        continuation.resume(
+                            returning:
+                                (samples
+                                as? [HKWorkout]
+                                ?? [])
+                        )
+                    }
+
+                self.healthStore.execute(
+                    query
+                )
+            }
+
+        var allRoutePoints:
+            [ActivityRawRoutePoint] = []
+
+        for workout in workouts {
+
+            let workoutPredicate =
+                HKQuery.predicateForObjects(
+                    from:
+                        workout
+                )
+
+            let routes =
+                try await withCheckedThrowingContinuation {
+                    (continuation: CheckedContinuation<[HKWorkoutRoute], Error>) in
+
+                    let query =
+                        HKSampleQuery(
+                            sampleType:
+                                HKSeriesType.workoutRoute(),
+
+                            predicate:
+                                workoutPredicate,
+
+                            limit:
+                                HKObjectQueryNoLimit,
+
+                            sortDescriptors: nil
+                        ) {
+
+                            _,
+                            samples,
+                            error
+                            in
+
+                            if let error {
+
+                                continuation.resume(
+                                    throwing:
+                                        error
+                                )
+
+                                return
+                            }
+
+                            continuation.resume(
+                                returning:
+                                    (samples
+                                    as? [HKWorkoutRoute]
+                                    ?? [])
+                            )
+                        }
+
+                    self.healthStore.execute(
+                        query
+                    )
+                }
+
+            for route in routes {
+
+                let routePoints =
+                    try await withCheckedThrowingContinuation {
+                        (continuation: CheckedContinuation<[ActivityRawRoutePoint], Error>) in
+
+                        var points:
+                            [ActivityRawRoutePoint] = []
+
+                        let query =
+                            HKWorkoutRouteQuery(
+                                route:
+                                    route
+                            ) {
+                                query,
+                                locations,
+                                done,
+                                error
+                                in
+
+                                if let error {
+
+                                    continuation.resume(
+                                        throwing:
+                                            error
+                                    )
+
+                                    self.healthStore.stop(
+                                        query
+                                    )
+
+                                    return
+                                }
+
+                                if let locations {
+
+                                    points.append(
+                                        contentsOf:
+                                            locations.map {
+                                                location in
+
+                                                ActivityRawRoutePoint(
+                                                    workoutID:
+                                                        workout.uuid,
+
+                                                    timestamp:
+                                                        location.timestamp,
+
+                                                    latitude:
+                                                        location
+                                                            .coordinate
+                                                            .latitude,
+
+                                                    longitude:
+                                                        location
+                                                            .coordinate
+                                                            .longitude,
+
+                                                    altitude:
+                                                        location
+                                                            .altitude,
+
+                                                    speed:
+                                                        location.speed
+                                                            >= 0
+                                                            ? location.speed
+                                                            : nil,
+
+                                                    course:
+                                                        location.course
+                                                            >= 0
+                                                            ? location.course
+                                                            : nil,
+
+                                                    horizontalAccuracy:
+                                                        location.horizontalAccuracy
+                                                            >= 0
+                                                            ? location.horizontalAccuracy
+                                                            : nil,
+
+                                                    verticalAccuracy:
+                                                        location.verticalAccuracy
+                                                            >= 0
+                                                            ? location.verticalAccuracy
+                                                            : nil
+                                                )
+                                            }
+                                    )
+                                }
+
+                                if done {
+
+                                    continuation.resume(
+                                        returning:
+                                            points
+                                    )
+                                }
+                            }
+
+                        self.healthStore.execute(
+                            query
+                        )
+                    }
+
+                allRoutePoints.append(
+                    contentsOf:
+                        routePoints
+                )
+            }
+        }
+
+        return allRoutePoints
     }
 
     func getTodayWorkouts()

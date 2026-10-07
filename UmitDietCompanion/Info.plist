@@ -8,6 +8,19 @@
 	<string>$(PRODUCT_BUNDLE_IDENTIFIER)</string>
 	<key>CFBundleName</key>
 	<string>$(PRODUCT_NAME)</string>
+	<key>CFBundleURLTypes</key>
+	<array>
+		<dict>
+			<key>CFBundleTypeRole</key>
+			<string>Editor</string>
+			<key>CFBundleURLName</key>
+			<string>com.umitdietcompanion.garmin</string>
+			<key>CFBundleURLSchemes</key>
+			<array>
+				<string>umitdietcompanion</string>
+			</array>
+		</dict>
+	</array>
 	<key>NSCameraUsageDescription</key>
 	<string>Ümit Diet Companion uses the camera to analyze your meals.</string>
 	<key>NSHealthShareUsageDescription</key>

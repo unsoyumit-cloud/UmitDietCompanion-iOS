@@ -2598,9 +2598,9 @@ struct PersistenceService {
         }
     }
 
-    // MARK: - Raw Activity Samples
+    // MARK: - Raw Samples
 
-    static func saveActivityRawSamples(
+    static func saveRawSamples(
         _ samples: [ActivityRawSample]
     ) {
 
@@ -2799,12 +2799,403 @@ struct PersistenceService {
             }
 
             print(
-                "💾 Raw Activity samples saved:",
+                "💾 Raw samples saved:",
                 samples.count
             )
         }
     }
 
+    // MARK: - Raw Activity Workouts
+
+    static func saveActivityRawWorkouts(
+        _ workouts: [ActivityRawWorkout]
+    ) {
+
+        guard !workouts.isEmpty else {
+            return
+        }
+
+        let sql =
+            """
+            INSERT OR REPLACE INTO activity_raw_workouts (
+
+                id,
+                activity_type,
+                start_date,
+                end_date,
+                duration,
+                total_energy_burned,
+                total_distance,
+                source_name,
+                source_bundle_identifier
+
+            )
+            VALUES (
+                ?, ?, ?, ?, ?, ?, ?, ?, ?
+            );
+            """
+
+        database.withDatabase { database in
+
+            var statement:
+                OpaquePointer?
+
+            guard sqlite3_prepare_v2(
+                database,
+                sql,
+                -1,
+                &statement,
+                nil
+            ) == SQLITE_OK
+            else {
+
+                print(
+                    "❌ Failed to prepare raw Activity workout INSERT."
+                )
+
+                return
+            }
+
+            defer {
+                sqlite3_finalize(
+                    statement
+                )
+            }
+
+            for workout in workouts {
+
+                sqlite3_reset(
+                    statement
+                )
+
+                sqlite3_clear_bindings(
+                    statement
+                )
+
+                bindText(
+                    statement,
+                    index: 1,
+                    value:
+                        workout.id.uuidString
+                )
+
+                bindText(
+                    statement,
+                    index: 2,
+                    value:
+                        workout.activityType
+                )
+
+                bindDate(
+                    statement,
+                    index: 3,
+                    date:
+                        workout.startDate
+                )
+
+                bindDate(
+                    statement,
+                    index: 4,
+                    date:
+                        workout.endDate
+                )
+
+                bindDouble(
+                    statement,
+                    index: 5,
+                    value:
+                        workout.duration
+                )
+
+                if let energy =
+                    workout.totalEnergyBurned {
+
+                    bindDouble(
+                        statement,
+                        index: 6,
+                        value:
+                            energy
+                    )
+
+                } else {
+
+                    sqlite3_bind_null(
+                        statement,
+                        6
+                    )
+                }
+
+                if let distance =
+                    workout.totalDistance {
+
+                    bindDouble(
+                        statement,
+                        index: 7,
+                        value:
+                            distance
+                    )
+
+                } else {
+
+                    sqlite3_bind_null(
+                        statement,
+                        7
+                    )
+                }
+
+                if let sourceName =
+                    workout.sourceName {
+
+                    bindText(
+                        statement,
+                        index: 8,
+                        value:
+                            sourceName
+                    )
+
+                } else {
+
+                    sqlite3_bind_null(
+                        statement,
+                        8
+                    )
+                }
+
+                if let sourceBundleIdentifier =
+                    workout.sourceBundleIdentifier {
+
+                    bindText(
+                        statement,
+                        index: 9,
+                        value:
+                            sourceBundleIdentifier
+                    )
+
+                } else {
+
+                    sqlite3_bind_null(
+                        statement,
+                        9
+                    )
+                }
+
+                let result =
+                    sqlite3_step(
+                        statement
+                    )
+
+                if result != SQLITE_DONE {
+
+                    print(
+                        "❌ Failed to save raw Activity workout:",
+                        workout.id.uuidString,
+                        result
+                    )
+                }
+            }
+
+            print(
+                "💾 Raw Activity workouts saved:",
+                workouts.count
+            )
+        }
+    }
+
+    // MARK: - Raw Activity Route Points
+
+    static func saveActivityRawRoutePoints(
+        _ points: [ActivityRawRoutePoint]
+    ) {
+
+        guard !points.isEmpty else {
+            return
+        }
+
+        let sql =
+            """
+            INSERT OR REPLACE INTO activity_raw_route_points (
+
+                workout_id,
+                timestamp,
+                latitude,
+                longitude,
+                altitude,
+                speed,
+                course,
+                horizontal_accuracy,
+                vertical_accuracy
+
+            )
+            VALUES (
+                ?, ?, ?, ?, ?, ?, ?, ?, ?
+            );
+            """
+
+        database.withDatabase { database in
+
+            var statement:
+                OpaquePointer?
+
+            guard sqlite3_prepare_v2(
+                database,
+                sql,
+                -1,
+                &statement,
+                nil
+            ) == SQLITE_OK
+            else {
+
+                print(
+                    "❌ Failed to prepare raw Activity route point INSERT."
+                )
+
+                return
+            }
+
+            defer {
+                sqlite3_finalize(
+                    statement
+                )
+            }
+
+            for point in points {
+
+                sqlite3_reset(
+                    statement
+                )
+
+                sqlite3_clear_bindings(
+                    statement
+                )
+
+                bindText(
+                    statement,
+                    index: 1,
+                    value:
+                        point.workoutID.uuidString
+                )
+
+                bindDate(
+                    statement,
+                    index: 2,
+                    date:
+                        point.timestamp
+                )
+
+                bindDouble(
+                    statement,
+                    index: 3,
+                    value:
+                        point.latitude
+                )
+
+                bindDouble(
+                    statement,
+                    index: 4,
+                    value:
+                        point.longitude
+                )
+
+                bindDouble(
+                    statement,
+                    index: 5,
+                    value:
+                        point.altitude
+                )
+
+                if let speed =
+                    point.speed {
+
+                    bindDouble(
+                        statement,
+                        index: 6,
+                        value:
+                            speed
+                    )
+
+                } else {
+
+                    sqlite3_bind_null(
+                        statement,
+                        6
+                    )
+                }
+
+                if let course =
+                    point.course {
+
+                    bindDouble(
+                        statement,
+                        index: 7,
+                        value:
+                            course
+                    )
+
+                } else {
+
+                    sqlite3_bind_null(
+                        statement,
+                        7
+                    )
+                }
+
+                if let horizontalAccuracy =
+                    point.horizontalAccuracy {
+
+                    bindDouble(
+                        statement,
+                        index: 8,
+                        value:
+                            horizontalAccuracy
+                    )
+
+                } else {
+
+                    sqlite3_bind_null(
+                        statement,
+                        8
+                    )
+                }
+
+                if let verticalAccuracy =
+                    point.verticalAccuracy {
+
+                    bindDouble(
+                        statement,
+                        index: 9,
+                        value:
+                            verticalAccuracy
+                    )
+
+                } else {
+
+                    sqlite3_bind_null(
+                        statement,
+                        9
+                    )
+                }
+
+                let result =
+                    sqlite3_step(
+                        statement
+                    )
+
+                if result != SQLITE_DONE {
+
+                    print(
+                        "❌ Failed to save raw Activity route point:",
+                        point.workoutID.uuidString,
+                        result
+                    )
+                }
+            }
+
+            print(
+                "💾 Raw Activity route points saved:",
+                points.count
+            )
+        }
+    }
     
     // MARK: - Activity
 
@@ -3096,6 +3487,7 @@ struct PersistenceService {
             "daily_health_snapshots",
             "daily_health_metrics",
             "activities",
+            "activity_raw_samples",
             "meals",
             "meal_analysis"
         ]
@@ -3296,6 +3688,7 @@ struct PersistenceService {
             "daily_health_snapshots",
             "daily_health_metrics",
             "activities",
+            "activity_raw_samples",
             "meals",
             "meal_analysis"
         ]
