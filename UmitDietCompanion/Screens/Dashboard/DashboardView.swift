@@ -84,8 +84,8 @@ struct DashboardView: View {
                             ScoreCard(
                                 score:
                                     viewModel.totalScore,
-                                waterScore:
-                                    viewModel.waterScore,
+                                liquidScore:
+                                    viewModel.liquidScore,
                                 stepScore:
                                     15,
                                 sleepScore:
@@ -129,7 +129,7 @@ struct DashboardView: View {
 
                                         case .water:
 
-                                            WaterDetailView()
+                                            LiquidsDetailView()
 
                                         // MARK: Activities
 

@@ -1061,8 +1061,8 @@ final class HealthStore {
             healthScore:
                 HealthScoreCalculator.totalScore(
 
-                    waterScore:
-                        HealthScoreCalculator.waterScore(
+                    liquidScore:
+                        HealthScoreCalculator.liquidScore(
                             current:
                                 waterAmount,
 

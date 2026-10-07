@@ -40,7 +40,7 @@ final class DashboardViewModel {
     var waterProgress: Double {
 
         Double(
-            HealthScoreCalculator.waterScore(
+            HealthScoreCalculator.liquidScore(
                 current:
                     waterAmount,
 
@@ -151,9 +151,9 @@ final class DashboardViewModel {
 
     // MARK: - Internal Category Scores
 
-    var waterScore: Int {
+    var liquidScore: Int {
 
-        HealthScoreCalculator.waterScore(
+        HealthScoreCalculator.liquidScore(
             current:
                 waterAmount,
 
@@ -209,8 +209,8 @@ final class DashboardViewModel {
 
         HealthScoreCalculator.totalScore(
 
-            waterScore:
-                waterScore,
+            liquidScore:
+                liquidScore,
 
             activitiesScore:
                 activitiesScore,

@@ -57,7 +57,7 @@ struct HealthScoreCalculator {
     /// The first meaningful hydration milestone carries
     /// the greatest behavioral value.
 
-    static func waterScore(
+    static func liquidScore(
         current: Double,
         target: Double
     ) -> Int {
@@ -571,14 +571,14 @@ struct HealthScoreCalculator {
     /// normalized so that the available categories still
     /// produce a score out of 100.
     static func totalScore(
-        waterScore: Int,
+        liquidScore: Int,
         activitiesScore: Int,
         sleepScore: Int
     ) -> Int {
 
         let waterContribution =
             Double(
-                waterScore
+                liquidScore
             ) *
             (
                 waterWeight /

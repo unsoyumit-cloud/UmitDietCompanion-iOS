@@ -10,7 +10,7 @@ import SwiftUI
 struct ScoreCard: View {
     
     let score: Int
-    let waterScore: Int
+    let liquidScore: Int
     let stepScore: Int
     let sleepScore: Int
     let restingHeartRateScore: Int
@@ -82,7 +82,7 @@ struct ScoreCard: View {
 #Preview {
     ScoreCard(
         score: 45,
-        waterScore: 0,
+        liquidScore: 0,
         stepScore: 10,
         sleepScore: 15,
         restingHeartRateScore: 20
