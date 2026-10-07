@@ -166,8 +166,80 @@ struct LiquidNutritionContribution: Codable, Equatable {
     var protein: Double = 0
     var carbohydrates: Double = 0
     var fat: Double = 0
+    var sugar: Double = 0
     var caffeine: Double = 0
     var alcohol: Double = 0
+
+    enum CodingKeys: String, CodingKey {
+        case calories
+        case protein
+        case carbohydrates
+        case fat
+        case sugar
+        case caffeine
+        case alcohol
+    }
+
+    init(
+        calories: Double = 0,
+        protein: Double = 0,
+        carbohydrates: Double = 0,
+        fat: Double = 0,
+        sugar: Double = 0,
+        caffeine: Double = 0,
+        alcohol: Double = 0
+    ) {
+        self.calories = calories
+        self.protein = protein
+        self.carbohydrates = carbohydrates
+        self.fat = fat
+        self.sugar = sugar
+        self.caffeine = caffeine
+        self.alcohol = alcohol
+    }
+
+    init(from decoder: Decoder) throws {
+        let container = try decoder.container(
+            keyedBy: CodingKeys.self
+        )
+
+        calories = try container.decodeIfPresent(
+            Double.self,
+            forKey: .calories
+        ) ?? 0
+
+        protein = try container.decodeIfPresent(
+            Double.self,
+            forKey: .protein
+        ) ?? 0
+
+        carbohydrates = try container.decodeIfPresent(
+            Double.self,
+            forKey: .carbohydrates
+        ) ?? 0
+
+        fat = try container.decodeIfPresent(
+            Double.self,
+            forKey: .fat
+        ) ?? 0
+
+        // Backward compatibility:
+        // Old liquid records don't have this key.
+        sugar = try container.decodeIfPresent(
+            Double.self,
+            forKey: .sugar
+        ) ?? 0
+
+        caffeine = try container.decodeIfPresent(
+            Double.self,
+            forKey: .caffeine
+        ) ?? 0
+
+        alcohol = try container.decodeIfPresent(
+            Double.self,
+            forKey: .alcohol
+        ) ?? 0
+    }
 }
 
 // MARK: - Liquid Consumption

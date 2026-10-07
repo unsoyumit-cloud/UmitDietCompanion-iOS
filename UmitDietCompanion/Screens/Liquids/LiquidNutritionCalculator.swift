@@ -20,7 +20,6 @@ struct LiquidNutritionCalculator {
         switch category {
 
         case .coffee:
-
             return coffeeNutrition(
                 beverage: beverage,
                 size: sizeMilliliters ?? 150,
@@ -28,7 +27,6 @@ struct LiquidNutritionCalculator {
             )
 
         case .tea:
-
             return teaNutrition(
                 beverage: beverage,
                 size: sizeMilliliters ?? 150,
@@ -36,24 +34,22 @@ struct LiquidNutritionCalculator {
             )
 
         case .softDrinks:
-
             return softDrinkNutrition(
                 beverage: beverage,
                 size: sizeMilliliters ?? 330
             )
 
         case .energyDrinks:
-
             return energyDrinkNutrition(
                 beverage: beverage,
                 size: sizeMilliliters ?? 330
             )
 
         case .alcohol:
-
             return alcoholNutrition(
                 beverage: beverage,
-                size: alcoholSize ?? .single
+                sizeMilliliters: sizeMilliliters,
+                alcoholSize: alcoholSize
             )
         }
     }
@@ -95,9 +91,9 @@ struct LiquidNutritionCalculator {
         if beverage == "Turkish Coffee" {
 
             if style == .sugared {
-
                 result.calories += 16
                 result.carbohydrates += 4
+                result.sugar += 4
             }
 
             return result
@@ -115,6 +111,7 @@ struct LiquidNutritionCalculator {
             result.protein += milk * 0.033
             result.carbohydrates += milk * 0.048
             result.fat += milk * 0.032
+            result.sugar += milk * 0.048
 
             return result
         }
@@ -131,6 +128,7 @@ struct LiquidNutritionCalculator {
             result.protein += milk * 0.033
             result.carbohydrates += milk * 0.048
             result.fat += milk * 0.032
+            result.sugar += milk * 0.048
         }
 
         return result
@@ -152,6 +150,7 @@ struct LiquidNutritionCalculator {
 
             result.calories += 16
             result.carbohydrates += 4
+            result.sugar += 4
         }
 
         switch beverage {
@@ -180,19 +179,19 @@ struct LiquidNutritionCalculator {
     ) -> LiquidNutritionContribution {
 
         let zeroTypes = [
-            "Coke Zero",
-            "Diet Coke",
+            "Cola Zero",
+            "Diet Cola",
             "Other Zero / Diet"
         ]
 
         if zeroTypes.contains(beverage) {
 
             return LiquidNutritionContribution(
-                calories: 1
+                calories: 1,
+                sugar: 0
             )
         }
 
-        // Approximate regular sugary drink profile.
         let caloriesPer100ml: Double
 
         switch beverage {
@@ -210,11 +209,18 @@ struct LiquidNutritionCalculator {
         let multiplier =
             Double(size) / 100.0
 
+        let sugarPer100ml =
+            caloriesPer100ml / 4.0
+
         return LiquidNutritionContribution(
             calories:
                 caloriesPer100ml * multiplier,
+
             carbohydrates:
-                (caloriesPer100ml / 4.0) * multiplier
+                sugarPer100ml * multiplier,
+
+            sugar:
+                sugarPer100ml * multiplier
         )
     }
 
@@ -225,16 +231,33 @@ struct LiquidNutritionCalculator {
         size: Int
     ) -> LiquidNutritionContribution {
 
-        let caloriesPer100ml = 45.0
-
         let multiplier =
             Double(size) / 100.0
+
+        // Diet Energy Drink
+        if beverage == "Diet Energy Drink" {
+
+            return LiquidNutritionContribution(
+                calories: 1,
+                sugar: 0,
+                caffeine: 32.0 * multiplier
+            )
+        }
+
+        // Regular Energy Drink
+        let caloriesPer100ml = 45.0
+        let sugarPer100ml = caloriesPer100ml / 4.0
 
         return LiquidNutritionContribution(
             calories:
                 caloriesPer100ml * multiplier,
+
             carbohydrates:
-                (caloriesPer100ml / 4.0) * multiplier,
+                sugarPer100ml * multiplier,
+
+            sugar:
+                sugarPer100ml * multiplier,
+
             caffeine:
                 32.0 * multiplier
         )
@@ -244,24 +267,33 @@ struct LiquidNutritionCalculator {
 
     private func alcoholNutrition(
         beverage: String,
-        size: AlcoholSize
+        sizeMilliliters: Int?,
+        alcoholSize: AlcoholSize?
     ) -> LiquidNutritionContribution {
 
         switch beverage {
 
         case "Beer":
 
-            return size == .single
-                ? LiquidNutritionContribution(
-                    calories: 130,
-                    alcohol: 12
-                )
-                : LiquidNutritionContribution(
+            // Beer uses actual milliliter size.
+            if sizeMilliliters == 500 {
+
+                return LiquidNutritionContribution(
                     calories: 215,
                     alcohol: 20
                 )
 
+            } else {
+
+                return LiquidNutritionContribution(
+                    calories: 130,
+                    alcohol: 12
+                )
+            }
+
         case "Rakı":
+
+            let size = alcoholSize ?? .single
 
             return size == .single
                 ? LiquidNutritionContribution(
@@ -274,7 +306,11 @@ struct LiquidNutritionCalculator {
                 )
 
         case "Whiskey",
+             "Gin/Vodka/Martini",
+             "Gin/Vodka",
              "Gin / Vodka":
+
+            let size = alcoholSize ?? .single
 
             return size == .single
                 ? LiquidNutritionContribution(
@@ -288,6 +324,8 @@ struct LiquidNutritionCalculator {
 
         case "Wine":
 
+            let size = alcoholSize ?? .single
+
             return size == .single
                 ? LiquidNutritionContribution(
                     calories: 85,
@@ -299,6 +337,8 @@ struct LiquidNutritionCalculator {
                 )
 
         default:
+
+            let size = alcoholSize ?? .single
 
             return size == .single
                 ? LiquidNutritionContribution(

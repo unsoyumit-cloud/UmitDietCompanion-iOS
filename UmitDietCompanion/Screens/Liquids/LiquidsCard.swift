@@ -10,6 +10,7 @@ struct LiquidsCard: View {
     let title: String
     let icon: String
     let color: Color
+    var customIcon: AnyView? = nil
 
     var body: some View {
 
@@ -24,12 +25,16 @@ struct LiquidsCard: View {
                     color.opacity(0.10)
                 )
 
-                Text(icon)
-                    .font(
-                        .system(
-                            size: 28
+                if let customIcon {
+                    customIcon
+                } else {
+                    Text(icon)
+                        .font(
+                            .system(
+                                size: 28
+                            )
                         )
-                    )
+                }
             }
             .frame(
                 width: 54,
