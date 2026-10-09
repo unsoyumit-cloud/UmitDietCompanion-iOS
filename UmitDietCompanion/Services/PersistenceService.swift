@@ -2827,7 +2827,72 @@ struct PersistenceService {
             VALUES (?, ?, ?, ?, ?, ?);
             """
 
+        
         database.withDatabase { database in
+
+            // MARK: - Duplicate Response Check
+
+            let duplicateSQL = """
+                SELECT 1
+                FROM garmin_raw_responses
+                WHERE data_type = ?
+                  AND endpoint = ?
+                  AND calendar_date = ?
+                  AND raw_json = ?
+                LIMIT 1;
+                """
+
+            var duplicateStatement: OpaquePointer?
+
+            if sqlite3_prepare_v2(
+                database,
+                duplicateSQL,
+                -1,
+                &duplicateStatement,
+                nil
+            ) == SQLITE_OK {
+
+                defer {
+                    sqlite3_finalize(duplicateStatement)
+                }
+
+                bindText(
+                    duplicateStatement,
+                    index: 1,
+                    value: dataType
+                )
+
+                bindText(
+                    duplicateStatement,
+                    index: 2,
+                    value: endpoint
+                )
+
+                bindText(
+                    duplicateStatement,
+                    index: 3,
+                    value: calendarDate
+                )
+
+                bindText(
+                    duplicateStatement,
+                    index: 4,
+                    value: rawJSON
+                )
+
+                let duplicateResult = sqlite3_step(
+                    duplicateStatement
+                )
+
+                if duplicateResult == SQLITE_ROW {
+                    print(
+                        "⏭️ Duplicate Garmin raw response skipped:",
+                        dataType,
+                        calendarDate
+                    )
+                    return
+                }
+            }
 
             var statement: OpaquePointer?
 
@@ -2838,6 +2903,7 @@ struct PersistenceService {
                 &statement,
                 nil
             ) == SQLITE_OK else {
+
                 print(
                     "❌ Failed to prepare Garmin raw response INSERT."
                 )
