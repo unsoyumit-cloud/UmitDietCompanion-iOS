@@ -2804,7 +2804,452 @@ struct PersistenceService {
             )
         }
     }
+    
+    // MARK: - Garmin Raw Responses
 
+    static func saveGarminRawResponse(
+        dataType: String,
+        endpoint: String,
+        calendarDate: String,
+        rawJSON: String,
+        fetchedAt: Date = Date()
+    ) {
+
+        let sql = """
+            INSERT INTO garmin_raw_responses (
+                id,
+                data_type,
+                endpoint,
+                calendar_date,
+                fetched_at,
+                raw_json
+            )
+            VALUES (?, ?, ?, ?, ?, ?);
+            """
+
+        database.withDatabase { database in
+
+            var statement: OpaquePointer?
+
+            guard sqlite3_prepare_v2(
+                database,
+                sql,
+                -1,
+                &statement,
+                nil
+            ) == SQLITE_OK else {
+                print(
+                    "❌ Failed to prepare Garmin raw response INSERT."
+                )
+                return
+            }
+
+            defer {
+                sqlite3_finalize(statement)
+            }
+
+            bindText(
+                statement,
+                index: 1,
+                value: UUID().uuidString
+            )
+
+            bindText(
+                statement,
+                index: 2,
+                value: dataType
+            )
+
+            bindText(
+                statement,
+                index: 3,
+                value: endpoint
+            )
+
+            bindText(
+                statement,
+                index: 4,
+                value: calendarDate
+            )
+
+            bindDate(
+                statement,
+                index: 5,
+                date: fetchedAt
+            )
+
+            bindText(
+                statement,
+                index: 6,
+                value: rawJSON
+            )
+
+            let result = sqlite3_step(statement)
+
+            guard result == SQLITE_DONE else {
+                print(
+                    "❌ Failed to save Garmin raw response:",
+                    dataType,
+                    result
+                )
+                return
+            }
+
+            print(
+                "💾 Garmin raw response saved:",
+                dataType,
+                calendarDate
+            )
+        }
+    }
+
+    // MARK: - Load Garmin Raw Responses
+
+    static func loadGarminRawResponses(
+        dataType: String,
+        startDate: String,
+        endDate: String
+    ) -> [(
+        dataType: String,
+        endpoint: String,
+        calendarDate: String,
+        fetchedAt: Date,
+        rawJSON: String
+    )] {
+
+        let sql = """
+            SELECT
+                data_type,
+                endpoint,
+                calendar_date,
+                fetched_at,
+                raw_json
+            FROM garmin_raw_responses
+            WHERE data_type = ?
+              AND calendar_date BETWEEN ? AND ?
+            ORDER BY calendar_date ASC, fetched_at ASC;
+            """
+
+        return database.withDatabase { database in
+
+            var responses: [(
+                dataType: String,
+                endpoint: String,
+                calendarDate: String,
+                fetchedAt: Date,
+                rawJSON: String
+            )] = []
+
+            var statement: OpaquePointer?
+
+            guard sqlite3_prepare_v2(
+                database,
+                sql,
+                -1,
+                &statement,
+                nil
+            ) == SQLITE_OK else {
+                print("❌ Failed to prepare Garmin raw response SELECT.")
+                return responses
+            }
+
+            defer {
+                sqlite3_finalize(statement)
+            }
+
+            bindText(
+                statement,
+                index: 1,
+                value: dataType
+            )
+
+            bindText(
+                statement,
+                index: 2,
+                value: startDate
+            )
+
+            bindText(
+                statement,
+                index: 3,
+                value: endDate
+            )
+
+            while sqlite3_step(statement) == SQLITE_ROW {
+
+                guard
+                    let dataTypePointer = sqlite3_column_text(statement, 0),
+                    let endpointPointer = sqlite3_column_text(statement, 1),
+                    let calendarDatePointer = sqlite3_column_text(statement, 2),
+                    let rawJSONPointer = sqlite3_column_text(statement, 4)
+                else {
+                    print("⚠️ Skipping invalid Garmin raw response row.")
+                    continue
+                }
+
+                responses.append((
+                    dataType: String(cString: dataTypePointer),
+                    endpoint: String(cString: endpointPointer),
+                    calendarDate: String(cString: calendarDatePointer),
+                    fetchedAt: Date(
+                        timeIntervalSince1970:
+                            sqlite3_column_double(statement, 3)
+                    ),
+                    rawJSON: String(cString: rawJSONPointer)
+                ))
+            }
+
+            print(
+                "📥 Garmin raw responses loaded:",
+                dataType,
+                startDate,
+                endDate,
+                responses.count
+            )
+
+            return responses
+        } ?? []
+    }
+
+   
+    // MARK: - Garmin Body Battery Raw Samples
+
+    static func saveGarminBodyBatteryRawSamples(
+        _ samples: [GarminBodyBatteryRawSample]
+    ) {
+        guard !samples.isEmpty else {
+            print("⚠️ No Garmin Body Battery samples to save.")
+            return
+        }
+
+        database.withDatabase { database in
+
+            // Bu batch içindeki günleri belirle.
+            let calendarDates = Set(
+                samples.map(\.calendarDate)
+            )
+
+            // Önce aynı günlere ait eski kayıtları temizle.
+            let deleteSQL = """
+                DELETE FROM garmin_body_battery_raw_samples
+                WHERE calendar_date = ?;
+                """
+
+            var deleteStatement: OpaquePointer?
+
+            guard sqlite3_prepare_v2(
+                database,
+                deleteSQL,
+                -1,
+                &deleteStatement,
+                nil
+            ) == SQLITE_OK else {
+                print("❌ Failed to prepare Body Battery DELETE.")
+                return
+            }
+
+            defer {
+                sqlite3_finalize(deleteStatement)
+            }
+
+            for calendarDate in calendarDates {
+                sqlite3_reset(deleteStatement)
+                sqlite3_clear_bindings(deleteStatement)
+
+                bindText(
+                    deleteStatement,
+                    index: 1,
+                    value: calendarDate
+                )
+
+                guard sqlite3_step(deleteStatement) == SQLITE_DONE else {
+                    print(
+                        "❌ Failed to clear Body Battery date:",
+                        calendarDate
+                    )
+                    return
+                }
+            }
+
+            // Güncel raw örnekleri yeniden yaz.
+            let insertSQL = """
+                INSERT INTO garmin_body_battery_raw_samples (
+                    id,
+                    timestamp,
+                    body_battery_level,
+                    event_type,
+                    version,
+                    calendar_date
+                )
+                VALUES (?, ?, ?, ?, ?, ?);
+                """
+
+            var insertStatement: OpaquePointer?
+
+            guard sqlite3_prepare_v2(
+                database,
+                insertSQL,
+                -1,
+                &insertStatement,
+                nil
+            ) == SQLITE_OK else {
+                print("❌ Failed to prepare Body Battery INSERT.")
+                return
+            }
+
+            defer {
+                sqlite3_finalize(insertStatement)
+            }
+
+            for sample in samples {
+                sqlite3_reset(insertStatement)
+                sqlite3_clear_bindings(insertStatement)
+
+                bindText(
+                    insertStatement,
+                    index: 1,
+                    value: sample.id.uuidString
+                )
+
+                bindDate(
+                    insertStatement,
+                    index: 2,
+                    date: sample.timestamp
+                )
+
+                bindInt(
+                    insertStatement,
+                    index: 3,
+                    value: sample.bodyBatteryLevel
+                )
+
+                bindText(
+                    insertStatement,
+                    index: 4,
+                    value: sample.eventType
+                )
+
+                bindInt(
+                    insertStatement,
+                    index: 5,
+                    value: sample.version
+                )
+
+                bindText(
+                    insertStatement,
+                    index: 6,
+                    value: sample.calendarDate
+                )
+
+                guard sqlite3_step(insertStatement) == SQLITE_DONE else {
+                    print(
+                        "❌ Failed to insert Body Battery sample:",
+                        sample.timestamp
+                    )
+                    return
+                }
+            }
+
+            print(
+                "🔋 Garmin Body Battery raw samples saved:",
+                samples.count
+            )
+            print(
+                "📅 Replaced calendar dates:",
+                calendarDates.sorted()
+            )
+        }
+    }
+
+    
+    // MARK: - Load Garmin Body Battery Raw Samples
+
+   static func loadGarminBodyBatteryRawSamples(
+       calendarDate: String
+   ) -> [GarminBodyBatteryRawSample] {
+
+       let sql = """
+           SELECT
+               id,
+               timestamp,
+               body_battery_level,
+               event_type,
+               version,
+               calendar_date
+           FROM garmin_body_battery_raw_samples
+           WHERE calendar_date = ?
+           ORDER BY timestamp ASC;
+           """
+
+       return database.withDatabase { database -> [GarminBodyBatteryRawSample] in
+
+           var samples: [GarminBodyBatteryRawSample] = []
+           var statement: OpaquePointer?
+
+           guard sqlite3_prepare_v2(
+               database,
+               sql,
+               -1,
+               &statement,
+               nil
+           ) == SQLITE_OK else {
+               print("❌ Failed to prepare Body Battery SELECT.")
+               return []
+           }
+
+           defer {
+               sqlite3_finalize(statement)
+           }
+
+           bindText(
+               statement,
+               index: 1,
+               value: calendarDate
+           )
+
+           while sqlite3_step(statement) == SQLITE_ROW {
+
+               guard
+                   let idPointer = sqlite3_column_text(statement, 0),
+                   let eventPointer = sqlite3_column_text(statement, 3),
+                   let datePointer = sqlite3_column_text(statement, 5),
+                   let id = UUID(
+                       uuidString: String(cString: idPointer)
+                   )
+               else {
+                   print("⚠️ Skipping invalid Body Battery database row.")
+                   continue
+               }
+
+               let sample = GarminBodyBatteryRawSample(
+                   id: id,
+                   timestamp: Date(
+                       timeIntervalSince1970:
+                           sqlite3_column_double(statement, 1)
+                   ),
+                   bodyBatteryLevel: Int(
+                       sqlite3_column_int(statement, 2)
+                   ),
+                   eventType: String(cString: eventPointer),
+                   version: Int(
+                       sqlite3_column_int(statement, 4)
+                   ),
+                   calendarDate: String(cString: datePointer)
+               )
+
+               samples.append(sample)
+           }
+
+           print(
+               "📥 Garmin Body Battery raw samples loaded from SQLite:",
+               samples.count
+           )
+
+           return samples
+       } ?? []
+   }
+
+    
     // MARK: - Raw Activity Workouts
 
     static func saveActivityRawWorkouts(
@@ -3489,7 +3934,9 @@ struct PersistenceService {
             "activities",
             "activity_raw_samples",
             "meals",
-            "meal_analysis"
+            "meal_analysis",
+            "garmin_raw_responses",
+            "garmin_body_battery_raw_samples",
         ]
 
         print("")
@@ -3690,7 +4137,9 @@ struct PersistenceService {
             "activities",
             "activity_raw_samples",
             "meals",
-            "meal_analysis"
+            "meal_analysis",
+            "garmin_raw_responses",
+            "garmin_body_battery_raw_samples",
         ]
 
         guard

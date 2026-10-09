@@ -21,7 +21,7 @@ final class DatabaseManager {
         "UmitDietCompanion.sqlite"
 
     private let currentSchemaVersion =
-        7
+        9
 
     // MARK: - Database
 
@@ -632,39 +632,41 @@ final class DatabaseManager {
 
     // MARK: - Schema Migration
 
+    
     private func migrateSchema() -> Bool {
 
-        let version =
-            currentDatabaseSchemaVersion()
+        let version = currentDatabaseSchemaVersion()
 
         if version >= currentSchemaVersion {
             return true
         }
 
         if version < 4 {
-
             guard migrateToVersion4() else {
                 return false
             }
         }
 
         if version < 5 {
-
             guard migrateToVersion5() else {
                 return false
             }
         }
 
         if version < 6 {
-
             guard migrateToVersion6() else {
                 return false
             }
         }
 
-        if version < 7 {
+        if version < 8 {
+            guard migrateToVersion8() else {
+                return false
+            }
+        }
 
-            guard migrateToVersion7() else {
+        if version < 9 {
+            guard migrateToVersion9() else {
                 return false
             }
         }
@@ -817,6 +819,137 @@ final class DatabaseManager {
 
         return true
     }
+    
+    // MARK: - Migration 8
+
+    private func migrateToVersion8() -> Bool {
+
+        print(
+            "🔋 Creating Garmin Body Battery raw storage..."
+        )
+
+        let success =
+            execute(
+                """
+                CREATE TABLE IF NOT EXISTS garmin_body_battery_raw_samples (
+
+                    id TEXT PRIMARY KEY,
+
+                    timestamp REAL NOT NULL,
+
+                    body_battery_level INTEGER NOT NULL,
+
+                    event_type TEXT NOT NULL,
+
+                    version INTEGER NOT NULL,
+
+                    calendar_date TEXT NOT NULL
+
+                );
+                """
+            )
+
+        guard success else {
+
+            print(
+                "❌ Failed to create Garmin Body Battery raw storage."
+            )
+
+            return false
+        }
+
+        let indexSuccess =
+            execute(
+                """
+                CREATE INDEX IF NOT EXISTS
+                idx_garmin_body_battery_raw_timestamp
+                ON garmin_body_battery_raw_samples(timestamp);
+                """
+            )
+
+        guard indexSuccess else {
+
+            print(
+                "❌ Failed to create Garmin Body Battery timestamp index."
+            )
+
+            return false
+        }
+
+        print(
+            "🔋 Garmin Body Battery raw storage created."
+        )
+
+        print(
+            "✅ SQLite schema migrated to version 8"
+        )
+
+        return true
+    }
+    
+    // MARK: - Migration 9
+
+    private func migrateToVersion9() -> Bool {
+
+        print("📡 Creating Garmin raw response storage...")
+
+        let success = execute(
+            """
+            CREATE TABLE IF NOT EXISTS garmin_raw_responses (
+
+                id TEXT PRIMARY KEY,
+
+                data_type TEXT NOT NULL,
+
+                endpoint TEXT NOT NULL,
+
+                calendar_date TEXT NOT NULL,
+
+                fetched_at REAL NOT NULL,
+
+                raw_json TEXT NOT NULL
+
+            );
+            """
+        )
+
+        guard success else {
+            print("❌ Failed to create Garmin raw response storage.")
+            return false
+        }
+
+        let dataTypeIndexSuccess = execute(
+            """
+            CREATE INDEX IF NOT EXISTS
+            idx_garmin_raw_responses_data_type_date
+            ON garmin_raw_responses(data_type, calendar_date);
+            """
+        )
+
+        guard dataTypeIndexSuccess else {
+            print("❌ Failed to create Garmin raw response data type index.")
+            return false
+        }
+
+        let fetchedAtIndexSuccess = execute(
+            """
+            CREATE INDEX IF NOT EXISTS
+            idx_garmin_raw_responses_fetched_at
+            ON garmin_raw_responses(fetched_at);
+            """
+        )
+
+        guard fetchedAtIndexSuccess else {
+            print("❌ Failed to create Garmin raw response timestamp index.")
+            return false
+        }
+
+        print("📡 Garmin raw response storage created.")
+        print("✅ SQLite schema migrated to version 9")
+
+        return true
+    }
+
 
     // MARK: - Current Schema Version
 
