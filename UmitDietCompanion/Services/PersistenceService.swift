@@ -3077,6 +3077,62 @@ struct PersistenceService {
         } ?? []
     }
 
+    static func testGarminRawResponseDeduplication() {
+        let dataType = "deduplication_test"
+        let endpoint = "/test/deduplication"
+        let calendarDate = "2099-01-01"
+
+        let initialJSON = #"{"value":50}"#
+        let changedJSON = #"{"value":51}"#
+
+        print("")
+        print("🧪 Garmin raw response deduplication test started")
+
+        // 1. İlk yanıt kaydedilmeli.
+        saveGarminRawResponse(
+            dataType: dataType,
+            endpoint: endpoint,
+            calendarDate: calendarDate,
+            rawJSON: initialJSON
+        )
+
+        // 2. Aynı yanıt tekrar kaydedilmemeli.
+        saveGarminRawResponse(
+            dataType: dataType,
+            endpoint: endpoint,
+            calendarDate: calendarDate,
+            rawJSON: initialJSON
+        )
+
+        // 3. Değişen yanıt yeni tarihçe kaydı oluşturmalı.
+        saveGarminRawResponse(
+            dataType: dataType,
+            endpoint: endpoint,
+            calendarDate: calendarDate,
+            rawJSON: changedJSON
+        )
+
+        let responses = loadGarminRawResponses(
+            dataType: dataType,
+            startDate: calendarDate,
+            endDate: calendarDate
+        )
+
+        let payloads = responses.map(\.rawJSON)
+        let passed =
+            payloads.count == 2 &&
+            payloads.contains(initialJSON) &&
+            payloads.contains(changedJSON)
+
+        print("🧪 Test records found:", responses.count)
+        print(
+            passed
+                ? "✅ GARMIN RAW RESPONSE DEDUPLICATION TEST PASSED"
+                : "❌ GARMIN RAW RESPONSE DEDUPLICATION TEST FAILED"
+        )
+        print("")
+    }
+
    
     // MARK: - Garmin Body Battery Raw Samples
 

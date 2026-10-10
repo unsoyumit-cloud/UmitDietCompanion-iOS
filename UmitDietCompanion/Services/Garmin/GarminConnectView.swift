@@ -222,7 +222,15 @@ struct GarminConnectView: View {
         status =
         "Testing final Garmin wellness endpoints..."
         
-        let date = "2026-10-08"
+        let testDate = Date()
+
+        let dateFormatter = DateFormatter()
+        dateFormatter.calendar = Calendar(identifier: .gregorian)
+        dateFormatter.locale = Locale(identifier: "en_US_POSIX")
+        dateFormatter.timeZone = Calendar.current.timeZone
+        dateFormatter.dateFormat = "yyyy-MM-dd"
+
+        let date = dateFormatter.string(from: testDate)
         
         Task {
             
@@ -234,10 +242,41 @@ struct GarminConnectView: View {
             print("📅 Date:", date)
             print("")
             
-            // MARK: 9A - HRV
+            
+            // MARK: 9A - Garmin Profile Discovery
+
+            print("")
+            print("-----------------------------------")
+            print("👤 9A - GARMIN PROFILE")
+            print("-----------------------------------")
+
+            await GarminHealthClient.shared.testEndpoint(
+                path: "/userprofile-service/socialProfile"
+            )
+            
+            // MARK: 9B - Garmin Sleep Data Discovery
+
+            print("")
+            print("-----------------------------------")
+            print("😴 9B - GARMIN SLEEP DATA")
+            print("-----------------------------------")
+
+            // Geçici test: profil yanıtında bulunan profileId.
+            // Başarılı olursa sonraki adımda dinamik hale getireceğiz.
+            let garminProfileId = "143223256"
+
+            await GarminHealthClient.shared.testEndpoint(
+                path: "/wellness-service/wellness/dailySleepData/\(garminProfileId)",
+                queryItems: [
+                    URLQueryItem(name: "date", value: date),
+                    URLQueryItem(name: "nonSleepBufferMinutes", value: "60")
+                ]
+            )
+            
+            // MARK: 9C - HRV
             
             print("-----------------------------------")
-            print("❤️ 9A - HRV")
+            print("❤️ 9C - HRV")
             print("-----------------------------------")
             
             await GarminHealthClient.shared.testEndpoint(
@@ -283,11 +322,11 @@ struct GarminConnectView: View {
             
 
             
-            // MARK: 9B - SpO2
+            // MARK: 9D - SpO2
 
             print("")
             print("-----------------------------------")
-            print("💧 9B - SPO2")
+            print("💧 9D - SPO2")
             print("-----------------------------------")
 
             await GarminHealthClient.shared.testEndpoint(
@@ -295,11 +334,11 @@ struct GarminConnectView: View {
                     "/wellness-service/wellness/daily/spo2acclimation/\(date)"
             )
 
-            // MARK: 9C - Respiration
+            // MARK: 9E - Respiration
 
             print("")
             print("-----------------------------------")
-            print("🫁 9C - RESPIRATION")
+            print("🫁 9E - RESPIRATION")
             print("-----------------------------------")
 
             await GarminHealthClient.shared.testEndpoint(
@@ -307,11 +346,11 @@ struct GarminConnectView: View {
                     "/wellness-service/wellness/daily/respiration/\(date)"
             )
             
-            // MARK: 9D - Body Composition / Weight
+            // MARK: 9F - Body Composition / Weight
             
             print("")
             print("-----------------------------------")
-            print("⚖️ 9E - BODY COMPOSITION / WEIGHT")
+            print("⚖️ 9F - BODY COMPOSITION / WEIGHT")
             print("-----------------------------------")
             
             await GarminHealthClient.shared.testEndpoint(
@@ -329,18 +368,18 @@ struct GarminConnectView: View {
                 ]
             )
             
-            // MARK: 9E - Calories / Energy
+            // MARK: 9G - Calories / Energy
             
             print("")
             print("-----------------------------------")
-            print("🔥 9F - CALORIES / ENERGY")
+            print("🔥 9G - CALORIES / ENERGY")
             print("-----------------------------------")
             
             do {
                 
                 try await GarminHealthClient.shared
                     .debugDailySummary(
-                        date: Date()
+                        date: testDate
                     )
                 
             } catch {
@@ -352,86 +391,11 @@ struct GarminConnectView: View {
             }
             
             
-            do {
-                // Testte kullanılan tarih ile API ve SQLite aynı olmalı.
-                let formatter = DateFormatter()
-                formatter.calendar = Calendar(identifier: .gregorian)
-                formatter.locale = Locale(identifier: "en_US_POSIX")
-                formatter.timeZone = Calendar.current.timeZone
-                formatter.dateFormat = "yyyy-MM-dd"
-                
-                guard let bodyBatteryDate = formatter.date(from: date) else {
-                    print("❌ Invalid Body Battery test date:", date)
-                    return
-                }
-                
-                // 1. Garmin API'den raw örnekleri al.
-                let bodyBatterySamples =
-                try await GarminHealthClient.shared
-                    .fetchBodyBatteryRawSamples(
-                        date: bodyBatteryDate
-                    )
-                
-                print("📡 Body Battery samples fetched:", bodyBatterySamples.count)
-                
-                guard !bodyBatterySamples.isEmpty else {
-                    print("❌ No Body Battery samples to persist.")
-                    return
-                }
-                
-                // 2. SQLite'a kaydet.
-                PersistenceService.saveGarminBodyBatteryRawSamples(
-                    bodyBatterySamples
-                )
-                
-                // 3. Aynı günün kayıtlarını SQLite'tan geri oku.
-                let loadedSamples =
-                PersistenceService.loadGarminBodyBatteryRawSamples(
-                    calendarDate: date
-                )
-                
-                print("")
-                print("===================================")
-                print("🔍 BODY BATTERY SQLITE VERIFICATION")
-                print("===================================")
-                print("Expected samples:", bodyBatterySamples.count)
-                print("Loaded samples:", loadedSamples.count)
-                
-                // 4. Kayıt sayısını ve ilk/son kayıt kimliklerini karşılaştır.
-                let countMatches =
-                loadedSamples.count == bodyBatterySamples.count
-                
-                let firstMatches =
-                bodyBatterySamples.first?.id == loadedSamples.first?.id
-                
-                let lastMatches =
-                bodyBatterySamples.last?.id == loadedSamples.last?.id
-                
-                print("Count matches:", countMatches)
-                print("First sample matches:", firstMatches)
-                print("Last sample matches:", lastMatches)
-                
-                if let first = loadedSamples.first {
-                    print("DB FIRST — Timestamp:", first.timestamp)
-                    print("DB FIRST — Level:", first.bodyBatteryLevel)
-                }
-                
-                if let last = loadedSamples.last {
-                    print("DB LAST — Timestamp:", last.timestamp)
-                    print("DB LAST — Level:", last.bodyBatteryLevel)
-                }
-                
-                if countMatches && firstMatches == true && lastMatches == true {
-                    print("✅ BODY BATTERY SQLITE VERIFICATION PASSED")
-                } else {
-                    print("❌ BODY BATTERY SQLITE VERIFICATION FAILED")
-                }
-                
-                print("===================================")
-                
-            } catch {
-                print("❌ Garmin Body Battery persistence test failed:", error)
-            }
+            // Body Battery empty-response investigation is intentionally deferred.
+            // Run the missing L1 endpoint calls from the Discovery coverage matrix.
+            await GarminHealthClient.shared
+                .testMissingL1DiscoveryEndpoints(date: testDate)
+
             
             print("")
             print("===================================")
@@ -440,7 +404,7 @@ struct GarminConnectView: View {
             
             await MainActor.run {
                 status =
-                "Garmin API and Body Battery SQLite test completed."
+                "Garmin L1 endpoint discovery calls completed. Check Xcode console for HTTP status and raw responses."
                 
                 isTestingAPI = false
             }

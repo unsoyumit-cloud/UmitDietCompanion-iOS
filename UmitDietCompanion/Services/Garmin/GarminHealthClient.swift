@@ -93,15 +93,13 @@ final class GarminHealthClient {
         if let rawJSON = String(data: data, encoding: .utf8) {
 
             
-            let calendarDate =
-                queryItems.first(where: {
-                    $0.name == "calendarDate"
-                })?.value
-                ?? queryItems.first(where: {
-                    $0.name == "startDate"
-                })?.value
-                ?? path.split(separator: "/").last.map(String.init)
-                ?? Self.dateFormatter.string(from: Date())
+            
+            
+            let calendarDate = resolvedPersistenceDate(
+                path: path,
+                queryItems: queryItems
+            )
+
 
 
             PersistenceService.saveGarminRawResponse(
@@ -122,41 +120,269 @@ final class GarminHealthClient {
 
     /// Geçici endpoint discovery/test fonksiyonu.
     /// Endpoint'in HTTP status ve raw JSON response'unu görmek için kullanılır.
+    
+    /// Ortak endpoint testi:
+    /// 1. API çağrısı ve ham yanıt
+    /// 2. JSON geçerliliği ve boş yanıt ayrımı
+    /// 3. Tarih biliniyorsa SQLite readback doğrulaması
+    
+    enum EndpointHistoryStrategy {
+        case none
+        case queryDate(String)
+        case pathDate
+        case dateRange(start: String, end: String)
+    }
+
+    /// Endpoint'i bugün test eder; zamana bağlı endpoint'lerde
+    /// son 7 günlük kapsamı da ayrıca doğrular.
     func testEndpoint(
         path: String,
-        queryItems: [URLQueryItem] = []
+        queryItems: [URLQueryItem] = [],
+        historyStrategy: EndpointHistoryStrategy = .none
     ) async {
-        print("🧪 Garmin endpoint test starting...")
-        print("🌐 Path:", path)
+        let today = Self.dateFormatter.string(from: Date())
 
-        do {
-            let data =
-                try await get(
-                    path: path,
-                    queryItems: queryItems
+        print("")
+        print("===================================")
+        print("🧪 GARMIN STANDARD ENDPOINT TEST")
+        print("===================================")
+        print("🌐 Endpoint:", path)
+        print("📅 Test date:", today)
+
+        // 1. Güncel çağrı: her endpoint için zorunlu.
+        await runEndpointCheck(
+            path: path,
+            queryItems: queryItems,
+            label: "CURRENT",
+            expectedDate: resolvedPersistenceDate(
+                path: path,
+                queryItems: queryItems
+            )
+        )
+
+        // 2. Zamana bağlı endpoint'ler için geçmiş kapsamı.
+        switch historyStrategy {
+        case .none:
+            print("⏭️ HISTORY TEST: Not applicable")
+
+        case .queryDate(let parameterName):
+            for offset in stride(from: -6, through: -1, by: 1) {
+                guard let date = Calendar.current.date(
+                    byAdding: .day,
+                    value: offset,
+                    to: Date()
+                ) else {
+                    continue
+                }
+
+                let dateString = Self.dateFormatter.string(from: date)
+                let historicalItems = replacingQueryValue(
+                    queryItems,
+                    name: parameterName,
+                    value: dateString
                 )
 
-            print("📦 RAW RESPONSE:")
-
-            if let response =
-                String(
-                    data: data,
-                    encoding: .utf8
-                ) {
-                print(response)
-            } else {
-                print(
-                    "<Response UTF-8 olarak okunamadı>"
+                await runEndpointCheck(
+                    path: path,
+                    queryItems: historicalItems,
+                    label: "HISTORY \(dateString)",
+                    expectedDate: dateString
                 )
             }
 
-        } catch {
-            print(
-                "❌ ENDPOINT TEST ERROR:",
-                error
+        case .pathDate:
+            let components = path.split(separator: "/")
+            guard !components.isEmpty else {
+                print("❌ HISTORY TEST: Invalid endpoint path")
+                return
+            }
+
+            let basePath = "/" + components.dropLast().joined(separator: "/")
+
+            for offset in stride(from: -6, through: -1, by: 1) {
+                guard let date = Calendar.current.date(
+                    byAdding: .day,
+                    value: offset,
+                    to: Date()
+                ) else {
+                    continue
+                }
+
+                let dateString = Self.dateFormatter.string(from: date)
+
+                await runEndpointCheck(
+                    path: "\(basePath)/\(dateString)",
+                    queryItems: queryItems,
+                    label: "HISTORY \(dateString)",
+                    expectedDate: dateString
+                )
+            }
+
+        case .dateRange(let startName, let endName):
+            guard
+                let startDate = Calendar.current.date(
+                    byAdding: .day,
+                    value: -6,
+                    to: Date()
+                )
+            else {
+                print("❌ HISTORY TEST: Could not calculate date range")
+                return
+            }
+
+            let startString = Self.dateFormatter.string(from: startDate)
+
+            let endString = today
+
+            var rangeItems = replacingQueryValue(
+                queryItems,
+                name: startName,
+                value: startString
+            )
+
+            rangeItems = replacingQueryValue(
+                rangeItems,
+                name: endName,
+                value: endString
+            )
+
+            await runEndpointCheck(
+                path: path,
+                queryItems: rangeItems,
+                label: "HISTORY RANGE \(startString) → \(endString)",
+                expectedDate: startString
             )
         }
+
+        print("===================================")
+        print("🏁 GARMIN STANDARD ENDPOINT TEST FINISHED")
+        print("===================================")
     }
+
+    private func runEndpointCheck(
+        path: String,
+        queryItems: [URLQueryItem],
+        label: String,
+        expectedDate: String
+    ) async {
+        print("")
+        print("-----------------------------------")
+        print("🔎 TEST:", label)
+        print("🌐 Endpoint:", path)
+        print("📅 Expected SQLite date:", expectedDate)
+
+        do {
+            let data = try await get(
+                path: path,
+                queryItems: queryItems
+            )
+
+            guard let rawJSON = String(data: data, encoding: .utf8) else {
+                print("❌ RESULT: RESPONSE IS NOT UTF-8")
+                return
+            }
+
+            guard let jsonObject = try? JSONSerialization.jsonObject(
+                with: data,
+                options: [.fragmentsAllowed]
+            ) else {
+                print("❌ RESULT: INVALID JSON")
+                print("📦 Response:", rawJSON)
+                return
+            }
+
+            let isEmpty: Bool
+            if let array = jsonObject as? [Any] {
+                isEmpty = array.isEmpty
+            } else if let dictionary = jsonObject as? [String: Any] {
+                isEmpty = dictionary.isEmpty
+            } else {
+                isEmpty = false
+            }
+
+            print("📡 RESULT:", isEmpty
+                ? "VALID JSON, EMPTY PAYLOAD"
+                : "VALID JSON, NON-EMPTY PAYLOAD")
+            print("📄 JSON length:", rawJSON.count)
+
+            let records = PersistenceService.loadGarminRawResponses(
+                dataType: path,
+                startDate: expectedDate,
+                endDate: expectedDate
+            )
+
+            let matches = records.filter { record in
+                record.endpoint == path &&
+                record.calendarDate == expectedDate &&
+                record.rawJSON == rawJSON &&
+                !record.rawJSON.isEmpty &&
+                (try? JSONSerialization.jsonObject(
+                    with: Data(record.rawJSON.utf8),
+                    options: [.fragmentsAllowed]
+                )) != nil
+            }
+
+            print("📦 SQLite records:", records.count)
+            print("✅ Exact SQLite matches:", matches.count)
+
+            if matches.isEmpty {
+                print("❌ SQLITE READBACK: FAILED")
+            } else {
+                print("✅ SQLITE READBACK: PASSED")
+            }
+        } catch {
+            print("❌ RESULT: HTTP / REQUEST ERROR")
+            print("❌ ERROR:", error)
+        }
+    }
+
+    private func replacingQueryValue(
+        _ queryItems: [URLQueryItem],
+        name: String,
+        value: String
+    ) -> [URLQueryItem] {
+        var result = queryItems
+        if let index = result.firstIndex(where: { $0.name == name }) {
+            result[index] = URLQueryItem(name: name, value: value)
+        } else {
+            result.append(URLQueryItem(name: name, value: value))
+        }
+        return result
+    }
+
+    private func resolvedPersistenceDate(
+        path: String,
+        queryItems: [URLQueryItem]
+    ) -> String {
+        let queryDate = ["calendarDate", "date", "startDate"]
+            .compactMap { name in
+                queryItems.first(where: { $0.name == name })?.value
+            }
+            .first(where: isCalendarDate)
+
+        if let queryDate {
+            return queryDate
+        }
+
+        if let lastComponent = path.split(separator: "/").last.map(String.init),
+           isCalendarDate(lastComponent) {
+            return lastComponent
+        }
+
+        return Self.dateFormatter.string(from: Date())
+    }
+
+    private func isCalendarDate(_ value: String) -> Bool {
+        guard value.range(
+            of: #"^\d{4}-\d{2}-\d{2}$"#,
+            options: .regularExpression
+        ) != nil else {
+            return false
+        }
+
+        return Self.dateFormatter.date(from: value) != nil
+    }
+
 
     /// İlk gerçek Garmin endpoint testi: Daily Summary.
     /// Response şimdilik raw JSON olarak bırakılıyor; gerçek response shape'ini
@@ -252,6 +478,13 @@ final class GarminHealthClient {
             Self.dateFormatter.string(
                 from: date
             )
+        
+        print("🧪 BODY BATTERY DATE DIAGNOSTIC")
+        print("Input Date: \(date)")
+        print("Formatted Date: \(dateString)")
+        print("Formatter TimeZone: \(Self.dateFormatter.timeZone.identifier)")
+        print("Formatter Calendar: \(Self.dateFormatter.calendar.identifier)")
+        print("🧪 END BODY BATTERY DATE DIAGNOSTIC")
 
         let data =
             try await get(
@@ -259,6 +492,19 @@ final class GarminHealthClient {
                     "/wellness-service/wellness/bodyBattery/events/\(dateString)"
             )
 
+        // TEMP DEBUG: 9 Ekim Garmin ham yanıtını incele.
+        if dateString == "2026-10-09" {
+            print("")
+            print("🧪 BODY BATTERY RAW RESPONSE DEBUG — 2026-10-09")
+            print("📄 Response byte count:", data.count)
+            print(
+                String(data: data, encoding: .utf8)
+                ?? "<UTF-8 decode failed>"
+            )
+            print("🧪 END BODY BATTERY RAW RESPONSE DEBUG")
+            print("")
+        }
+        
         guard
             let rootArray =
                 try JSONSerialization.jsonObject(
@@ -466,6 +712,198 @@ final class GarminHealthClient {
         }
 
         return samples
+    }
+
+
+    /// L1 discovery calls missing from the current iOS test sequence.
+    /// Successful raw responses are persisted by get(); no normalization is performed.
+    func testMissingL1DiscoveryEndpoints(date: Date = Date()) async {
+        let dateString = Self.dateFormatter.string(from: date)
+        guard let startDate = Calendar.current.date(byAdding: .day, value: -29, to: date) else {
+            print("Could not calculate L1 discovery date range.")
+            return
+        }
+        let startString = Self.dateFormatter.string(from: startDate)
+
+        var displayName: String?
+        do {
+            let profileData = try await get(path: "/userprofile-service/socialProfile")
+            if let profile = try? JSONSerialization.jsonObject(with: profileData) as? [String: Any] {
+                displayName = (profile["displayName"] as? String) ?? (profile["userName"] as? String)
+            }
+            if displayName == nil {
+                print("⚠️ Garmin socialProfile did not expose displayName/userName.")
+            }
+        } catch {
+            print("❌ Garmin profile lookup for displayName failed:", error)
+        }
+
+        // MARK: Heart Rate / Resting Heart Rate / Calories
+        print("\n===================================")
+        print("🧪 L1 DISCOVERY — HEART RATE / CALORIES")
+        print("===================================")
+        if let displayName {
+            await testEndpoint(
+                path: "/wellness-service/wellness/dailyHeartRate/\(displayName)",
+                queryItems: [URLQueryItem(name: "date", value: dateString)]
+            )
+            await testEndpoint(
+                path: "/userstats-service/wellness/daily/\(displayName)",
+                queryItems: [
+                    URLQueryItem(name: "fromDate", value: dateString),
+                    URLQueryItem(name: "untilDate", value: dateString),
+                    URLQueryItem(name: "metricId", value: "60")
+                ]
+            )
+            await testEndpoint(
+                path: "/userstats-service/wellness/daily/\(displayName)",
+                queryItems: [
+                    URLQueryItem(name: "fromDate", value: startString),
+                    URLQueryItem(name: "untilDate", value: dateString),
+                    URLQueryItem(name: "metricId", value: "60")
+                ]
+            )
+            await testEndpoint(
+                path: "/userstats-service/wellness/daily/\(displayName)",
+                queryItems: [
+                    URLQueryItem(name: "fromDate", value: startString),
+                    URLQueryItem(name: "untilDate", value: dateString),
+                    URLQueryItem(name: "metricId", value: "22"),
+                    URLQueryItem(name: "metricId", value: "23")
+                ]
+            )
+        } else {
+            print("⚠️ Heart-rate and calories history calls skipped because displayName is unavailable.")
+        }
+
+
+        print("\n===================================")
+        print("🧪 L1 DISCOVERY — STRESS")
+        print("===================================")
+        await testEndpoint(path: "/wellness-service/wellness/dailyStress/\(dateString)")
+        await testEndpoint(path: "/usersummary-service/stats/stress/weekly/\(dateString)/52")
+
+        print("\n===================================")
+        print("🧪 L1 DISCOVERY — STEPS / FLOORS / INTENSITY")
+        print("===================================")
+        await testEndpoint(path: "/usersummary-service/stats/steps/daily/\(dateString)/\(dateString)")
+        await testEndpoint(path: "/usersummary-service/stats/steps/daily/\(startString)/\(dateString)")
+        if let displayName {
+            await testEndpoint(
+                path: "/wellness-service/wellness/dailySummaryChart/\(displayName)",
+                queryItems: [URLQueryItem(name: "date", value: dateString)]
+            )
+        } else {
+            print("⚠️ Intraday steps skipped: displayName was not found in socialProfile.")
+        }
+
+        await testEndpoint(path: "/usersummary-service/stats/steps/weekly/\(dateString)/52")
+        await testEndpoint(path: "/wellness-service/wellness/floorsChartData/daily/\(dateString)")
+        await testEndpoint(path: "/wellness-service/wellness/daily/im/\(dateString)")
+        await testEndpoint(
+            path: "/usersummary-service/stats/im/weekly/\(startString)/\(dateString)"
+        )
+
+        print("\n===================================")
+        print("🧪 L1 DISCOVERY — ACTIVITIES / WORKOUTS")
+        print("===================================")
+        await testEndpoint(
+            path: "/activitylist-service/activities/search/activities",
+            queryItems: [
+                URLQueryItem(name: "start", value: "0"),
+                URLQueryItem(name: "limit", value: "20"),
+                URLQueryItem(name: "startDate", value: startString),
+                URLQueryItem(name: "endDate", value: dateString)
+            ]
+        )
+        await testEndpoint(
+            path: "/activitylist-service/activities/search/activities",
+            queryItems: [
+                URLQueryItem(name: "start", value: "0"),
+                URLQueryItem(name: "limit", value: "20"),
+                URLQueryItem(name: "startDate", value: dateString),
+                URLQueryItem(name: "endDate", value: dateString)
+            ]
+        )
+        await testEndpoint(
+            path: "/activitylist-service/activities/search/activities",
+            queryItems: [
+                URLQueryItem(name: "start", value: "0"),
+                URLQueryItem(name: "limit", value: "1")
+            ]
+        )
+        await testEndpoint(path: "/activity-service/activity/activityTypes")
+        await testEndpoint(
+            path: "/workout-service/workouts",
+            queryItems: [
+                URLQueryItem(name: "start", value: "0"),
+                URLQueryItem(name: "limit", value: "100")
+            ]
+        )
+
+        print("\n===================================")
+        print("🧪 L1 DISCOVERY — TRAINING")
+        print("===================================")
+        await testEndpoint(path: "/metrics-service/metrics/trainingreadiness/\(dateString)")
+        await testEndpoint(path: "/metrics-service/metrics/trainingloadbalance/latest/\(dateString)")
+        await testEndpoint(path: "/metrics-service/metrics/trainingstatus/daily/\(dateString)")
+        await testEndpoint(
+            path: "/metrics-service/metrics/trainingstatus/aggregated/\(dateString)"
+        )
+        await testEndpoint(
+            path: "/metrics-service/metrics/endurancescore/stats",
+            queryItems: [
+                URLQueryItem(name: "startDate", value: startString),
+                URLQueryItem(name: "endDate", value: dateString),
+                URLQueryItem(name: "aggregation", value: "weekly")
+            ]
+        )
+        await testEndpoint(
+            path: "/fitnessstats-service/activity/all",
+            queryItems: [
+                URLQueryItem(name: "startDate", value: startString),
+                URLQueryItem(name: "endDate", value: dateString),
+                URLQueryItem(name: "metric", value: "activityTrainingLoad"),
+                URLQueryItem(name: "metric", value: "trainingEffectLabel"),
+                URLQueryItem(name: "metric", value: "trainingEffectLabelSrvrCalc")
+            ]
+        )
+        await testEndpoint(
+            path: "/metrics-service/metrics/hillscore/stats",
+            queryItems: [
+                URLQueryItem(name: "startDate", value: startString),
+                URLQueryItem(name: "endDate", value: dateString),
+                URLQueryItem(name: "aggregation", value: "daily")
+            ]
+        )
+
+        print("\n===================================")
+        print("🧪 L1 DISCOVERY — VO2 / FITNESS AGE")
+        print("===================================")
+        await testEndpoint(path: "/metrics-service/metrics/maxmet/daily/\(dateString)/\(dateString)")
+        await testEndpoint(path: "/metrics-service/metrics/maxmet/daily/\(startString)/\(dateString)")
+        await testEndpoint(path: "/fitnessage-service/fitnessage/\(dateString)")
+
+        print("\n===================================")
+        print("🧪 L1 DISCOVERY — HYDRATION")
+        print("===================================")
+        await testEndpoint(path: "/usersummary-service/usersummary/hydration/daily/\(dateString)")
+        await testEndpoint(path: "/userprofile-service/userprofile/user-settings")
+        await testEndpoint(path: "/userprofile-service/userprofile/settings")
+
+        print("\n===================================")
+        print("🧪 L1 DISCOVERY — DEVICES")
+        print("===================================")
+        await testEndpoint(path: "/device-service/deviceregistration/devices")
+        await testEndpoint(path: "/web-gateway/device-info/primary-training-device")
+        await testEndpoint(path: "/device-service/deviceservice/mylastused")
+        await testEndpoint(path: "/device-service/deviceservice/device-info/settings/3605244570")
+        await testEndpoint(
+            path: "/web-gateway/solar/3605244570/\(startString)/\(dateString)",
+            queryItems: [URLQueryItem(name: "singleDayView", value: "false")]
+        )
+
+        print("\n🏁 MISSING L1 DISCOVERY CALLS FINISHED")
     }
 
     private static let dateFormatter: DateFormatter = {
