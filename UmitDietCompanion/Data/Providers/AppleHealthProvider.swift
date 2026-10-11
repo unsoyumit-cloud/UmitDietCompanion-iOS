@@ -5,6 +5,7 @@
 
 import Foundation
 import HealthKit
+import CoreLocation
 
 /// Reads health data from Apple Health (HealthKit)
 /// and converts it into normalized application models.
@@ -354,6 +355,277 @@ final class AppleHealthProvider: HealthDataProvider {
             weight:
                 weight
         )
+    }
+
+
+    // MARK: - Historical L1 Collection
+
+    /// Collects all currently supported HealthKit L1 raw data for [startDate, endDate).
+    /// Quantity/category samples keep their HealthKit UUID, timestamps, source and metadata.
+    /// Workout routes are persisted to the existing route table because the historical
+    /// result model intentionally contains only samples and workout summaries.
+    func fetchHistoricalRawData(
+        from startDate: Date,
+        to endDate: Date
+    ) async throws -> AppleHealthHistoricalRawData {
+
+        guard startDate < endDate else {
+            return AppleHealthHistoricalRawData(
+                samples: [], workouts: [], queriedFrom: startDate,
+                queriedTo: endDate, fetchedAt: Date()
+            )
+        }
+
+        try await healthKit.requestAuthorization()
+
+        async let activitySamples = healthKit.getActivityRawSamples(
+            from: startDate, to: endDate
+        )
+        async let heartSamples = healthKit.getHeartRawSamples(
+            from: startDate, to: endDate
+        )
+        async let workouts = healthKit.getRawWorkouts(
+            from: startDate, to: endDate
+        )
+        async let additionalSamples = fetchAdditionalQuantitySamples(
+            from: startDate, to: endDate
+        )
+        async let sleepSamples = fetchRawSleepSamples(
+            from: startDate, to: endDate
+        )
+        async let routePoints = fetchHistoricalWorkoutRoutePoints(
+            from: startDate, to: endDate
+        )
+
+        let (activity, heart, rawWorkouts, additional, sleep, routes) = try await (
+            activitySamples, heartSamples, workouts,
+            additionalSamples, sleepSamples, routePoints
+        )
+
+        var byID: [UUID: ActivityRawSample] = [:]
+        for sample in activity + heart + additional + sleep {
+            byID[sample.id] = sample
+        }
+
+        // Existing persistence schema supports historical route points.
+        PersistenceService.saveActivityRawRoutePoints(routes)
+        print("🍎 Historical L1: additional quantity samples=\(additional.count), sleep samples=\(sleep.count), workout route points=\(routes.count)")
+
+        return AppleHealthHistoricalRawData(
+            samples: byID.values.sorted { $0.startDate < $1.startDate },
+            workouts: rawWorkouts,
+            queriedFrom: startDate,
+            queriedTo: endDate,
+            fetchedAt: Date()
+        )
+    }
+
+    // MARK: - Additional Historical Quantity Samples
+
+    private func fetchAdditionalQuantitySamples(
+        from startDate: Date,
+        to endDate: Date
+    ) async throws -> [ActivityRawSample] {
+        let store = HKHealthStore()
+        let predicate = HKQuery.predicateForSamples(
+            withStart: startDate, end: endDate, options: .strictStartDate
+        )
+
+        var identifiers: [HKQuantityTypeIdentifier] = [
+            .oxygenSaturation,
+            .respiratoryRate,
+            .bodyMass,
+            .bodyFatPercentage,
+            .leanBodyMass,
+            .waistCircumference
+        ]
+        if #available(iOS 16.0, *) {
+            identifiers.append(.appleSleepingWristTemperature)
+        }
+
+        var result: [ActivityRawSample] = []
+        for identifier in identifiers {
+            guard let type = HKObjectType.quantityType(forIdentifier: identifier) else {
+                continue
+            }
+            let unit: HKUnit
+            switch identifier {
+            case .oxygenSaturation, .bodyFatPercentage:
+                unit = .percent()
+            case .respiratoryRate:
+                unit = .count().unitDivided(by: .minute())
+            case .bodyMass, .leanBodyMass:
+                unit = .gramUnit(with: .kilo)
+            case .waistCircumference:
+                unit = .meterUnit(with: .centi)
+            default:
+                if #available(iOS 16.0, *), identifier == .appleSleepingWristTemperature {
+                    unit = .degreeCelsius()
+                } else {
+                    continue
+                }
+            }
+
+            let samples: [HKQuantitySample] = try await withCheckedThrowingContinuation { continuation in
+                let query = HKSampleQuery(
+                    sampleType: type, predicate: predicate,
+                    limit: HKObjectQueryNoLimit,
+                    sortDescriptors: [NSSortDescriptor(key: HKSampleSortIdentifierStartDate, ascending: true)]
+                ) { _, samples, error in
+                    if let error {
+                        let nsError = error as NSError
+                        if nsError.domain == HKError.errorDomain && nsError.code == HKError.Code.errorNoData.rawValue {
+                            continuation.resume(returning: [])
+                        } else {
+                            continuation.resume(throwing: error)
+                        }
+                        return
+                    }
+                    continuation.resume(returning: samples as? [HKQuantitySample] ?? [])
+                }
+                store.execute(query)
+            }
+
+            result.append(contentsOf: samples.map { sample in
+                ActivityRawSample(
+                    id: sample.uuid,
+                    metricType: sample.quantityType.identifier,
+                    value: sample.quantity.doubleValue(for: unit),
+                    unit: unit.unitString,
+                    startDate: sample.startDate,
+                    endDate: sample.endDate,
+                    sourceName: sample.sourceRevision.source.name,
+                    sourceBundleIdentifier: sample.sourceRevision.source.bundleIdentifier,
+                    metadataJSON: Self.metadataJSON(sample.metadata)
+                )
+            })
+        }
+        return result
+    }
+
+    // MARK: - Historical Raw Sleep Categories
+
+    private func fetchRawSleepSamples(
+        from startDate: Date,
+        to endDate: Date
+    ) async throws -> [ActivityRawSample] {
+        let store = HKHealthStore()
+        guard let type = HKObjectType.categoryType(forIdentifier: .sleepAnalysis) else {
+            return []
+        }
+        let predicate = HKQuery.predicateForSamples(
+            withStart: startDate, end: endDate, options: .strictStartDate
+        )
+        let samples: [HKCategorySample] = try await withCheckedThrowingContinuation { continuation in
+            let query = HKSampleQuery(
+                sampleType: type, predicate: predicate,
+                limit: HKObjectQueryNoLimit,
+                sortDescriptors: [NSSortDescriptor(key: HKSampleSortIdentifierStartDate, ascending: true)]
+            ) { _, samples, error in
+                if let error {
+                    let nsError = error as NSError
+                    if nsError.domain == HKError.errorDomain && nsError.code == HKError.Code.errorNoData.rawValue {
+                        continuation.resume(returning: [])
+                    } else {
+                        continuation.resume(throwing: error)
+                    }
+                    return
+                }
+                continuation.resume(returning: samples as? [HKCategorySample] ?? [])
+            }
+            store.execute(query)
+        }
+
+        return samples.map { sample in
+            ActivityRawSample(
+                id: sample.uuid,
+                metricType: HKCategoryTypeIdentifier.sleepAnalysis.rawValue,
+                value: Double(sample.value),
+                unit: "HKCategoryValueSleepAnalysis",
+                startDate: sample.startDate,
+                endDate: sample.endDate,
+                sourceName: sample.sourceRevision.source.name,
+                sourceBundleIdentifier: sample.sourceRevision.source.bundleIdentifier,
+                metadataJSON: Self.metadataJSON(sample.metadata)
+            )
+        }
+    }
+
+    // MARK: - Historical Workout Route Points
+
+    private func fetchHistoricalWorkoutRoutePoints(
+        from startDate: Date,
+        to endDate: Date
+    ) async throws -> [ActivityRawRoutePoint] {
+        let store = HKHealthStore()
+        let predicate = HKQuery.predicateForSamples(
+            withStart: startDate, end: endDate, options: .strictStartDate
+        )
+        let workouts: [HKWorkout] = try await withCheckedThrowingContinuation { continuation in
+            let query = HKSampleQuery(
+                sampleType: HKObjectType.workoutType(), predicate: predicate,
+                limit: HKObjectQueryNoLimit,
+                sortDescriptors: [NSSortDescriptor(key: HKSampleSortIdentifierStartDate, ascending: true)]
+            ) { _, samples, error in
+                if let error { continuation.resume(throwing: error); return }
+                continuation.resume(returning: samples as? [HKWorkout] ?? [])
+            }
+            store.execute(query)
+        }
+
+        var allPoints: [ActivityRawRoutePoint] = []
+        for workout in workouts {
+            let routePredicate = HKQuery.predicateForObjects(from: workout)
+            let routes: [HKWorkoutRoute] = try await withCheckedThrowingContinuation { continuation in
+                let query = HKSampleQuery(
+                    sampleType: HKSeriesType.workoutRoute(), predicate: routePredicate,
+                    limit: HKObjectQueryNoLimit, sortDescriptors: nil
+                ) { _, samples, error in
+                    if let error { continuation.resume(throwing: error); return }
+                    continuation.resume(returning: samples as? [HKWorkoutRoute] ?? [])
+                }
+                store.execute(query)
+            }
+
+            for route in routes {
+                let points: [ActivityRawRoutePoint] = try await withCheckedThrowingContinuation { continuation in
+                    var collected: [ActivityRawRoutePoint] = []
+                    let query = HKWorkoutRouteQuery(route: route) { query, locations, done, error in
+                        if let error {
+                            store.stop(query)
+                            continuation.resume(throwing: error)
+                            return
+                        }
+                        if let locations {
+                            collected.append(contentsOf: locations.map { location in
+                                ActivityRawRoutePoint(
+                                    workoutID: workout.uuid,
+                                    timestamp: location.timestamp,
+                                    latitude: location.coordinate.latitude,
+                                    longitude: location.coordinate.longitude,
+                                    altitude: location.altitude,
+                                    speed: location.speed >= 0 ? location.speed : nil,
+                                    course: location.course >= 0 ? location.course : nil,
+                                    horizontalAccuracy: location.horizontalAccuracy >= 0 ? location.horizontalAccuracy : nil,
+                                    verticalAccuracy: location.verticalAccuracy >= 0 ? location.verticalAccuracy : nil
+                                )
+                            })
+                        }
+                        if done { continuation.resume(returning: collected) }
+                    }
+                    store.execute(query)
+                }
+                allPoints.append(contentsOf: points)
+            }
+        }
+        return allPoints
+    }
+
+    private static func metadataJSON(_ metadata: [String: Any]?) -> String? {
+        guard let metadata, JSONSerialization.isValidJSONObject(metadata),
+              let data = try? JSONSerialization.data(withJSONObject: metadata),
+              let string = String(data: data, encoding: .utf8) else { return nil }
+        return string
     }
 
     // MARK: - Today's Raw Activity Samples

@@ -177,6 +177,62 @@ final class HealthStore {
         }
     }
 
+    /// Explicit historical L1 import. Call manually during development or from
+    /// a dedicated settings action; it is intentionally not part of dashboard refresh.
+    func backfillAppleHealthHistory(days: Int = 28) async throws {
+        guard days > 0 else { return }
+
+        let perfID = String(UUID().uuidString.prefix(6))
+        let totalStart = Date()
+        print("⏱️ [PERF \(perfID)] L1 BACKFILL START days=\(days) at=\(totalStart)")
+
+        let calendar = Calendar.current
+        let end = Date()
+        guard let start = calendar.date(byAdding: .day, value: -days, to: end) else {
+            print("⚠️ [PERF \(perfID)] Could not calculate backfill start date")
+            return
+        }
+
+        let fetchStart = Date()
+        print("⏱️ [PERF \(perfID)] L1 fetchHistoricalRawData START")
+        let result = try await appleHealthProvider.fetchHistoricalRawData(
+            from: start,
+            to: end
+        )
+        print("⏱️ [PERF \(perfID)] L1 fetchHistoricalRawData END elapsed=\(String(format: "%.2f", Date().timeIntervalSince(fetchStart)))s samples=\(result.samples.count) workouts=\(result.workouts.count)")
+
+        // Persist first, then validate. Validating before save creates false missing-ID reports.
+        let saveStart = Date()
+        print("⏱️ [PERF \(perfID)] L1 saveRawSamples START")
+        PersistenceService.saveRawSamples(result.samples)
+        print("⏱️ [PERF \(perfID)] L1 saveRawSamples END elapsed=\(String(format: "%.2f", Date().timeIntervalSince(saveStart)))s")
+
+        let validationStart = Date()
+        print("⏱️ [PERF \(perfID)] L1 validateRawSamplePersistence START")
+        PersistenceService.validateRawSamplePersistence(result.samples)
+        print("⏱️ [PERF \(perfID)] L1 validateRawSamplePersistence END elapsed=\(String(format: "%.2f", Date().timeIntervalSince(validationStart)))s")
+
+        let workoutsStart = Date()
+        PersistenceService.saveActivityRawWorkouts(result.workouts)
+        print("⏱️ [PERF \(perfID)] L1 saveWorkouts END elapsed=\(String(format: "%.2f", Date().timeIntervalSince(workoutsStart)))s")
+
+        let reportStart = Date()
+        PersistenceService.printAppleHealthCoverageReport(
+            fetchedSamples: result.samples
+        )
+        print("⏱️ [PERF \(perfID)] L1 coverageReport END elapsed=\(String(format: "%.2f", Date().timeIntervalSince(reportStart)))s")
+        PersistenceService.printDatabaseStatus()
+
+        print("🍎 Apple Health historical L1 import finished")
+        print("Range: \(result.queriedFrom) → \(result.queriedTo)")
+        print("Raw samples returned: \(result.samples.count)")
+        print("Raw workouts returned: \(result.workouts.count)")
+        print("Fetched at: \(result.fetchedAt)")
+        print("⏱️ [PERF \(perfID)] L1 BACKFILL END total=\(String(format: "%.2f", Date().timeIntervalSince(totalStart)))s")
+    }
+    
+    
+
     // MARK: - Current Values
 
     var waterAmount:
@@ -425,8 +481,13 @@ final class HealthStore {
     @MainActor
     func refresh() async {
 
-        waterAmount =
-            PersistenceService.loadWater()
+        let perfID = String(UUID().uuidString.prefix(6))
+        let refreshStart = Date()
+        print("⏱️ [PERF \(perfID)] HealthStore.refresh START at=\(refreshStart)")
+
+        let waterStart = Date()
+        waterAmount = PersistenceService.loadWater()
+        print("⏱️ [PERF \(perfID)] loadWater END elapsed=\(String(format: "%.3f", Date().timeIntervalSince(waterStart)))s")
 
         // =================================================
         // MARK: - Activities
@@ -441,8 +502,12 @@ final class HealthStore {
         // activitiesData
         //
 
+        let activitiesStart = Date()
+        print("⏱️ [PERF \(perfID)] Activity refresh START")
         do {
 
+            let parallelFetchStart = Date()
+            print("⏱️ [PERF \(perfID)] todayActivities + 7-day history/workouts START")
             async let todayActivities =
                 appleHealthProvider
                     .fetchTodayActivities()
@@ -464,7 +529,10 @@ final class HealthStore {
                 sevenDayHistory,
                 sevenDayWorkouts
             )
-            
+            print("⏱️ [PERF \(perfID)] todayActivities + 7-day history/workouts END elapsed=\(String(format: "%.2f", Date().timeIntervalSince(parallelFetchStart)))s")
+
+            let activityRawStart = Date()
+            print("⏱️ [PERF \(perfID)] fetchTodayActivityRawSamples START")
             let activityRawSamples =
                 try await
                 appleHealthProvider
@@ -473,7 +541,10 @@ final class HealthStore {
             PersistenceService.saveRawSamples(
                 activityRawSamples
             )
-            
+            print("⏱️ [PERF \(perfID)] fetch+save activity raw END elapsed=\(String(format: "%.2f", Date().timeIntervalSince(activityRawStart)))s count=\(activityRawSamples.count)")
+
+            let heartRawStart = Date()
+            print("⏱️ [PERF \(perfID)] fetchTodayHeartRawSamples START")
             let heartRawSamples =
                 try await
                 appleHealthProvider
@@ -482,7 +553,9 @@ final class HealthStore {
             PersistenceService.saveRawSamples(
                 heartRawSamples
             )
-            
+            print("⏱️ [PERF \(perfID)] fetch+save heart raw END elapsed=\(String(format: "%.2f", Date().timeIntervalSince(heartRawStart)))s count=\(heartRawSamples.count)")
+
+            let rawWorkoutsStart = Date()
             let rawWorkouts =
                 try await
                 appleHealthProvider
@@ -491,7 +564,9 @@ final class HealthStore {
             PersistenceService.saveActivityRawWorkouts(
                 rawWorkouts
             )
-            
+            print("⏱️ [PERF \(perfID)] fetch+save raw workouts END elapsed=\(String(format: "%.2f", Date().timeIntervalSince(rawWorkoutsStart)))s count=\(rawWorkouts.count)")
+
+            let routesStart = Date()
             let rawRoutePoints =
                 try await
                 appleHealthProvider
@@ -505,6 +580,7 @@ final class HealthStore {
             PersistenceService.saveActivityRawRoutePoints(
                 rawRoutePoints
             )
+            print("⏱️ [PERF \(perfID)] fetch+save route points END elapsed=\(String(format: "%.2f", Date().timeIntervalSince(routesStart)))s count=\(rawRoutePoints.count)")
 
             workoutHistoryData =
                 allWorkouts
@@ -641,9 +717,11 @@ final class HealthStore {
             print(
                 "==================================="
             )
+            print("⏱️ [PERF \(perfID)] Activity refresh END elapsed=\(String(format: "%.2f", Date().timeIntervalSince(activitiesStart)))s")
 
         } catch {
 
+            print("⏱️ [PERF \(perfID)] Activity refresh FAILED elapsed=\(String(format: "%.2f", Date().timeIntervalSince(activitiesStart)))s error=\(error)")
             // Activity data is now HealthKit-backed.
             // Keep the last known activity values if the
             // current refresh fails.
@@ -669,6 +747,8 @@ final class HealthStore {
         // are loaded independently from Activities.
         //
 
+        let dailyMetricsStart = Date()
+        print("⏱️ [PERF \(perfID)] fetchDailyMetrics START")
         do {
 
             let metrics =
@@ -678,6 +758,7 @@ final class HealthStore {
                         for:
                             Date()
                     )
+            print("⏱️ [PERF \(perfID)] fetchDailyMetrics END elapsed=\(String(format: "%.2f", Date().timeIntervalSince(dailyMetricsStart)))s")
 
             // MARK: - Resting Energy
 
@@ -902,6 +983,7 @@ final class HealthStore {
 
         } catch {
 
+            print("⏱️ [PERF \(perfID)] fetchDailyMetrics FAILED elapsed=\(String(format: "%.2f", Date().timeIntervalSince(dailyMetricsStart)))s error=\(error)")
             // An Apple Health daily-metrics failure must NOT
             // destroy valid Activity data.
             //
@@ -940,8 +1022,11 @@ final class HealthStore {
         // MARK: - Debug Database Verification
         // =================================================
 
+        let persistenceStart = Date()
         PersistenceService
             .printDatabaseStatus()
+        print("⏱️ [PERF \(perfID)] databaseStatus END elapsed=\(String(format: "%.2f", Date().timeIntervalSince(persistenceStart)))s")
+        print("⏱️ [PERF \(perfID)] HealthStore.refresh END total=\(String(format: "%.2f", Date().timeIntervalSince(refreshStart)))s at=\(Date())")
     }
 
     // MARK: - Daily Metrics

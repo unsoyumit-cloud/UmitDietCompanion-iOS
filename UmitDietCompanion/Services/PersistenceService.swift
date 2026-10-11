@@ -2611,7 +2611,6 @@ struct PersistenceService {
         let sql =
             """
             INSERT OR REPLACE INTO activity_raw_samples (
-
                 id,
                 metric_type,
                 value,
@@ -2621,188 +2620,133 @@ struct PersistenceService {
                 source_name,
                 source_bundle_identifier,
                 metadata_json
-
             )
-            VALUES (
-                ?, ?, ?, ?, ?, ?, ?, ?, ?
-            );
+            VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?);
             """
+
+        let saveStart = Date()
+        var savedCount = 0
+        var failedCount = 0
 
         database.withDatabase { database in
 
-            var statement:
-                OpaquePointer?
+            // A single transaction prevents SQLite from committing each sample
+            // separately. This is especially important for the initial L1 import
+            // containing tens of thousands of HealthKit samples.
+            var transactionError: UnsafeMutablePointer<CChar>?
+            let beginResult = sqlite3_exec(
+                database,
+                "BEGIN IMMEDIATE TRANSACTION;",
+                nil,
+                nil,
+                &transactionError
+            )
 
+            guard beginResult == SQLITE_OK else {
+                let message = transactionError.map { String(cString: $0) } ?? "unknown error"
+                print("❌ Failed to begin raw sample transaction: \(message)")
+                sqlite3_free(transactionError)
+                return
+            }
+            sqlite3_free(transactionError)
+
+            var statement: OpaquePointer?
             guard sqlite3_prepare_v2(
                 database,
                 sql,
                 -1,
                 &statement,
                 nil
-            ) == SQLITE_OK
-            else {
-
-                print(
-                    "❌ Failed to prepare raw Activity sample INSERT."
-                )
-
+            ) == SQLITE_OK else {
+                print("❌ Failed to prepare raw Activity sample INSERT.")
+                sqlite3_exec(database, "ROLLBACK;", nil, nil, nil)
                 return
             }
 
             defer {
-                sqlite3_finalize(
-                    statement
-                )
+                sqlite3_finalize(statement)
             }
 
             for sample in samples {
+                sqlite3_reset(statement)
+                sqlite3_clear_bindings(statement)
 
-                sqlite3_reset(
-                    statement
-                )
+                bindText(statement, index: 1, value: sample.id.uuidString)
+                bindText(statement, index: 2, value: sample.metricType)
 
-                sqlite3_clear_bindings(
-                    statement
-                )
-
-                bindText(
-                    statement,
-                    index: 1,
-                    value:
-                        sample.id.uuidString
-                )
-
-                bindText(
-                    statement,
-                    index: 2,
-                    value:
-                        sample.metricType
-                )
-
-                if let value =
-                    sample.value {
-
-                    bindDouble(
-                        statement,
-                        index: 3,
-                        value:
-                            value
-                    )
-
+                if let value = sample.value {
+                    bindDouble(statement, index: 3, value: value)
                 } else {
-
-                    sqlite3_bind_null(
-                        statement,
-                        3
-                    )
+                    sqlite3_bind_null(statement, 3)
                 }
 
-                if let unit =
-                    sample.unit {
-
-                    bindText(
-                        statement,
-                        index: 4,
-                        value:
-                            unit
-                    )
-
+                if let unit = sample.unit {
+                    bindText(statement, index: 4, value: unit)
                 } else {
-
-                    sqlite3_bind_null(
-                        statement,
-                        4
-                    )
+                    sqlite3_bind_null(statement, 4)
                 }
 
-                bindDate(
-                    statement,
-                    index: 5,
-                    date:
-                        sample.startDate
-                )
+                bindDate(statement, index: 5, date: sample.startDate)
+                bindDate(statement, index: 6, date: sample.endDate)
 
-                bindDate(
-                    statement,
-                    index: 6,
-                    date:
-                        sample.endDate
-                )
-
-                if let sourceName =
-                    sample.sourceName {
-
-                    bindText(
-                        statement,
-                        index: 7,
-                        value:
-                            sourceName
-                    )
-
+                if let sourceName = sample.sourceName {
+                    bindText(statement, index: 7, value: sourceName)
                 } else {
-
-                    sqlite3_bind_null(
-                        statement,
-                        7
-                    )
+                    sqlite3_bind_null(statement, 7)
                 }
 
-                if let sourceBundleIdentifier =
-                    sample.sourceBundleIdentifier {
-
-                    bindText(
-                        statement,
-                        index: 8,
-                        value:
-                            sourceBundleIdentifier
-                    )
-
+                if let sourceBundleIdentifier = sample.sourceBundleIdentifier {
+                    bindText(statement, index: 8, value: sourceBundleIdentifier)
                 } else {
-
-                    sqlite3_bind_null(
-                        statement,
-                        8
-                    )
+                    sqlite3_bind_null(statement, 8)
                 }
 
-                if let metadataJSON =
-                    sample.metadataJSON {
-
-                    bindText(
-                        statement,
-                        index: 9,
-                        value:
-                            metadataJSON
-                    )
-
+                if let metadataJSON = sample.metadataJSON {
+                    bindText(statement, index: 9, value: metadataJSON)
                 } else {
-
-                    sqlite3_bind_null(
-                        statement,
-                        9
-                    )
+                    sqlite3_bind_null(statement, 9)
                 }
 
-                let result =
-                    sqlite3_step(
-                        statement
-                    )
-
-                if result != SQLITE_DONE {
-
+                let result = sqlite3_step(statement)
+                if result == SQLITE_DONE {
+                    savedCount += 1
+                } else {
+                    failedCount += 1
                     print(
                         "❌ Failed to save raw Activity sample:",
                         sample.id.uuidString,
-                        result
+                        "SQLite result:", result,
+                        "message:", String(cString: sqlite3_errmsg(database))
                     )
                 }
             }
 
-            print(
-                "💾 Raw samples saved:",
-                samples.count
-            )
+            if failedCount == 0 {
+                var commitError: UnsafeMutablePointer<CChar>?
+                let commitResult = sqlite3_exec(
+                    database,
+                    "COMMIT;",
+                    nil,
+                    nil,
+                    &commitError
+                )
+
+                guard commitResult == SQLITE_OK else {
+                    let message = commitError.map { String(cString: $0) } ?? "unknown error"
+                    print("❌ Failed to commit raw sample transaction: \(message)")
+                    sqlite3_free(commitError)
+                    sqlite3_exec(database, "ROLLBACK;", nil, nil, nil)
+                    return
+                }
+                sqlite3_free(commitError)
+            } else {
+                // Avoid committing a partially written batch when any insert fails.
+                sqlite3_exec(database, "ROLLBACK;", nil, nil, nil)
+            }
         }
+
+        let elapsed = Date().timeIntervalSince(saveStart)
+        print("💾 Raw samples save result: \(savedCount)/\(samples.count), failed=\(failedCount), elapsed=\(String(format: "%.2f", elapsed))s (single transaction)")
     }
     
     // MARK: - Garmin Raw Responses
@@ -2967,6 +2911,106 @@ struct PersistenceService {
                 calendarDate
             )
         }
+    }
+
+    // MARK: - Date-indexed Garmin Raw Records
+
+    /// Stores one date-addressable JSON fragment derived from a Garmin response.
+    /// The original response remains untouched in garmin_raw_responses.
+    static func saveGarminDailyRawRecord(
+        dataType: String,
+        endpoint: String,
+        calendarDate: String,
+        sourceCalendarDate: String,
+        rawJSON: String,
+        fetchedAt: Date = Date()
+    ) {
+        let sql = """
+            INSERT INTO garmin_daily_raw_records (
+                id, data_type, endpoint, calendar_date,
+                fetched_at, source_calendar_date, raw_json
+            ) VALUES (?, ?, ?, ?, ?, ?, ?);
+            """
+
+        database.withDatabase { database in
+            let duplicateSQL = """
+                SELECT 1 FROM garmin_daily_raw_records
+                WHERE data_type = ? AND endpoint = ?
+                  AND calendar_date = ? AND raw_json = ?
+                LIMIT 1;
+                """
+            var duplicateStatement: OpaquePointer?
+            if sqlite3_prepare_v2(database, duplicateSQL, -1, &duplicateStatement, nil) == SQLITE_OK {
+                defer { sqlite3_finalize(duplicateStatement) }
+                bindText(duplicateStatement, index: 1, value: dataType)
+                bindText(duplicateStatement, index: 2, value: endpoint)
+                bindText(duplicateStatement, index: 3, value: calendarDate)
+                bindText(duplicateStatement, index: 4, value: rawJSON)
+                if sqlite3_step(duplicateStatement) == SQLITE_ROW {
+                    return
+                }
+            }
+
+            var statement: OpaquePointer?
+            guard sqlite3_prepare_v2(database, sql, -1, &statement, nil) == SQLITE_OK else {
+                print("❌ Failed to prepare Garmin daily raw record INSERT.")
+                return
+            }
+            defer { sqlite3_finalize(statement) }
+            bindText(statement, index: 1, value: UUID().uuidString)
+            bindText(statement, index: 2, value: dataType)
+            bindText(statement, index: 3, value: endpoint)
+            bindText(statement, index: 4, value: calendarDate)
+            bindDate(statement, index: 5, date: fetchedAt)
+            bindText(statement, index: 6, value: sourceCalendarDate)
+            bindText(statement, index: 7, value: rawJSON)
+
+            guard sqlite3_step(statement) == SQLITE_DONE else {
+                print("❌ Failed to save Garmin daily raw record:", dataType, calendarDate)
+                return
+            }
+            print("🗓️ Garmin daily raw record saved:", dataType, calendarDate)
+        }
+    }
+
+    static func loadGarminDailyRawRecords(
+        dataType: String,
+        startDate: String,
+        endDate: String
+    ) -> [(dataType: String, endpoint: String, calendarDate: String,
+           fetchedAt: Date, sourceCalendarDate: String, rawJSON: String)] {
+        let sql = """
+            SELECT data_type, endpoint, calendar_date, fetched_at,
+                   source_calendar_date, raw_json
+            FROM garmin_daily_raw_records
+            WHERE data_type = ? AND calendar_date BETWEEN ? AND ?
+            ORDER BY calendar_date ASC, fetched_at ASC;
+            """
+
+        return database.withDatabase { database in
+            var records: [(dataType: String, endpoint: String, calendarDate: String,
+                           fetchedAt: Date, sourceCalendarDate: String, rawJSON: String)] = []
+            var statement: OpaquePointer?
+            guard sqlite3_prepare_v2(database, sql, -1, &statement, nil) == SQLITE_OK else {
+                print("❌ Failed to prepare Garmin daily raw record SELECT.")
+                return records
+            }
+            defer { sqlite3_finalize(statement) }
+            bindText(statement, index: 1, value: dataType)
+            bindText(statement, index: 2, value: startDate)
+            bindText(statement, index: 3, value: endDate)
+
+            while sqlite3_step(statement) == SQLITE_ROW {
+                let type = String(cString: sqlite3_column_text(statement, 0))
+                let endpoint = String(cString: sqlite3_column_text(statement, 1))
+                let date = String(cString: sqlite3_column_text(statement, 2))
+                let fetchedAt = Date(timeIntervalSince1970: sqlite3_column_double(statement, 3))
+                let sourceDate = String(cString: sqlite3_column_text(statement, 4))
+                let json = String(cString: sqlite3_column_text(statement, 5))
+                records.append((type, endpoint, date, fetchedAt, sourceDate, json))
+            }
+            return records
+        } ?? []
     }
 
     // MARK: - Load Garmin Raw Responses
@@ -4043,6 +4087,154 @@ struct PersistenceService {
         return result
     }
 
+    
+    // MARK: - Apple Health Collection & Persistence Coverage
+
+    static func printAppleHealthCoverageReport(
+        fetchedSamples: [ActivityRawSample]
+    ) {
+        let expectedMetrics: [String] = [
+            "HKQuantityTypeIdentifierStepCount",
+            "HKQuantityTypeIdentifierDistanceWalkingRunning",
+            "HKQuantityTypeIdentifierActiveEnergyBurned",
+            "HKQuantityTypeIdentifierBasalEnergyBurned",
+            "HKQuantityTypeIdentifierHeartRate",
+            "HKQuantityTypeIdentifierRestingHeartRate",
+            "HKQuantityTypeIdentifierHeartRateVariabilitySDNN",
+            "HKQuantityTypeIdentifierOxygenSaturation",
+            "HKQuantityTypeIdentifierRespiratoryRate",
+            "HKQuantityTypeIdentifierVO2Max",
+            "HKQuantityTypeIdentifierWalkingSpeed",
+            "HKQuantityTypeIdentifierWalkingStepLength",
+            "HKQuantityTypeIdentifierWalkingAsymmetryPercentage",
+            "HKQuantityTypeIdentifierWalkingDoubleSupportPercentage",
+            "HKQuantityTypeIdentifierFlightsClimbed",
+            "HKQuantityTypeIdentifierAppleExerciseTime",
+            "HKQuantityTypeIdentifierAppleMoveTime",
+            "HKQuantityTypeIdentifierAppleStandTime",
+            "HKQuantityTypeIdentifierBodyMass",
+            "HKQuantityTypeIdentifierSixMinuteWalkTestDistance",
+            "HKQuantityTypeIdentifierRunningSpeed",
+            "HKQuantityTypeIdentifierRunningStrideLength",
+            "HKQuantityTypeIdentifierRunningPower",
+            "HKQuantityTypeIdentifierRunningGroundContactTime",
+            "HKQuantityTypeIdentifierRunningVerticalOscillation",
+            "HKQuantityTypeIdentifierDistanceCycling",
+            "HKQuantityTypeIdentifierCyclingCadence",
+            "HKQuantityTypeIdentifierCyclingPower",
+            "HKCategoryTypeIdentifierSleepAnalysis"
+        ]
+
+        let fetchedByMetric = Dictionary(
+            grouping: fetchedSamples,
+            by: \.metricType
+        )
+
+        let allMetrics = Set(expectedMetrics)
+            .union(fetchedByMetric.keys)
+            .sorted()
+
+        // Verify the exact sample IDs from this HealthKit batch.
+        let persistedByMetric: [String: Int] =
+            database.withDatabase { db -> [String: Int] in
+
+                let sql = """
+                    SELECT 1
+                    FROM activity_raw_samples
+                    WHERE id = ?;
+                    """
+
+                var statement: OpaquePointer?
+
+                guard sqlite3_prepare_v2(
+                    db,
+                    sql,
+                    -1,
+                    &statement,
+                    nil
+                ) == SQLITE_OK else {
+                    print("❌ Coverage report: SQL prepare failed.")
+                    return [:]
+                }
+
+                defer {
+                    sqlite3_finalize(statement)
+                }
+
+                var counts: [String: Int] = [:]
+
+                for sample in fetchedSamples {
+                    sqlite3_reset(statement)
+                    sqlite3_clear_bindings(statement)
+
+                    bindText(
+                        statement,
+                        index: 1,
+                        value: sample.id.uuidString
+                    )
+
+                    if sqlite3_step(statement) == SQLITE_ROW {
+                        counts[sample.metricType, default: 0] += 1
+                    }
+                }
+
+                return counts
+            } ?? [:]
+
+        print("")
+        print("================================================")
+        print("🍎 APPLE HEALTH COLLECTION & PERSISTENCE COVERAGE")
+        print("================================================")
+        print("Fetched sample total: \(fetchedSamples.count)")
+        print("SQLite table total: \(rowCount(in: "activity_raw_samples"))")
+        print("Daily snapshots: \(rowCount(in: "daily_health_snapshots"))")
+        print("Daily metrics rows: \(rowCount(in: "daily_health_metrics"))")
+        print("------------------------------------------------")
+
+        var totalFetched = 0
+        var totalPersisted = 0
+        var totalMissing = 0
+
+        for metric in allMetrics {
+            let fetched = fetchedByMetric[metric]?.count ?? 0
+            let persisted = persistedByMetric[metric] ?? 0
+            let missing = max(0, fetched - persisted)
+
+            totalFetched += fetched
+            totalPersisted += persisted
+            totalMissing += missing
+
+            let status: String
+
+            if fetched == 0 {
+                status = "NO SAMPLES IN THIS BATCH"
+            } else if missing == 0 {
+                status = "OK"
+            } else {
+                status = "MISSING \(missing)"
+            }
+
+            print(
+                "\(metric) | fetched: \(fetched) | " +
+                "persisted: \(persisted) | " +
+                "missing: \(missing) | \(status)"
+            )
+        }
+
+        print("------------------------------------------------")
+        print("TOTAL FETCHED: \(totalFetched)")
+        print("TOTAL PERSISTED: \(totalPersisted)")
+        print("TOTAL MISSING: \(totalMissing)")
+        print(
+            totalMissing == 0
+                ? "✅ All fetched sample IDs were found in SQLite."
+                : "❌ Some fetched samples are missing from SQLite."
+        )
+        print("================================================")
+        print("")
+    }
+
+    
     // MARK: - Debug Database Status
 
     static func printDatabaseStatus() {
@@ -4092,6 +4284,83 @@ struct PersistenceService {
         print("")
     }
 
+    // MARK: - Raw Sample Persistence Validation
+
+    static func validateRawSamplePersistence(
+        _ samples: [ActivityRawSample]
+    ) {
+        guard !samples.isEmpty else {
+            print("⚠️ No raw samples to validate.")
+            return
+        }
+
+        let sql = """
+            SELECT COUNT(*)
+            FROM activity_raw_samples
+            WHERE id = ?;
+            """
+
+        database.withDatabase { database in
+            var statement: OpaquePointer?
+
+            guard sqlite3_prepare_v2(
+                database,
+                sql,
+                -1,
+                &statement,
+                nil
+            ) == SQLITE_OK else {
+                print("❌ Failed to prepare raw sample validation.")
+                return
+            }
+
+            defer {
+                sqlite3_finalize(statement)
+            }
+
+            var found = 0
+            var missingIDs: [String] = []
+
+            for sample in samples {
+                sqlite3_reset(statement)
+                sqlite3_clear_bindings(statement)
+
+                bindText(
+                    statement,
+                    index: 1,
+                    value: sample.id.uuidString
+                )
+
+                if sqlite3_step(statement) == SQLITE_ROW,
+                   sqlite3_column_int(statement, 0) > 0 {
+                    found += 1
+                } else {
+                    missingIDs.append(sample.id.uuidString)
+                }
+            }
+
+            print("")
+            print("===================================")
+            print("🔎 RAW SAMPLE PERSISTENCE VALIDATION")
+            print("===================================")
+            print("Samples returned by HealthKit: \(samples.count)")
+            print("Samples found in SQLite: \(found)")
+            print("Missing samples: \(missingIDs.count)")
+
+            if !missingIDs.isEmpty {
+                print("❌ Missing sample IDs (first 20):")
+                for id in missingIDs.prefix(20) {
+                    print("  - \(id)")
+                }
+            } else {
+                print("✅ All returned sample IDs exist in SQLite.")
+            }
+
+            print("===================================")
+            print("")
+        }
+    }
+    
     // MARK: - Debug Meal Database
 
     static func printMealDatabaseStatus() {

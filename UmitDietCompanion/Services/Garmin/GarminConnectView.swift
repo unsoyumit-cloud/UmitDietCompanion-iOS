@@ -51,6 +51,19 @@ struct GarminConnectView: View {
                 isTestingAPI
             )
             
+            Button {
+                runInitialGarminBackfill()
+            } label: {
+                HStack {
+                    Image(systemName: "arrow.down.to.line")
+                    Text(isTestingAPI ? "Running 28-Day Backfill..." : "Run 28-Day Garmin Backfill")
+                }
+                .fontWeight(.semibold)
+                .frame(maxWidth: .infinity)
+            }
+            .buttonStyle(.borderedProminent)
+            .disabled(isExchangingToken || isTestingAPI)
+
             // MARK: - Garmin API Test
             
             Button {
@@ -201,6 +214,22 @@ struct GarminConnectView: View {
     
     // MARK: - Garmin API Tests
     
+    private func runInitialGarminBackfill() {
+        guard GarminConnectClient.shared.isAuthenticated else {
+            status = "Garmin is not connected.\nPlease connect Garmin first."
+            return
+        }
+        isTestingAPI = true
+        status = "Fetching missing Garmin history for the last 28 days... Check Xcode console for progress."
+        Task {
+            await GarminHealthClient.shared.runInitialHistoricalBackfill28Days()
+            await MainActor.run {
+                status = "28-day Garmin backfill finished. Check Xcode console for fetched, skipped, and failed counts."
+                isTestingAPI = false
+            }
+        }
+    }
+
     private func testFinalGarminWellnessEndpoints() {
         
         guard GarminConnectClient.shared.isAuthenticated else {

@@ -13,6 +13,29 @@ final class DashboardViewModel {
     let healthStore =
         HealthStore.shared
 
+    // MARK: - Data Refresh
+
+    /// Dashboard pull-to-refresh: update Apple Health data and then collect
+    /// the currently integrated Garmin L1 responses.
+    @MainActor
+    func refreshAllSources() async {
+        let refreshID = String(UUID().uuidString.prefix(6))
+        let totalStart = Date()
+        print("⏱️ [PERF \(refreshID)] DashboardViewModel.refreshAllSources START at=\(totalStart)")
+
+        let appleStart = Date()
+        print("⏱️ [PERF \(refreshID)] Apple Health refresh START")
+        await healthStore.refresh()
+        print("⏱️ [PERF \(refreshID)] Apple Health refresh END elapsed=\(String(format: "%.2f", Date().timeIntervalSince(appleStart)))s")
+
+        let garminStart = Date()
+        print("⏱️ [PERF \(refreshID)] Garmin refreshDashboardL1 START")
+        await GarminHealthClient.shared.refreshDashboardL1()
+        print("⏱️ [PERF \(refreshID)] Garmin refreshDashboardL1 END elapsed=\(String(format: "%.2f", Date().timeIntervalSince(garminStart)))s")
+
+        print("⏱️ [PERF \(refreshID)] refreshAllSources END total=\(String(format: "%.2f", Date().timeIntervalSince(totalStart)))s")
+    }
+
     private let contextBuilder =
         CoachingContextBuilder()
 

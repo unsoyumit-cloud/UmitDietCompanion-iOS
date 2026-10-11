@@ -196,6 +196,9 @@ struct DashboardView: View {
                         .padding(.horizontal, horizontalPadding)
                         .padding(.vertical)
                     }
+                    .refreshable {
+                        await viewModel.refreshAllSources()
+                    }
                 }
             }
 
@@ -255,11 +258,36 @@ struct DashboardView: View {
                 AIReactorConsoleView()
             }
 
-            // MARK: - HealthKit Refresh
+            // MARK: - HealthKit Refresh / Performance Diagnostics
 
+            .onAppear {
+                print("⏱️ [PERF] DashboardView onAppear at=\(Date())")
+                print("⏱️ [PERF] Initial ring inputs: steps=\(viewModel.healthStore.steps), activeEnergy=\(viewModel.healthStore.activeEnergy), sleepHours=\(viewModel.healthStore.sleepHours), weight=\(viewModel.healthStore.weight), restingHR=\(viewModel.healthStore.restingHeartRate), water=\(viewModel.healthStore.waterAmount), nutritionCalories=\(viewModel.healthStore.dailyMetrics.calorieIntake)")
+            }
+            .onChange(of: viewModel.healthStore.steps) { oldValue, newValue in
+                print("⏱️ [PERF] Ring input changed: steps \(oldValue) -> \(newValue) at=\(Date())")
+            }
+            .onChange(of: viewModel.healthStore.activeEnergy) { oldValue, newValue in
+                print("⏱️ [PERF] Ring input changed: activeEnergy \(oldValue) -> \(newValue) at=\(Date())")
+            }
+            .onChange(of: viewModel.healthStore.sleepHours) { oldValue, newValue in
+                print("⏱️ [PERF] Ring input changed: sleepHours \(oldValue) -> \(newValue) at=\(Date())")
+            }
+            .onChange(of: viewModel.healthStore.weight) { oldValue, newValue in
+                print("⏱️ [PERF] Ring input changed: weight \(oldValue) -> \(newValue) at=\(Date())")
+            }
+            .onChange(of: viewModel.healthStore.restingHeartRate) { oldValue, newValue in
+                print("⏱️ [PERF] Ring input changed: restingHeartRate \(oldValue) -> \(newValue) at=\(Date())")
+            }
+            .onChange(of: viewModel.healthStore.waterAmount) { oldValue, newValue in
+                print("⏱️ [PERF] Ring input changed: waterAmount \(oldValue) -> \(newValue) at=\(Date())")
+            }
             .task {
-
+                let taskStart = Date()
+                let taskID = String(UUID().uuidString.prefix(6))
+                print("⏱️ [PERF \(taskID)] Dashboard .task START at=\(taskStart)")
                 await HealthStore.shared.refresh()
+                print("⏱️ [PERF \(taskID)] Dashboard .task END elapsed=\(String(format: "%.2f", Date().timeIntervalSince(taskStart)))s at=\(Date())")
             }
         }
     }

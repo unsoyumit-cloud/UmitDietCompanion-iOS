@@ -2023,19 +2023,25 @@ final class HealthKitService {
 
     func getTodayHeartRawSamples()
         async throws -> [ActivityRawSample] {
+        try await getHeartRawSamples(
+            from: Calendar.current.startOfDay(for: Date()),
+            to: Date()
+        )
+    }
 
-        let range =
-            dayRange(
-                for:
-                    Date()
-            )
+    func getHeartRawSamples(
+        from startDate: Date,
+        to endDate: Date
+    ) async throws -> [ActivityRawSample] {
+
+        guard startDate < endDate else { return [] }
 
         let predicate =
             HKQuery.predicateForSamples(
                 withStart:
-                    range.start,
+                    startDate,
                 end:
-                    range.end,
+                    endDate,
                 options:
                     .strictStartDate
             )
@@ -2132,18 +2138,25 @@ final class HealthKitService {
     
     func getTodayActivityRawSamples()
         async throws -> [ActivityRawSample] {
+        try await getActivityRawSamples(
+            from: Calendar.current.startOfDay(for: Date()),
+            to: Date()
+        )
+    }
 
-        let range =
-            dayRange(
-                for: Date()
-            )
+    func getActivityRawSamples(
+        from startDate: Date,
+        to endDate: Date
+    ) async throws -> [ActivityRawSample] {
+
+        guard startDate < endDate else { return [] }
 
         let predicate =
             HKQuery.predicateForSamples(
                 withStart:
-                    range.start,
+                    startDate,
                 end:
-                    range.end,
+                    endDate,
                 options:
                     .strictStartDate
             )
@@ -2737,21 +2750,28 @@ final class HealthKitService {
 
     func getTodayRawWorkouts()
         async throws -> [ActivityRawWorkout] {
+        try await getRawWorkouts(
+            from: Calendar.current.startOfDay(for: Date()),
+            to: Date()
+        )
+    }
+
+    func getRawWorkouts(
+        from startDate: Date,
+        to endDate: Date
+    ) async throws -> [ActivityRawWorkout] {
+
+        guard startDate < endDate else { return [] }
 
         let workoutType =
             HKObjectType.workoutType()
 
-        let range =
-            dayRange(
-                for: Date()
-            )
-
         let predicate =
             HKQuery.predicateForSamples(
                 withStart:
-                    range.start,
+                    startDate,
                 end:
-                    range.end,
+                    endDate,
                 options:
                     .strictStartDate
             )

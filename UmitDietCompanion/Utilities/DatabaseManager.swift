@@ -21,7 +21,7 @@ final class DatabaseManager {
         "UmitDietCompanion.sqlite"
 
     private let currentSchemaVersion =
-        9
+        10
 
     // MARK: - Database
 
@@ -671,6 +671,12 @@ final class DatabaseManager {
             }
         }
 
+        if version < 10 {
+            guard migrateToVersion10() else {
+                return false
+            }
+        }
+
         return true
     }
 
@@ -887,6 +893,56 @@ final class DatabaseManager {
         return true
     }
     
+
+    // MARK: - Migration 10: Date-indexed Garmin raw records
+
+    private func migrateToVersion10() -> Bool {
+
+        print("📡 Creating date-indexed Garmin raw records storage...")
+
+        guard execute(
+            """
+            CREATE TABLE IF NOT EXISTS garmin_daily_raw_records (
+                id TEXT PRIMARY KEY,
+                data_type TEXT NOT NULL,
+                endpoint TEXT NOT NULL,
+                calendar_date TEXT NOT NULL,
+                fetched_at REAL NOT NULL,
+                source_calendar_date TEXT NOT NULL,
+                raw_json TEXT NOT NULL
+            );
+            """
+        ) else {
+            print("❌ Failed to create Garmin daily raw records storage.")
+            return false
+        }
+
+        guard execute(
+            """
+            CREATE INDEX IF NOT EXISTS
+            idx_garmin_daily_raw_records_type_date
+            ON garmin_daily_raw_records(data_type, calendar_date);
+            """
+        ) else {
+            print("❌ Failed to create Garmin daily raw records date index.")
+            return false
+        }
+
+        guard execute(
+            """
+            CREATE INDEX IF NOT EXISTS
+            idx_garmin_daily_raw_records_endpoint_date
+            ON garmin_daily_raw_records(endpoint, calendar_date);
+            """
+        ) else {
+            print("❌ Failed to create Garmin daily raw records endpoint index.")
+            return false
+        }
+
+        print("✅ SQLite schema migrated to version 10")
+        return true
+    }
+
     // MARK: - Migration 9
 
     private func migrateToVersion9() -> Bool {
