@@ -350,6 +350,48 @@ final class GarminHealthClient {
         return result
     }
 
+    /// Verilen tarih aralığını, çakışmayan ve en fazla maxDays takvim günü
+    /// kapsayan pencerelere böler. Başlangıç ve bitiş günleri dahildir.
+    private func makeDateWindows(
+        startDate: Date,
+        endDate: Date,
+        maxDays: Int = 28
+    ) -> [(start: Date, end: Date)] {
+        guard maxDays > 0 else { return [] }
+
+        let calendar = Calendar.current
+        let normalizedStart = calendar.startOfDay(for: startDate)
+        let normalizedEnd = calendar.startOfDay(for: endDate)
+        guard normalizedStart <= normalizedEnd else { return [] }
+
+        var windows: [(start: Date, end: Date)] = []
+        var cursor = normalizedStart
+
+        while cursor <= normalizedEnd {
+            guard let candidateEnd = calendar.date(
+                byAdding: .day,
+                value: maxDays - 1,
+                to: cursor
+            ) else {
+                break
+            }
+
+            let windowEnd = min(candidateEnd, normalizedEnd)
+            windows.append((start: cursor, end: windowEnd))
+
+            guard let nextStart = calendar.date(
+                byAdding: .day,
+                value: 1,
+                to: windowEnd
+            ) else {
+                break
+            }
+            cursor = nextStart
+        }
+
+        return windows
+    }
+
     private func resolvedPersistenceDate(
         path: String,
         queryItems: [URLQueryItem]
@@ -364,7 +406,17 @@ final class GarminHealthClient {
             return queryDate
         }
 
-        if let lastComponent = path.split(separator: "/").last.map(String.init),
+        // Date-range path'lerinde SQLite kaydını aralığın başlangıç günüyle ilişkilendir.
+        let pathComponents = path.split(separator: "/").map(String.init)
+        if pathComponents.count >= 2 {
+            let startComponent = pathComponents[pathComponents.count - 2]
+            let endComponent = pathComponents[pathComponents.count - 1]
+            if isCalendarDate(startComponent), isCalendarDate(endComponent) {
+                return startComponent
+            }
+        }
+
+        if let lastComponent = pathComponents.last,
            isCalendarDate(lastComponent) {
             return lastComponent
         }
@@ -787,7 +839,31 @@ final class GarminHealthClient {
         print("🧪 L1 DISCOVERY — STEPS / FLOORS / INTENSITY")
         print("===================================")
         await testEndpoint(path: "/usersummary-service/stats/steps/daily/\(dateString)/\(dateString)")
-        await testEndpoint(path: "/usersummary-service/stats/steps/daily/\(startString)/\(dateString)")
+
+        let stepsWindows = makeDateWindows(
+            startDate: startDate,
+            endDate: date,
+            maxDays: 28
+        )
+
+        print("\n🧪 STEPS HISTORY — 28-DAY WINDOWS")
+        print("Total windows:", stepsWindows.count)
+
+        for (index, window) in stepsWindows.enumerated() {
+            let windowStart = Self.dateFormatter.string(from: window.start)
+            let windowEnd = Self.dateFormatter.string(from: window.end)
+            let endpoint = "/usersummary-service/stats/steps/daily/\(windowStart)/\(windowEnd)"
+
+            print("\n📅 Window \(index + 1)/\(stepsWindows.count): \(windowStart) → \(windowEnd)")
+
+            await runEndpointCheck(
+                path: endpoint,
+                queryItems: [],
+                label: "STEPS WINDOW \(index + 1): \(windowStart) → \(windowEnd)",
+                expectedDate: windowStart
+            )
+        }
+
         if let displayName {
             await testEndpoint(
                 path: "/wellness-service/wellness/dailySummaryChart/\(displayName)",
