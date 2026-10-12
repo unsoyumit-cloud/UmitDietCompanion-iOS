@@ -64,7 +64,7 @@ struct REMSleepDetailView: View {
                         alignment: .firstTextBaseline
                     ) {
 
-                        Text("From Apple Health")
+                        Text(healthStore.sleepSourceLabel)
                             .font(.subheadline)
                             .foregroundStyle(.secondary)
 

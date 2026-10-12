@@ -60,7 +60,7 @@ struct AwakeDetailView: View {
 
                     }
 
-                    Text("From Apple Health")
+                    Text(healthStore.sleepSourceLabel)
                         .font(.subheadline)
                         .foregroundStyle(.secondary)
 

@@ -130,6 +130,108 @@ final class GarminHealthClient {
         return data
     }
 
+    // MARK: - Night Metrics
+
+    struct GarminNightMetrics {
+        let averageHRV: Double?
+        let sevenDayAverageHRV: Double?
+        let averageSpO2: Double?
+        let minimumSpO2: Double?
+        let averageRespiratoryRate: Double?
+        let minimumRespiratoryRate: Double?
+        let averageHeartRate: Double?
+
+        // Garmin sleep-session values are in seconds unless noted otherwise.
+        let sleepTimeSeconds: Double?
+        let deepSleepSeconds: Double?
+        let lightSleepSeconds: Double?
+        let remSleepSeconds: Double?
+        let awakeSleepSeconds: Double?
+
+        var hasSleepData: Bool {
+            sleepTimeSeconds != nil || deepSleepSeconds != nil
+                || lightSleepSeconds != nil || remSleepSeconds != nil
+                || awakeSleepSeconds != nil
+        }
+
+        var hasAnyData: Bool {
+            averageHRV != nil || averageSpO2 != nil
+                || averageRespiratoryRate != nil || averageHeartRate != nil
+                || hasSleepData
+        }
+    }
+
+    /// Fetches last-night metrics directly from Garmin Connect and persists the
+    /// untouched JSON through `get(path:queryItems:)`. Apple Health remains the
+    /// preferred source when it actually has a value; HealthStore applies Garmin
+    /// values only as a fallback.
+    func fetchNightMetrics(for date: Date = Date()) async -> GarminNightMetrics? {
+        let dateString = Self.dateFormatter.string(from: date)
+        var sleepDTO: [String: Any]?
+        var hrvSummary: [String: Any]?
+
+        // HRV is date-addressed and does not depend on the Garmin display name.
+        do {
+            let data = try await get(path: "/hrv-service/hrv/\(dateString)")
+            let root = try JSONSerialization.jsonObject(with: data) as? [String: Any]
+            hrvSummary = root?["hrvSummary"] as? [String: Any]
+            print("✅ Garmin NightMetrics HRV response parsed for \(dateString).")
+        } catch {
+            print("⚠️ Garmin NightMetrics HRV fetch failed: \(error)")
+        }
+
+        // Sleep DTO requires the account's displayName/userName.
+        do {
+            let profileData = try await get(path: "/userprofile-service/socialProfile")
+            let profile = try JSONSerialization.jsonObject(with: profileData) as? [String: Any]
+            let displayName = (profile?["displayName"] as? String)
+                ?? (profile?["userName"] as? String)
+
+            if let displayName, !displayName.isEmpty {
+                let sleepData = try await get(
+                    path: "/wellness-service/wellness/dailySleepData/\(displayName)",
+                    queryItems: [URLQueryItem(name: "date", value: dateString)]
+                )
+                let root = try JSONSerialization.jsonObject(with: sleepData) as? [String: Any]
+                sleepDTO = root?["dailySleepDTO"] as? [String: Any]
+                print("✅ Garmin NightMetrics sleep response parsed for \(dateString).")
+            } else {
+                print("⚠️ Garmin NightMetrics sleep fetch skipped: no displayName/userName.")
+            }
+        } catch {
+            print("⚠️ Garmin NightMetrics sleep fetch failed: \(error)")
+        }
+
+        func number(_ dictionary: [String: Any]?, _ key: String) -> Double? {
+            guard let value = dictionary?[key] as? NSNumber else { return nil }
+            let result = value.doubleValue
+            return result.isFinite && result > 0 ? result : nil
+        }
+
+        let metrics = GarminNightMetrics(
+            averageHRV: number(hrvSummary, "lastNightAvg") ?? number(sleepDTO, "avgOvernightHrv"),
+            sevenDayAverageHRV: number(hrvSummary, "weeklyAvg"),
+            averageSpO2: number(sleepDTO, "averageSpO2Value"),
+            minimumSpO2: number(sleepDTO, "lowestSpO2Value"),
+            averageRespiratoryRate: number(sleepDTO, "averageRespirationValue"),
+            minimumRespiratoryRate: number(sleepDTO, "lowestRespirationValue"),
+            averageHeartRate: number(sleepDTO, "avgHeartRate"),
+            sleepTimeSeconds: number(sleepDTO, "sleepTimeSeconds"),
+            deepSleepSeconds: number(sleepDTO, "deepSleepSeconds"),
+            lightSleepSeconds: number(sleepDTO, "lightSleepSeconds"),
+            remSleepSeconds: number(sleepDTO, "remSleepSeconds"),
+            awakeSleepSeconds: number(sleepDTO, "awakeSleepSeconds")
+        )
+
+        guard metrics.hasAnyData else {
+            print("⚠️ Garmin returned no usable NightMetrics for \(dateString).")
+            return nil
+        }
+
+        print("🌙 Garmin NightMetrics: HRV=\(metrics.averageHRV ?? 0), Night HR=\(metrics.averageHeartRate ?? 0), SpO₂=\(metrics.averageSpO2 ?? 0), Respiration=\(metrics.averageRespiratoryRate ?? 0)")
+        return metrics
+    }
+
     // MARK: - Dashboard L1 Refresh
 
     /// Fetches a small set of Garmin endpoints that are currently integrated

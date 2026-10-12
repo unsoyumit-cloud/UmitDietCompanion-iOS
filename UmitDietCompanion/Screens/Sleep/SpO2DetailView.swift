@@ -31,6 +31,8 @@ struct SpO2DetailView: View {
                         : "No Data",
                     subtitle:
                         "Average blood oxygen during the night",
+                    source:
+                        healthStore.spo2Source,
                     icon:
                         "drop.fill",
                     iconColor:

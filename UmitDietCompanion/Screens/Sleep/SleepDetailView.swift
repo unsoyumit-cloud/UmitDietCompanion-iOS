@@ -34,7 +34,7 @@ struct SleepDetailView: View {
                     duration: formatDuration(
                         healthStore.deepSleep
                     ),
-                    trend: "From Apple Health"
+                    trend: healthStore.sleepSourceLabel
                 ) {
 
                     DeepSleepDetailView()
@@ -48,7 +48,7 @@ struct SleepDetailView: View {
                     duration: formatDuration(
                         healthStore.coreSleep
                     ),
-                    trend: "From Apple Health"
+                    trend: healthStore.sleepSourceLabel
                 ) {
 
                     CoreSleepDetailView()
@@ -62,7 +62,7 @@ struct SleepDetailView: View {
                     duration: formatDuration(
                         healthStore.remSleep
                     ),
-                    trend: "From Apple Health"
+                    trend: healthStore.sleepSourceLabel
                 ) {
 
                     REMSleepDetailView()
@@ -76,7 +76,7 @@ struct SleepDetailView: View {
                     duration: formatDuration(
                         healthStore.awakeTime
                     ),
-                    trend: "From Apple Health"
+                    trend: healthStore.sleepSourceLabel
                 ) {
 
                     AwakeDetailView()

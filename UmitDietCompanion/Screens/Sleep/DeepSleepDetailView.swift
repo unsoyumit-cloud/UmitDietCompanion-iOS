@@ -65,7 +65,7 @@ struct DeepSleepDetailView: View {
                     ) {
 
                         Text(
-                            "From Apple Health"
+                            healthStore.sleepSourceLabel
                         )
                         .font(.subheadline)
                         .foregroundStyle(.secondary)

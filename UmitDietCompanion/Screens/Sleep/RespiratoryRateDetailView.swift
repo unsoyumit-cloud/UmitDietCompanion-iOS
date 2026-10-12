@@ -31,6 +31,8 @@ struct RespiratoryRateDetailView: View {
                         : "No Data",
                     subtitle:
                         "Average breathing rate during the night",
+                    source:
+                        healthStore.respiratoryRateSource,
                     icon:
                         "lungs.fill",
                     iconColor:

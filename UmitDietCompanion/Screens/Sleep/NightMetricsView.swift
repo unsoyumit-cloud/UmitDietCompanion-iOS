@@ -115,9 +115,13 @@ struct NightMetricsView: View {
             NightMetricItem(
                 title: "Heart Rate",
                 value:
-                    "\(healthStore.restingHeartRate) bpm",
+                    healthStore.hasNightAverageHeartRateData
+                    ? String(format: "%.0f bpm", healthStore.nightAverageHeartRate)
+                    : "\(healthStore.restingHeartRate) bpm",
                 comparison:
-                    "Resting heart rate",
+                    healthStore.hasNightAverageHeartRateData
+                    ? "Night average • \(healthStore.nightAverageHeartRateSource)"
+                    : "Resting heart rate • Apple Health",
                 icon:
                     "heart",
                 iconColor:
@@ -143,7 +147,7 @@ struct NightMetricsView: View {
                     : "No Data",
                 comparison:
                     healthStore.hasHRVData
-                    ? "Apple Health data"
+                    ? healthStore.hrvSource
                     : "No data available yet",
                 icon:
                     "waveform.path.ecg",
@@ -174,7 +178,7 @@ struct NightMetricsView: View {
                     : "No Data",
                 comparison:
                     healthStore.hasSpO2Data
-                    ? "Apple Health data"
+                    ? healthStore.spo2Source
                     : "No data available yet",
                 icon:
                     "drop",
@@ -205,7 +209,7 @@ struct NightMetricsView: View {
                     : "No Data",
                 comparison:
                     healthStore.hasRespiratoryRateData
-                    ? "Apple Health data"
+                    ? healthStore.respiratoryRateSource
                     : "No data available yet",
                 icon:
                     "lungs",
@@ -438,25 +442,25 @@ struct NightMetricsView: View {
             !healthStore.hasRespiratoryRateData {
 
             return
-                "Some night metrics are not available yet. They will appear here when Apple Health has data for them."
+                "Some night metrics are not available yet. They will appear here when Apple Health or Garmin Connect provides them."
         }
 
         if !healthStore.hasHRVData {
 
             return
-                "HRV data is not available yet. Once Apple Health has enough data, we can start tracking this metric here."
+                "HRV data is not available from Apple Health or Garmin Connect yet."
         }
 
         if !healthStore.hasSpO2Data {
 
             return
-                "SpO₂ data is not available yet. Once Apple Health has data, we can start tracking this metric here."
+                "SpO₂ data is not available from Apple Health or Garmin Connect yet."
         }
 
         if !healthStore.hasRespiratoryRateData {
 
             return
-                "Respiratory rate data is not available yet. Once Apple Health has data, we can start tracking this metric here."
+                "Respiratory rate data is not available from Apple Health or Garmin Connect yet."
         }
 
         return

@@ -12,6 +12,7 @@ struct SleepNightMetricRow: View {
     let title: String
     let value: String
     let subtitle: String
+    var source: String? = nil
     let icon: String
     let iconColor: Color
 
@@ -61,6 +62,14 @@ struct SleepNightMetricRow: View {
                 .minimumScaleFactor(
                     0.8
                 )
+
+                if let source, !source.isEmpty {
+                    Text("Source: \(source)")
+                        .font(.caption2)
+                        .foregroundStyle(.tertiary)
+                        .lineLimit(1)
+                        .minimumScaleFactor(0.8)
+                }
             }
 
             Spacer()

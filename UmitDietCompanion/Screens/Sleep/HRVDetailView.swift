@@ -25,6 +25,8 @@ struct HRVDetailView: View {
                         : "No Data",
                     subtitle:
                         "Average HRV during the night",
+                    source:
+                        healthStore.hrvSource,
                     icon:
                         "waveform.path.ecg",
                     iconColor:
